@@ -102,7 +102,9 @@ async function main(): Promise<void> {
   }
 
   const { total, breakdown } = countWords(input);
+  console.log(" ");
   console.log(`Total words: ${total}`);
+  console.log(" ");
   for (const chunk of breakdown) {
     console.log(`Locale ${chunk.locale}: ${chunk.words} words`);
   }
