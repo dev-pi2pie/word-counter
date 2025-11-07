@@ -1,4 +1,5 @@
 import countWords from "./wc";
+import { showSingularOrPluralWord } from "./utils";
 
 type BunRuntime = {
   argv: string[];
@@ -106,7 +107,9 @@ async function main(): Promise<void> {
   console.log(`Total words: ${total}`);
   console.log(" ");
   for (const chunk of breakdown) {
-    console.log(`Locale ${chunk.locale}: ${chunk.words} words`);
+    console.log(
+      `Locale ${chunk.locale}: ${showSingularOrPluralWord(chunk.words, "word")}`
+    );
   }
 }
 
