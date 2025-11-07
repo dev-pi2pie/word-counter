@@ -1,4 +1,7 @@
-import countWords from "./wc";
+import wordCounter, {
+  type WordCounterMode,
+  type WordCounterResult,
+} from "./wc";
 import { showSingularOrPluralWord } from "./utils";
 
 type BunRuntime = {
@@ -85,16 +88,114 @@ function exit(code: number): never {
   throw new Error(`Failed to exit with code ${code}`);
 }
 
-async function readInput(): Promise<string> {
-  const args = getArgv();
-  if (args.length > 0) {
-    return args.join(" ");
+function parseMode(value: string | undefined): WordCounterMode {
+  if (!value) {
+    throw new Error("Missing value for --mode option");
   }
-  return await readStdin();
+
+  const normalized = value.toLowerCase();
+  if (normalized === "chunk" || normalized === "segments" || normalized === "collector") {
+    return normalized;
+  }
+
+  throw new Error(`Unsupported mode: ${value}`);
+}
+
+function parseArgs(argv: string[]): { mode: WordCounterMode; textTokens: string[] } {
+  let mode: WordCounterMode = "chunk";
+  const textTokens: string[] = [];
+  let collectRemainder = false;
+
+  for (let i = 0; i < argv.length; i++) {
+    const arg = argv[i]!;
+
+    if (collectRemainder) {
+      textTokens.push(arg);
+      continue;
+    }
+
+    if (arg === "--") {
+      collectRemainder = true;
+      continue;
+    }
+
+    if (arg === "--mode" || arg === "-m") {
+      const next = argv[i + 1];
+      mode = parseMode(next);
+      i++;
+      continue;
+    }
+
+    if (arg.startsWith("--mode=")) {
+      mode = parseMode(arg.split("=", 2)[1]);
+      continue;
+    }
+
+    textTokens.push(arg);
+  }
+
+  return { mode, textTokens };
+}
+
+function renderChunkBreakdown(items: Array<{ locale: string; words: number }>): void {
+  for (const item of items) {
+    console.log(
+      `Locale ${item.locale}: ${showSingularOrPluralWord(item.words, "word")}`
+    );
+  }
+}
+
+function renderSegmentBreakdown(
+  items: Array<{ locale: string; words: number; segments: string[] }>
+): void {
+  for (const item of items) {
+    console.log(
+      `Locale ${item.locale}: ${JSON.stringify(item.segments)} (${showSingularOrPluralWord(item.words, "word")})`
+    );
+  }
+}
+
+function renderCollectorBreakdown(items: Array<{ locale: string; words: number }>): void {
+  for (const item of items) {
+    console.log(
+      `Locale ${item.locale}: ${showSingularOrPluralWord(item.words, "word")}`
+    );
+  }
+}
+
+function renderResult(result: WordCounterResult): void {
+  console.log(`Total words: ${result.total}`);
+
+  if (result.breakdown.mode === "segments") {
+    renderSegmentBreakdown(result.breakdown.items);
+    return;
+  }
+
+  if (result.breakdown.mode === "collector") {
+    renderCollectorBreakdown(result.breakdown.items);
+    return;
+  }
+
+  renderChunkBreakdown(result.breakdown.items);
 }
 
 async function main(): Promise<void> {
-  const input = (await readInput()).trim();
+  const argv = getArgv();
+  let parsed: { mode: WordCounterMode; textTokens: string[] };
+
+  try {
+    parsed = parseArgs(argv);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(message);
+    exit(1);
+  }
+
+  const argsText = parsed.textTokens.join(" ");
+  const argsInput = argsText.trim();
+
+  const stdinText = argsInput.length > 0 ? "" : (await readStdin()).trim();
+  const input = argsInput.length > 0 ? argsInput : stdinText;
   if (!input) {
     console.error(
       "No input provided. Pass text as arguments or pipe via stdin."
@@ -102,15 +203,8 @@ async function main(): Promise<void> {
     exit(1);
   }
 
-  const { total, breakdown } = countWords(input);
-  console.log(" ");
-  console.log(`Total words: ${total}`);
-  console.log(" ");
-  for (const chunk of breakdown) {
-    console.log(
-      `Locale ${chunk.locale}: ${showSingularOrPluralWord(chunk.words, "word")}`
-    );
-  }
+  const result = wordCounter(input, { mode: parsed.mode });
+  renderResult(result);
 }
 
 if (import.meta.main) {

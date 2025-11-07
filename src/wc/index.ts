@@ -1,3 +1,10 @@
-import { countWords } from "./wc";
+import { wordCounter } from "./wc";
 
-export default countWords;
+export default wordCounter;
+export { countWordsForLocale, segmentTextByLocale } from "./wc";
+export type {
+  WordCounterMode,
+  WordCounterOptions,
+  WordCounterResult,
+  WordCounterBreakdown,
+} from "./wc";

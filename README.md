@@ -23,6 +23,27 @@ You can also pipe text:
 echo "こんにちは world مرحبا" | bun src/index.ts
 ```
 
+### Display Modes
+
+Choose a breakdown style with `--mode` (or `-m`):
+
+- `chunk` (default) – list each contiguous locale block in order of appearance.
+- `segments` – show the actual wordlike segments used for counting.
+- `collector` – aggregate counts per locale regardless of text position.
+
+Examples:
+
+```bash
+# chunk mode (default)
+bun src/index.ts "飛鳥 bird 貓 cat; how do you do?"
+
+# show captured segments
+bun src/index.ts --mode segments "飛鳥 bird 貓 cat; how do you do?"
+
+# aggregate per locale
+bun src/index.ts -m collector "飛鳥 bird 貓 cat; how do you do?"
+```
+
 ## Sample Inputs
 
 Try the following mixed-locale phrases to see how detection behaves:
