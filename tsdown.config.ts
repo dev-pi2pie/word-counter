@@ -14,7 +14,7 @@ export default defineConfig([
     fixedExtension: true,
   },
   {
-    entry: { index: "src/index.ts" },
+    entry: { index: "src/index.cjs.ts" },
     format: ["cjs"],
     dts: false,
     outDir: "dist/cjs",

@@ -30,6 +30,22 @@ Or read from a file:
 node dist/esm/bin.mjs --path ./fixtures/sample.txt
 ```
 
+## Library Usage
+
+ESM:
+
+```js
+import wordCounter, { countWordsForLocale, segmentTextByLocale } from "word-counter";
+```
+
+CJS:
+
+```js
+const wordCounter = require("word-counter");
+const { countWordsForLocale, segmentTextByLocale, showSingularOrPluralWord } =
+  wordCounter;
+```
+
 ### Display Modes
 
 Choose a breakdown style with `--mode` (or `-m`):
@@ -64,6 +80,16 @@ Examples:
 ```bash
 node dist/esm/bin.mjs --format raw "Hello world"
 node dist/esm/bin.mjs --format json --pretty "Hello world"
+```
+
+## Testing
+
+Run the build before tests so the CJS interop test can load the emitted
+`dist/cjs/index.cjs` bundle:
+
+```bash
+bun run build
+bun test
 ```
 
 ## Sample Inputs
