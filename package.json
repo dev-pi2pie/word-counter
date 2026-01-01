@@ -1,14 +1,39 @@
 {
   "name": "word-counter",
-  "version": "0.0.2-canary.0",
-  "module": "src/index.ts",
+  "version": "0.0.2-canary.1",
   "type": "module",
+  "main": "./dist/cjs/index.cjs",
+  "module": "./dist/esm/index.mjs",
+  "types": "./dist/esm/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/esm/index.d.ts",
+      "import": "./dist/esm/index.mjs",
+      "require": "./dist/cjs/index.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE*"
+  ],
+  "bin": {
+    "word-counter": "./dist/esm/bin.mjs"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "type-check": "tsc -p tsconfig.json",
+    "test": "bun test",
+    "cli": "node dist/esm/bin.mjs"
+  },
   "devDependencies": {
-    "@types/bun": "latest",
+    "@types/node": "^22.10.0",
     "oxfmt": "^0.21.0",
     "oxlint": "^1.36.0",
     "picocolors": "^1.1.1",
-    "tsdown": "^0.18.4"
+    "tsdown": "^0.18.4",
+    "typescript": "^5.6.3"
   },
   "peerDependencies": {
     "typescript": "^5"

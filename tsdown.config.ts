@@ -1,0 +1,41 @@
+import { defineConfig } from "tsdown";
+
+export default defineConfig([
+  {
+    entry: { index: "src/index.ts" },
+    format: ["esm"],
+    dts: true,
+    outDir: "dist/esm",
+    clean: true,
+    sourcemap: true,
+    platform: "node",
+    target: "node18",
+    hash: false,
+    fixedExtension: true,
+  },
+  {
+    entry: { index: "src/index.ts" },
+    format: ["cjs"],
+    dts: false,
+    outDir: "dist/cjs",
+    clean: false,
+    sourcemap: true,
+    platform: "node",
+    target: "node18",
+    hash: false,
+    fixedExtension: true,
+  },
+  {
+    entry: { bin: "src/bin.ts" },
+    format: ["esm"],
+    dts: false,
+    outDir: "dist/esm",
+    clean: false,
+    sourcemap: true,
+    platform: "node",
+    target: "node18",
+    hash: false,
+    fixedExtension: true,
+    banner: "#!/usr/bin/env node\n",
+  },
+]);
