@@ -11,16 +11,59 @@ Locale-aware word counting powered by the Web API [`Intl.Segmenter`](https://dev
 
 ## Usage
 
-Run the script with Bun (or the transpiled JavaScript with Node):
+Build the CLI, then run it with Node:
 
 ```bash
-bun src/index.ts "Hello 世界 안녕"
+npm run build
+node dist/esm/bin.mjs "Hello 世界 안녕"
 ```
 
 You can also pipe text:
 
 ```bash
-echo "こんにちは world مرحبا" | bun src/index.ts
+echo "こんにちは world مرحبا" | node dist/esm/bin.mjs
+```
+
+Or read from a file:
+
+```bash
+node dist/esm/bin.mjs --path ./fixtures/sample.txt
+```
+
+### Display Modes
+
+Choose a breakdown style with `--mode` (or `-m`):
+
+- `chunk` (default) – list each contiguous locale block in order of appearance.
+- `segments` – show the actual wordlike segments used for counting.
+- `collector` – aggregate counts per locale regardless of text position.
+
+Examples:
+
+```bash
+# chunk mode (default)
+node dist/esm/bin.mjs "飛鳥 bird 貓 cat; how do you do?"
+
+# show captured segments
+node dist/esm/bin.mjs --mode segments "飛鳥 bird 貓 cat; how do you do?"
+
+# aggregate per locale
+node dist/esm/bin.mjs -m collector "飛鳥 bird 貓 cat; how do you do?"
+```
+
+### Output Formats
+
+Select how results are printed with `--format`:
+
+- `standard` (default) – total plus per-locale breakdown.
+- `raw` – only the total count (single number).
+- `json` – machine-readable output; add `--pretty` for indentation.
+
+Examples:
+
+```bash
+node dist/esm/bin.mjs --format raw "Hello world"
+node dist/esm/bin.mjs --format json --pretty "Hello world"
 ```
 
 ## Sample Inputs

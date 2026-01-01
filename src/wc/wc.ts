@@ -5,10 +5,6 @@ interface LocaleChunk {
   text: string;
 }
 
-interface LocaleCount extends LocaleChunk {
-  words: number;
-}
-
 const regex = {
   hiragana: /\p{Script=Hiragana}/u,
   katakana: /\p{Script=Katakana}/u,
@@ -139,17 +135,129 @@ export function countWordsForLocale(text: string, locale: string): number {
   return count;
 }
 
-export function countWords(text: string): {
+interface ChunkAnalysis extends LocaleChunk {
+  segments: string[];
+  words: number;
+}
+
+interface ChunkBreakdown extends LocaleChunk {
+  words: number;
+}
+
+interface ChunkWithSegments extends ChunkBreakdown {
+  segments: string[];
+}
+
+interface CollectorBreakdown {
+  locale: string;
+  words: number;
+  segments: string[];
+}
+
+export type WordCounterMode = "chunk" | "segments" | "collector";
+
+export interface WordCounterOptions {
+  mode?: WordCounterMode;
+}
+
+export type WordCounterBreakdown =
+  | { mode: "chunk"; items: ChunkBreakdown[] }
+  | { mode: "segments"; items: ChunkWithSegments[] }
+  | { mode: "collector"; items: CollectorBreakdown[] };
+
+export interface WordCounterResult {
   total: number;
-  breakdown: LocaleCount[];
-} {
+  breakdown: WordCounterBreakdown;
+}
+
+function analyzeChunk(chunk: LocaleChunk): ChunkAnalysis {
+  const segmenter = getSegmenter(chunk.locale);
+  const segments: string[] = [];
+  for (const part of segmenter.segment(chunk.text)) {
+    if (part.isWordLike) {
+      segments.push(part.segment);
+    }
+  }
+  return {
+    locale: chunk.locale,
+    text: chunk.text,
+    segments,
+    words: segments.length,
+  };
+}
+
+function aggregateByLocale(chunks: ChunkAnalysis[]): CollectorBreakdown[] {
+  const order: string[] = [];
+  const map = new Map<string, CollectorBreakdown>();
+
+  for (const chunk of chunks) {
+    const existing = map.get(chunk.locale);
+    if (existing) {
+      existing.words += chunk.words;
+      existing.segments.push(...chunk.segments);
+      continue;
+    }
+
+    order.push(chunk.locale);
+    map.set(chunk.locale, {
+      locale: chunk.locale,
+      words: chunk.words,
+      segments: [...chunk.segments],
+    });
+  }
+
+  return order.map((locale) => map.get(locale)!);
+}
+
+export function wordCounter(
+  text: string,
+  options: WordCounterOptions = {}
+): WordCounterResult {
+  const mode: WordCounterMode = options.mode ?? "chunk";
   const chunks = segmentTextByLocale(text);
-  const breakdown: LocaleCount[] = chunks.map((chunk) => ({
-    ...chunk,
-    words: countWordsForLocale(chunk.text, chunk.locale),
+  const analyzed = chunks.map(analyzeChunk);
+  const total = analyzed.reduce((sum, chunk) => sum + chunk.words, 0);
+
+  if (mode === "segments") {
+    const items: ChunkWithSegments[] = analyzed.map((chunk) => ({
+      locale: chunk.locale,
+      text: chunk.text,
+      words: chunk.words,
+      segments: chunk.segments,
+    }));
+    return {
+      total,
+      breakdown: {
+        mode,
+        items,
+      },
+    };
+  }
+
+  if (mode === "collector") {
+    const items = aggregateByLocale(analyzed);
+    return {
+      total,
+      breakdown: {
+        mode,
+        items,
+      },
+    };
+  }
+
+  const items: ChunkBreakdown[] = analyzed.map((chunk) => ({
+    locale: chunk.locale,
+    text: chunk.text,
+    words: chunk.words,
   }));
-  const total = breakdown.reduce((sum, chunk) => sum + chunk.words, 0);
-  return { total, breakdown };
+
+  return {
+    total,
+    breakdown: {
+      mode,
+      items,
+    },
+  };
 }
 
 export function autoDetectedLocale(text: string): string {
