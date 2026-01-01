@@ -1,12 +1,19 @@
 {
   "name": "word-counter",
-  "version": "0.0.1",
+  "version": "0.0.2-canary.0",
   "module": "src/index.ts",
   "type": "module",
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "oxfmt": "^0.21.0",
+    "oxlint": "^1.36.0",
+    "picocolors": "^1.1.1",
+    "tsdown": "^0.18.4"
   },
   "peerDependencies": {
     "typescript": "^5"
+  },
+  "dependencies": {
+    "commander": "^14.0.2"
   }
 }
