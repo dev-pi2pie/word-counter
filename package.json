@@ -1,6 +1,6 @@
 {
   "name": "word-counter",
-  "version": "0.0.3",
+  "version": "0.0.4-canary.0",
   "type": "module",
   "main": "./dist/cjs/index.cjs",
   "module": "./dist/esm/index.mjs",
