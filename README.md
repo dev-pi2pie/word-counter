@@ -4,7 +4,7 @@ Locale-aware word counting powered by the Web API [`Intl.Segmenter`](https://dev
 
 ## How It Works
 
-- The runtime inspects each character's Unicode script to infer its likely locale (e.g., `en-US`, `zh-Hans`, `ja-JP`).
+- The runtime inspects each character's Unicode script to infer its likely locale (e.g., `en`, `zh-Hans`, `ja`).
 - Adjacent characters that share the same locale are grouped into a chunk.
 - Each chunk is counted with `Intl.Segmenter` at `granularity: "word"`, caching segmenters to avoid re-instantiation.
 - Per-locale counts are summed into a overall total and printed to stdout.
