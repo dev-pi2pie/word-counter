@@ -1,7 +1,7 @@
 ---
 title: "Language Detection With Unicode Scripts and Regex"
 date: 2026-01-02
-status: draft
+status: in-progress
 agent: Codex
 ---
 
@@ -24,6 +24,12 @@ Document how far regex-based detection can go for language identification, and w
 3. If expanded script coverage is desired, add new script regexes based on the Unicode Script property list and prioritize them using observed input data. [^1]
 4. If true language identification is required, plan for a statistical or dictionary-based detector rather than regex-only heuristics. (Inference.)
 
+## Current Implementation Notes
+- Default Latin locale is `en` (language-only tag).
+- Region-specific tags have been dropped where possible: `ja`, `ko`, `th`, `ru`, `ar`, `hi`, `zh-Hans`.
+- Latin diacritic hints are used to label `de`, `es`, `pt`, and `fr` when matching characters appear.
+- Latin hints only affect the locale when a matching diacritic is present; otherwise runs stay in the default Latin bucket.
+
 ## Regex Patterns (Node.js / JS)
 Use Unicode property escapes with the `u` flag:
 
@@ -37,6 +43,9 @@ const isGreek = /\p{Script=Greek}/u;
 
 ## Link Style Note
 This doc uses footnote-style references (e.g., `[^1]`) with the URLs listed at the end of the file.
+
+## Status Note
+This research is marked `in-progress` because it is discovery-driven: findings may change as we test real inputs and refine detection heuristics.
 
 ## References
 [^1]: https://www.unicode.org/reports/tr24/
