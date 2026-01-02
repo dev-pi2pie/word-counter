@@ -1,4 +1,4 @@
-import { DEFAULT_LOCALE, detectLocaleForChar } from "./locale-detect";
+import { DEFAULT_LOCALE, detectLocaleForChar, isLatinLocale } from "./locale-detect";
 import type { LocaleChunk } from "./types";
 
 export function segmentTextByLocale(text: string): LocaleChunk[] {
@@ -19,6 +19,11 @@ export function segmentTextByLocale(text: string): LocaleChunk[] {
     }
 
     if (targetLocale !== currentLocale && detected !== null) {
+      if (currentLocale === DEFAULT_LOCALE && isLatinLocale(targetLocale)) {
+        currentLocale = targetLocale;
+        buffer += char;
+        continue;
+      }
       // currentLocale is guaranteed to be a string here.
       chunks.push({ locale: currentLocale, text: buffer });
       currentLocale = targetLocale;

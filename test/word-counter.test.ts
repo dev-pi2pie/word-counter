@@ -6,7 +6,7 @@ describe("wordCounter", () => {
     const result = wordCounter("Hello world");
     expect(result.total).toBe(2);
     expect(result.breakdown.mode).toBe("chunk");
-    expect(result.breakdown.items[0]?.locale).toBe("en-US");
+    expect(result.breakdown.items[0]?.locale).toBe("en");
   });
 
   test("returns segments breakdown when requested", () => {
@@ -23,12 +23,26 @@ describe("segmentTextByLocale", () => {
   test("splits Latin and Han scripts into separate locales", () => {
     const chunks = segmentTextByLocale("Hello 世界");
     const locales = chunks.map((chunk) => chunk.locale);
-    expect(locales).toEqual(["en-US", "zh-Hans"]);
+    expect(locales).toEqual(["en", "zh-Hans"]);
+  });
+
+  test("uses diacritics to hint Latin language buckets", () => {
+    const samples: Array<[string, string]> = [
+      ["Über", "de"],
+      ["mañana", "es"],
+      ["coração", "pt"],
+      ["œuvre", "fr"],
+    ];
+
+    for (const [text, locale] of samples) {
+      const chunks = segmentTextByLocale(text);
+      expect(chunks[0]?.locale).toBe(locale);
+    }
   });
 });
 
 describe("countWordsForLocale", () => {
   test("counts words for a specific locale", () => {
-    expect(countWordsForLocale("Hello world", "en-US")).toBe(2);
+    expect(countWordsForLocale("Hello world", "en")).toBe(2);
   });
 });
