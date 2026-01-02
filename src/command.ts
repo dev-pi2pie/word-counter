@@ -4,6 +4,7 @@ import { readFile } from "node:fs/promises";
 import { resolve as resolvePath } from "node:path";
 import { showSingularOrPluralWord } from "./utils";
 import wordCounter, { type WordCounterMode, type WordCounterResult } from "./wc";
+import pc from "picocolors";
 
 type OutputFormat = "standard" | "raw" | "json";
 
@@ -14,32 +15,29 @@ function getPackageVersion(): string {
   const packageUrl = new URL("../../package.json", import.meta.url);
   const raw = readFileSync(packageUrl, "utf8");
   const data = JSON.parse(raw) as { version?: string };
-  return data.version ?? "0.0.0";
+  const version = data.version ?? "0.0.0";
+  return pc.bgBlack(pc.bold(pc.italic(` word-counter ${pc.cyanBright(`ver.${version}`)} `)));
 }
 
 function renderChunkBreakdown(items: Array<{ locale: string; words: number }>): void {
   for (const item of items) {
-    console.log(
-      `Locale ${item.locale}: ${showSingularOrPluralWord(item.words, "word")}`
-    );
+    console.log(`Locale ${item.locale}: ${showSingularOrPluralWord(item.words, "word")}`);
   }
 }
 
 function renderSegmentBreakdown(
-  items: Array<{ locale: string; words: number; segments: string[] }>
+  items: Array<{ locale: string; words: number; segments: string[] }>,
 ): void {
   for (const item of items) {
     console.log(
-      `Locale ${item.locale}: ${JSON.stringify(item.segments)} (${showSingularOrPluralWord(item.words, "word")})`
+      `Locale ${item.locale}: ${JSON.stringify(item.segments)} (${showSingularOrPluralWord(item.words, "word")})`,
     );
   }
 }
 
 function renderCollectorBreakdown(items: Array<{ locale: string; words: number }>): void {
   for (const item of items) {
-    console.log(
-      `Locale ${item.locale}: ${showSingularOrPluralWord(item.words, "word")}`
-    );
+    console.log(`Locale ${item.locale}: ${showSingularOrPluralWord(item.words, "word")}`);
   }
 }
 
@@ -95,56 +93,57 @@ export async function runCli(argv: string[] = process.argv): Promise<void> {
     .description("Locale-aware word counting powered by Intl.Segmenter.")
     .version(getPackageVersion(), "-v, --version", "output the version number")
     .addOption(
-      new Option("-m, --mode <mode>", "breakdown mode")
-        .choices(MODE_CHOICES)
-        .default("chunk")
+      new Option("-m, --mode <mode>", "breakdown mode").choices(MODE_CHOICES).default("chunk"),
     )
     .addOption(
-      new Option("--format <format>", "output format")
-        .choices(FORMAT_CHOICES)
-        .default("standard")
+      new Option("--format <format>", "output format").choices(FORMAT_CHOICES).default("standard"),
     )
     .option("--pretty", "pretty print JSON output", false)
     .option("-p, --path <file>", "read input from a text file")
     .argument("[text...]", "text to count")
     .showHelpAfterError();
 
-  program.action(async (textTokens: string[], options: {
-    mode: WordCounterMode;
-    format: OutputFormat;
-    pretty: boolean;
-    path?: string;
-  }) => {
-    let input: string;
-    try {
-      input = await resolveInput(textTokens, options.path);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      program.error(`Failed to read input: ${message}`);
-      return;
-    }
+  program.action(
+    async (
+      textTokens: string[],
+      options: {
+        mode: WordCounterMode;
+        format: OutputFormat;
+        pretty: boolean;
+        path?: string;
+      },
+    ) => {
+      let input: string;
+      try {
+        input = await resolveInput(textTokens, options.path);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        program.error(`Failed to read input: ${message}`);
+        return;
+      }
 
-    const trimmed = input.trim();
-    if (!trimmed) {
-      program.error("No input provided. Pass text, pipe stdin, or use --path.");
-      return;
-    }
+      const trimmed = input.trim();
+      if (!trimmed) {
+        program.error(pc.red("No input provided. Pass text, pipe stdin, or use --path."));
+        return;
+      }
 
-    const result = wordCounter(trimmed, { mode: options.mode });
+      const result = wordCounter(trimmed, { mode: options.mode });
 
-    if (options.format === "raw") {
-      console.log(result.total);
-      return;
-    }
+      if (options.format === "raw") {
+        console.log(result.total);
+        return;
+      }
 
-    if (options.format === "json") {
-      const spacing = options.pretty ? 2 : 0;
-      console.log(JSON.stringify(result, null, spacing));
-      return;
-    }
+      if (options.format === "json") {
+        const spacing = options.pretty ? 2 : 0;
+        console.log(JSON.stringify(result, null, spacing));
+        return;
+      }
 
-    renderStandardResult(result);
-  });
+      renderStandardResult(result);
+    },
+  );
 
   await program.parseAsync(argv);
 }
