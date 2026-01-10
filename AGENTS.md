@@ -45,6 +45,45 @@ agent: <agent name>
 
 ---
 
+### Research Documents
+
+Use research docs for exploratory work that is not yet ready for a plan but may inform one.
+
+Location:
+```text
+docs/research-YYYY-MM-DD-<short-title>.md
+```
+
+Notes:
+- Use the date the research starts and a short, kebab-case title.
+- Keep scope focused on a single topic or question.
+- If research becomes actionable, create a plan doc and link to it.
+
+Front-matter format:
+```yaml
+---
+title: "<research title>"
+date: YYYY-MM-DD
+status: draft | in-progress | completed
+agent: <agent name>
+---
+```
+
+Suggested sections:
+- Goal
+- Key Findings
+- Implications or Recommendations
+- Open Questions (optional)
+- References (use footnote-style links)
+
+Traceability:
+- Research docs should include a short "Related Plans" section when applicable, with links to plan docs.
+- Plan docs should include a short "Related Research" section when applicable, with links to research docs.
+- Use those exact section titles for consistency.
+- Omit the section if there are no relevant links.
+
+---
+
 ### Job Records
 
 For concrete tasks or implementations, create a job record.
@@ -88,6 +127,3 @@ agent: <agent name>
 ## Philosophy
 
 > This file exists to reduce guesswork for the next agent.
-
-
-

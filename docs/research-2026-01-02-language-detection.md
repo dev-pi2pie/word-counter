@@ -47,6 +47,9 @@ This doc uses footnote-style references (e.g., `[^1]`) with the URLs listed at t
 ## Status Note
 This research is marked `in-progress` because it is discovery-driven: findings may change as we test real inputs and refine detection heuristics.
 
+## Related Plans
+- `docs/plans/plan-2026-01-02-wc-refactor-locale-research.md`
+
 ## References
 [^1]: https://www.unicode.org/reports/tr24/
 [^2]: https://www.unicode.org/reports/tr18/
