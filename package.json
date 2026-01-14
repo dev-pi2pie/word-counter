@@ -1,6 +1,14 @@
 {
   "name": "word-counter",
-  "version": "0.0.5-canary.1",
+  "version": "0.0.5-canary.2",
+  "bin": {
+    "word-counter": "./dist/esm/bin.mjs"
+  },
+  "files": [
+    "dist",
+    "LICENSE*",
+    "README.md"
+  ],
   "type": "module",
   "main": "./dist/cjs/index.cjs",
   "module": "./dist/esm/index.mjs",
@@ -13,20 +21,15 @@
     },
     "./package.json": "./package.json"
   },
-  "files": [
-    "dist",
-    "README.md",
-    "LICENSE*"
-  ],
-  "bin": {
-    "word-counter": "./dist/esm/bin.mjs"
-  },
   "scripts": {
     "build": "tsdown",
     "type-check": "tsc -p tsconfig.json",
     "test": "bun test",
     "test:ci": "bun run build && bun test",
     "cli": "node dist/esm/bin.mjs"
+  },
+  "dependencies": {
+    "commander": "^14.0.2"
   },
   "devDependencies": {
     "@types/node": "^25.0.8",
@@ -38,8 +41,5 @@
   },
   "peerDependencies": {
     "typescript": "^5"
-  },
-  "dependencies": {
-    "commander": "^14.0.2"
   }
 }
