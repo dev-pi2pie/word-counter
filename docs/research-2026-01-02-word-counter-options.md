@@ -1,6 +1,7 @@
 ---
 title: "WordCounterOptions: Current vs Future Config"
 date: 2026-01-02
+modified-date: 2026-01-14
 status: draft
 agent: Codex
 ---
@@ -34,7 +35,7 @@ export interface LocaleHintRule {
 }
 
 export interface LocaleDetectionOptions {
-  defaultLocale?: string; // default: "en"
+  defaultLocale?: string; // default: "und-Latn"
   latinHints?: LocaleHintRule[]; // optional overrides
 }
 
@@ -51,7 +52,7 @@ For CLI usage or config files, use a JSON representation where regex patterns ar
 {
   "mode": "chunk",
   "localeDetection": {
-    "defaultLocale": "en",
+    "defaultLocale": "und-Latn",
     "latinHints": [
       { "locale": "fr", "pattern": "[\\u0153\\u0152\\u00e6\\u00c6]" }
     ]
@@ -73,9 +74,12 @@ A small adapter can compile `pattern` strings into `RegExp` at runtime.
 - Document a stable schema for config files.
 
 ## Similar Approaches (Reference Points)
-- BCP 47 tags allow language-only labels when region is not required, which maps well to a language-level default like `en`. [^1][^2]
+- BCP 47 tags allow language-only labels when region is not required, and also permit script-only tags like `und-Latn` for undetermined Latin text. [^1][^2]
 - `Intl.Segmenter` locale tailoring is driven by these tags, so exposing locale configuration matches the platform API. [^3]
 - Unicode Script and Script_Extensions support script-aware segmentation logic but do not imply a unique language, motivating a user-configurable layer. [^4][^5]
+
+> [!NOTE]
+> 2026-01-14: Default Latin detection now uses `und-Latn` instead of `en` to avoid incorrect English attribution for ambiguous Latin text.
 
 ## Link Style Note
 This doc uses footnote-style references (e.g., `[^1]`) with the URLs listed at the end of the file.

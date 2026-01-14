@@ -1,4 +1,4 @@
-export const DEFAULT_LOCALE = "en";
+export const DEFAULT_LOCALE = "und-Latn";
 
 const regex = {
   hiragana: /\p{Script=Hiragana}/u,

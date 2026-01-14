@@ -1,6 +1,7 @@
 ---
 title: "Locale Defaults and Latin Diacritic Hints"
 date: 2026-01-02
+modified-date: 2026-01-14
 status: completed
 agent: Codex
 ---
@@ -16,3 +17,6 @@ Move locale defaults to language-only tags and add simple Latin diacritic hints.
 
 ## Verification
 - `bun test`
+
+> [!NOTE]
+> 2026-01-14: The default Latin locale was changed from `en` to `und-Latn` to avoid incorrect English attribution for ambiguous Latin text.
