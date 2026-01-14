@@ -1,6 +1,6 @@
 {
   "name": "word-counter",
-  "version": "0.0.5-canary.3",
+  "version": "0.0.5",
   "bin": {
     "word-counter": "./dist/esm/bin.mjs"
   },
