@@ -96,7 +96,9 @@ export async function runCli(argv: string[] = process.argv): Promise<void> {
       new Option("-m, --mode <mode>", "breakdown mode").choices(MODE_CHOICES).default("chunk"),
     )
     .addOption(
-      new Option("--format <format>", "output format").choices(FORMAT_CHOICES).default("standard"),
+      new Option("-f, --format <format>", "output format")
+        .choices(FORMAT_CHOICES)
+        .default("standard"),
     )
     .option("--pretty", "pretty print JSON output", false)
     .option("-p, --path <file>", "read input from a text file")
