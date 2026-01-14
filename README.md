@@ -4,46 +4,84 @@ Locale-aware word counting powered by the Web API [`Intl.Segmenter`](https://dev
 
 ## How It Works
 
-- The runtime inspects each character's Unicode script to infer its likely locale (e.g., `en`, `zh-Hans`, `ja`).
+- The runtime inspects each character's Unicode script to infer its likely locale (e.g., `und-Latn`, `zh-Hans`, `ja`).
 - Adjacent characters that share the same locale are grouped into a chunk.
 - Each chunk is counted with `Intl.Segmenter` at `granularity: "word"`, caching segmenters to avoid re-instantiation.
 - Per-locale counts are summed into a overall total and printed to stdout.
 
-## Usage
+## Installation
 
-Build the CLI, then run it with Node:
+### For Development
+
+Clone the repository and set up locally:
 
 ```bash
-npm run build
+git clone https://github.com/dev-pi2pie/word-counter.git
+cd word-counter
+bun install
+bun run build
+npm link
+```
+
+After linking, you can use the `word-counter` command globally:
+
+```bash
+word-counter "Hello 世界 안녕"
+```
+
+To uninstall the global link:
+
+```bash
+npm unlink --global word-counter
+```
+
+### From GitHub Packages
+
+```bash
+npm install -g @dev-pi2pie/word-counter@latest
+```
+
+## Usage
+
+Once installed (via `npm link` or GitHub Packages), you can use the CLI directly:
+
+```bash
+word-counter "Hello 世界 안녕"
+```
+
+Alternatively, run the built CLI with Node:
+
+```bash
 node dist/esm/bin.mjs "Hello 世界 안녕"
 ```
 
 You can also pipe text:
 
 ```bash
-echo "こんにちは world مرحبا" | node dist/esm/bin.mjs
+echo "こんにちは world مرحبا" | word-counter
 ```
 
 Or read from a file:
 
 ```bash
-node dist/esm/bin.mjs --path ./fixtures/sample.txt
+word-counter --path ./fixtures/sample.txt
 ```
 
 ## Library Usage
 
-ESM:
+The package exports can be used after installing from GitHub Packages or linking locally with `npm link`.
+
+### ESM
 
 ```js
 import wordCounter, { countWordsForLocale, segmentTextByLocale } from "word-counter";
 ```
 
-CJS:
+### CJS
 
 ```js
 const wordCounter = require("word-counter");
-const { countWordsForLocale, segmentTextByLocale, showSingularOrPluralWord } =
-  wordCounter;
+const { countWordsForLocale, segmentTextByLocale, showSingularOrPluralWord } = wordCounter;
 ```
 
 ### Display Modes
@@ -58,13 +96,13 @@ Examples:
 
 ```bash
 # chunk mode (default)
-node dist/esm/bin.mjs "飛鳥 bird 貓 cat; how do you do?"
+word-counter "飛鳥 bird 貓 cat; how do you do?"
 
 # show captured segments
-node dist/esm/bin.mjs --mode segments "飛鳥 bird 貓 cat; how do you do?"
+word-counter --mode segments "飛鳥 bird 貓 cat; how do you do?"
 
 # aggregate per locale
-node dist/esm/bin.mjs -m collector "飛鳥 bird 貓 cat; how do you do?"
+word-counter -m collector "飛鳥 bird 貓 cat; how do you do?"
 ```
 
 ### Output Formats
@@ -78,9 +116,15 @@ Select how results are printed with `--format`:
 Examples:
 
 ```bash
-node dist/esm/bin.mjs --format raw "Hello world"
-node dist/esm/bin.mjs --format json --pretty "Hello world"
+word-counter --format raw "Hello world"
+word-counter --format json --pretty "Hello world"
 ```
+
+## Locale Detection Notes (Migration)
+
+- Ambiguous Latin text now uses `und-Latn` instead of defaulting to `en`.
+- Use `--mode chunk`/`--mode segments` or `--format json` to see the exact locale assigned to each chunk.
+- Regex/script-only detection cannot reliably identify English vs. other Latin-script languages; 100% certainty requires explicit metadata (document language tags, user-provided locale, headers) or a language-ID model.
 
 ## Testing
 

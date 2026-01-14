@@ -1,6 +1,7 @@
 ---
 title: "Language Detection With Unicode Scripts and Regex"
 date: 2026-01-02
+modified-date: 2026-01-14
 status: in-progress
 agent: Codex
 ---
@@ -20,12 +21,12 @@ Document how far regex-based detection can go for language identification, and w
 
 ## Recommendations for This Repo
 1. Prefer Script_Extensions (`scx`) for script detection where shared characters are expected. This helps keep punctuation/marks aligned with the surrounding script instead of falling into a generic bucket. [^2][^1]
-2. Keep `DEFAULT_LOCALE` as a configurable fallback for Latin script (e.g., `en`), since regex cannot decide among Latin-based languages alone. (Inference.)
+2. Use `und-Latn` as the default for ambiguous Latin runs to avoid incorrect `en` attribution; keep a separate resolved locale only when required for compatibility. (Inference.)
 3. If expanded script coverage is desired, add new script regexes based on the Unicode Script property list and prioritize them using observed input data. [^1]
 4. If true language identification is required, plan for a statistical or dictionary-based detector rather than regex-only heuristics. (Inference.)
 
 ## Current Implementation Notes
-- Default Latin locale is `en` (language-only tag).
+- Default Latin locale is `und-Latn` (script-only tag for undetermined Latin).
 - Region-specific tags have been dropped where possible: `ja`, `ko`, `th`, `ru`, `ar`, `hi`, `zh-Hans`.
 - Latin diacritic hints are used to label `de`, `es`, `pt`, and `fr` when matching characters appear.
 - Latin hints only affect the locale when a matching diacritic is present; otherwise runs stay in the default Latin bucket.
@@ -46,6 +47,9 @@ This doc uses footnote-style references (e.g., `[^1]`) with the URLs listed at t
 
 ## Status Note
 This research is marked `in-progress` because it is discovery-driven: findings may change as we test real inputs and refine detection heuristics.
+
+## Related Plans
+- `docs/plans/plan-2026-01-02-wc-refactor-locale-research.md`
 
 ## References
 [^1]: https://www.unicode.org/reports/tr24/

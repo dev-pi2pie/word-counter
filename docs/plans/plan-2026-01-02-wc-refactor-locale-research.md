@@ -1,7 +1,8 @@
 ---
 title: "Refactor wc.ts and Improve Locale Detection"
 date: 2026-01-02
-status: active
+modified-date: 2026-01-14
+status: completed
 agent: Codex
 ---
 
@@ -33,5 +34,9 @@ agent: Codex
 - Locale detection changes are out of scope for this refactor; keep outputs identical.
 - Any script detection expansion should align with the research doc and include tests.
 
+## Related Research
+- `docs/research-2026-01-02-language-detection.md`
+- `docs/research-2026-01-02-word-counter-options.md`
+
 ## References
-- `docs/language-detection-research-2026-01-02.md`
+- `docs/research-2026-01-02-language-detection.md`
