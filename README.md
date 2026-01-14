@@ -4,7 +4,7 @@ Locale-aware word counting powered by the Web API [`Intl.Segmenter`](https://dev
 
 ## How It Works
 
-- The runtime inspects each character's Unicode script to infer its likely locale (e.g., `en`, `zh-Hans`, `ja`).
+- The runtime inspects each character's Unicode script to infer its likely locale (e.g., `und-Latn`, `zh-Hans`, `ja`).
 - Adjacent characters that share the same locale are grouped into a chunk.
 - Each chunk is counted with `Intl.Segmenter` at `granularity: "word"`, caching segmenters to avoid re-instantiation.
 - Per-locale counts are summed into a overall total and printed to stdout.
@@ -14,7 +14,7 @@ Locale-aware word counting powered by the Web API [`Intl.Segmenter`](https://dev
 Build the CLI, then run it with Node:
 
 ```bash
-npm run build
+bun run build
 node dist/esm/bin.mjs "Hello 世界 안녕"
 ```
 
@@ -81,6 +81,12 @@ Examples:
 node dist/esm/bin.mjs --format raw "Hello world"
 node dist/esm/bin.mjs --format json --pretty "Hello world"
 ```
+
+## Locale Detection Notes (Migration)
+
+- Ambiguous Latin text now uses `und-Latn` instead of defaulting to `en`.
+- Use `--mode chunk`/`--mode segments` or `--format json` to see the exact locale assigned to each chunk.
+- Regex/script-only detection cannot reliably identify English vs. other Latin-script languages; 100% certainty requires explicit metadata (document language tags, user-provided locale, headers) or a language-ID model.
 
 ## Testing
 
