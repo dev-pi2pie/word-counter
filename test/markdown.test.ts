@@ -25,6 +25,14 @@ describe("parseMarkdown", () => {
     expect(result.data?.title).toBe("Hello");
   });
 
+  test("parses JSON frontmatter with braces", () => {
+    const input = ['{"title":"Hello","summary":"Note"}', "Body"].join("\n");
+    const result = parseMarkdown(input);
+    expect(result.frontmatterType).toBe("json");
+    expect(result.frontmatter).toBe('{"title":"Hello","summary":"Note"}');
+    expect(result.data?.summary).toBe("Note");
+  });
+
   test("detects TOML fences", () => {
     const input = ["+++", "title = \"Hello\"", "+++", "Body"].join("\n");
     const result = parseMarkdown(input);

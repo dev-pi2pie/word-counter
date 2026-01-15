@@ -25,6 +25,7 @@ Implement a `custom + yaml` frontmatter splitter (with multi-format fence detect
      - `+++` => TOML
      - `;;;` => JSON (optional, common in some tooling)
    - Closing fence must match opening fence and appear on its own line.
+   - Hugo compatibility: also recognize top-of-file JSON objects (`{ ... }`) as frontmatter to align with Hugo’s JSON front matter format. [^1]
 3. Parse frontmatter by type:
    - YAML: `yaml.parseDocument` (or `yaml.parse`).
    - TOML/JSON: pick parser strategy (TOML parser TBD; JSON via `JSON.parse`).
@@ -51,3 +52,6 @@ Implement a `custom + yaml` frontmatter splitter (with multi-format fence detect
 
 ## Notes
 - Keep compatibility with Node.js runtime even when using Bun for tooling.
+
+## References
+[^1]: [Hugo front matter formats](https://gohugo.io/content-management/front-matter/)
