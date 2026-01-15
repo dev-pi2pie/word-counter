@@ -1,6 +1,6 @@
 {
-  "name": "word-counter",
-  "version": "0.0.5",
+  "name": "@dev-pi2pie/word-counter",
+  "version": "0.0.6-canary.0",
   "bin": {
     "word-counter": "./dist/esm/bin.mjs"
   },

@@ -29,21 +29,43 @@ After linking, you can use the `word-counter` command globally:
 word-counter "Hello 世界 안녕"
 ```
 
+To use the linked package inside another project:
+
+```bash
+npm link @dev-pi2pie/word-counter
+```
+
 To uninstall the global link:
 
 ```bash
-npm unlink --global word-counter
+npm unlink --global @dev-pi2pie/word-counter
 ```
 
-### From GitHub Packages
+### From npm Registry (npmjs.com)
 
 ```bash
 npm install -g @dev-pi2pie/word-counter@latest
 ```
 
+### From GitHub Packages
+
+If your scope is configured to use GitHub Packages:
+
+```bash
+# ~/.npmrc
+@dev-pi2pie:registry=https://npm.pkg.github.com
+```
+
+```bash
+npm install -g @dev-pi2pie/word-counter@latest
+```
+
+If your scope is configured to use npmjs instead, the same scoped package name
+will resolve from npmjs.com (see the npm registry section above).
+
 ## Usage
 
-Once installed (via `npm link` or GitHub Packages), you can use the CLI directly:
+Once installed (via `npm link`, npm registry, or GitHub Packages), you can use the CLI directly:
 
 ```bash
 word-counter "Hello 世界 안녕"
@@ -74,13 +96,13 @@ The package exports can be used after installing from GitHub Packages or linking
 ### ESM
 
 ```js
-import wordCounter, { countWordsForLocale, segmentTextByLocale } from "word-counter";
+import wordCounter, { countWordsForLocale, segmentTextByLocale } from "@dev-pi2pie/word-counter";
 ```
 
 ### CJS
 
 ```js
-const wordCounter = require("word-counter");
+const wordCounter = require("@dev-pi2pie/word-counter");
 const { countWordsForLocale, segmentTextByLocale, showSingularOrPluralWord } = wordCounter;
 ```
 
@@ -145,3 +167,7 @@ Try the following mixed-locale phrases to see how detection behaves:
 - `"¡Hola! مرحبا Hello"`
 
 Each run prints the total word count plus a per-locale breakdown, helping you understand how multilingual text is segmented.
+
+## License
+
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
