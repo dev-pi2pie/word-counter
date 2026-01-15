@@ -29,21 +29,47 @@ After linking, you can use the `word-counter` command globally:
 word-counter "Hello 世界 안녕"
 ```
 
+To use the linked package inside another project:
+
+```bash
+npm link @dev-pi2pie/word-counter
+```
+
 To uninstall the global link:
 
 ```bash
-npm unlink --global word-counter
+npm unlink --global @dev-pi2pie/word-counter
 ```
 
-### From GitHub Packages
+### From npm Registry (npmjs.com)
 
 ```bash
 npm install -g @dev-pi2pie/word-counter@latest
 ```
 
+### From GitHub Packages
+
+If your scope is configured to use GitHub Packages:
+
+```bash
+# ~/.npmrc
+@dev-pi2pie:registry=https://npm.pkg.github.com
+```
+
+```bash
+npm install -g @dev-pi2pie/word-counter@latest
+```
+
+If your scope is configured to use npmjs instead, the same scoped package name
+will resolve from npmjs.com (see the npm registry section above).
+
+> [!note]
+> **npm** may show newer releases (for example, `v0.0.6`) while GitHub Packages still lists `v0.0.5`.
+> This is historical; releases kept in sync starting with `v0.0.6`.
+
 ## Usage
 
-Once installed (via `npm link` or GitHub Packages), you can use the CLI directly:
+Once installed (via `npm link`, npm registry, or GitHub Packages), you can use the CLI directly:
 
 ```bash
 word-counter "Hello 世界 안녕"
@@ -74,13 +100,13 @@ The package exports can be used after installing from GitHub Packages or linking
 ### ESM
 
 ```js
-import wordCounter, { countWordsForLocale, segmentTextByLocale } from "word-counter";
+import wordCounter, { countWordsForLocale, segmentTextByLocale } from "@dev-pi2pie/word-counter";
 ```
 
 ### CJS
 
 ```js
-const wordCounter = require("word-counter");
+const wordCounter = require("@dev-pi2pie/word-counter");
 const { countWordsForLocale, segmentTextByLocale, showSingularOrPluralWord } = wordCounter;
 ```
 
@@ -103,6 +129,51 @@ word-counter --mode segments "飛鳥 bird 貓 cat; how do you do?"
 
 # aggregate per locale
 word-counter -m collector "飛鳥 bird 貓 cat; how do you do?"
+```
+
+### Section Modes (Frontmatter)
+
+Use `--section` to control which parts of a markdown document are counted:
+
+- `all` (default) – count the whole file (fast path, no section split).
+- `split` – count frontmatter and content separately.
+- `frontmatter` – count frontmatter only.
+- `content` – count content only.
+- `per-key` – count frontmatter per key (frontmatter only).
+- `split-per-key` – per-key frontmatter counts plus a content total.
+
+Supported frontmatter formats:
+
+- YAML fenced with `---`
+- TOML fenced with `+++`
+- JSON fenced with `;;;` or a top-of-file JSON object (`{ ... }`)
+
+Examples:
+
+```bash
+word-counter --section split -p examples/yaml-basic.md
+word-counter --section per-key -p examples/yaml-basic.md
+word-counter --section split-per-key -p examples/yaml-basic.md
+```
+
+JSON output includes a `source` field (`frontmatter` or `content`) to avoid key collisions:
+
+```bash
+word-counter --section split-per-key --format json -p examples/yaml-content-key.md
+```
+
+Example (trimmed):
+
+```json
+{
+  "section": "split-per-key",
+  "frontmatterType": "yaml",
+  "total": 7,
+  "items": [
+    { "name": "content", "source": "frontmatter", "result": { "total": 3 } },
+    { "name": "content", "source": "content", "result": { "total": 4 } }
+  ]
+}
 ```
 
 ### Output Formats
@@ -145,3 +216,7 @@ Try the following mixed-locale phrases to see how detection behaves:
 - `"¡Hola! مرحبا Hello"`
 
 Each run prints the total word count plus a per-locale breakdown, helping you understand how multilingual text is segmented.
+
+## License
+
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.

@@ -4,12 +4,22 @@ import { readFile } from "node:fs/promises";
 import { resolve as resolvePath } from "node:path";
 import { showSingularOrPluralWord } from "./utils";
 import wordCounter, { type WordCounterMode, type WordCounterResult } from "./wc";
+import { countSections } from "./markdown";
+import type { SectionMode, SectionedResult } from "./markdown";
 import pc from "picocolors";
 
 type OutputFormat = "standard" | "raw" | "json";
 
 const MODE_CHOICES: WordCounterMode[] = ["chunk", "segments", "collector"];
 const FORMAT_CHOICES: OutputFormat[] = ["standard", "raw", "json"];
+const SECTION_CHOICES: SectionMode[] = [
+  "all",
+  "split",
+  "frontmatter",
+  "content",
+  "per-key",
+  "split-per-key",
+];
 
 function getPackageVersion(): string {
   const packageUrl = new URL("../../package.json", import.meta.url);
@@ -57,6 +67,67 @@ function renderStandardResult(result: WordCounterResult): void {
   renderChunkBreakdown(result.breakdown.items);
 }
 
+function buildSectionLabel(
+  sectionName: string,
+  sectionMode: SectionMode,
+  source: "frontmatter" | "content",
+): string {
+  if (sectionMode === "frontmatter") {
+    return `[Frontmatter] (total)`;
+  }
+
+  if (sectionMode === "content") {
+    return `[Content] (total)`;
+  }
+
+  if (sectionMode === "split") {
+    if (source === "frontmatter") {
+      return `[Frontmatter] (total)`;
+    }
+    return `[Content] (total)`;
+  }
+
+  if (sectionMode === "per-key") {
+    return `[Frontmatter] ${sectionName} (total)`;
+  }
+
+  if (sectionMode === "split-per-key") {
+    if (source === "content") {
+      return `[Content] (total)`;
+    }
+    return `[Frontmatter] ${sectionName} (total)`;
+  }
+
+  return `[Section] ${sectionName} (total)`;
+}
+
+function renderStandardSectionedResult(result: SectionedResult): void {
+  console.log(`Total words: ${result.total}`);
+
+  for (const item of result.items) {
+    const label = buildSectionLabel(item.name, result.section, item.source);
+    console.log(pc.cyan(pc.bold(`${label}: ${showSingularOrPluralWord(item.result.total, "word")}`)));
+
+    if (item.result.breakdown.mode === "segments") {
+      renderSegmentBreakdown(item.result.breakdown.items);
+      continue;
+    }
+
+    if (item.result.breakdown.mode === "collector") {
+      renderCollectorBreakdown(item.result.breakdown.items);
+      continue;
+    }
+
+    renderChunkBreakdown(item.result.breakdown.items);
+  }
+}
+
+function isSectionedResult(
+  result: WordCounterResult | SectionedResult,
+): result is SectionedResult {
+  return "section" in result;
+}
+
 async function readStdin(): Promise<string> {
   if (process.stdin.isTTY) {
     return "";
@@ -100,6 +171,11 @@ export async function runCli(argv: string[] = process.argv): Promise<void> {
         .choices(FORMAT_CHOICES)
         .default("standard"),
     )
+    .addOption(
+      new Option("--section <section>", "document section mode")
+        .choices(SECTION_CHOICES)
+        .default("all"),
+    )
     .option("--pretty", "pretty print JSON output", false)
     .option("-p, --path <file>", "read input from a text file")
     .argument("[text...]", "text to count")
@@ -112,6 +188,7 @@ export async function runCli(argv: string[] = process.argv): Promise<void> {
         mode: WordCounterMode;
         format: OutputFormat;
         pretty: boolean;
+        section: SectionMode;
         path?: string;
       },
     ) => {
@@ -130,7 +207,10 @@ export async function runCli(argv: string[] = process.argv): Promise<void> {
         return;
       }
 
-      const result = wordCounter(trimmed, { mode: options.mode });
+      const useSection = options.section !== "all";
+      const result: WordCounterResult | SectionedResult = useSection
+        ? countSections(trimmed, options.section, options.mode)
+        : wordCounter(trimmed, { mode: options.mode });
 
       if (options.format === "raw") {
         console.log(result.total);
@@ -140,6 +220,11 @@ export async function runCli(argv: string[] = process.argv): Promise<void> {
       if (options.format === "json") {
         const spacing = options.pretty ? 2 : 0;
         console.log(JSON.stringify(result, null, spacing));
+        return;
+      }
+
+      if (isSectionedResult(result)) {
+        renderStandardSectionedResult(result);
         return;
       }
 
