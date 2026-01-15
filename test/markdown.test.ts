@@ -31,6 +31,15 @@ describe("parseMarkdown", () => {
     expect(result.frontmatterType).toBe("json");
     expect(result.frontmatter).toBe('{"title":"Hello","summary":"Note"}');
     expect(result.data?.summary).toBe("Note");
+    expect(result.content).toBe("Body");
+  });
+
+  test("treats invalid JSON frontmatter as content", () => {
+    const input = ["{title: Hello}", "Body"].join("\n");
+    const result = parseMarkdown(input);
+    expect(result.frontmatter).toBeNull();
+    expect(result.frontmatterType).toBeNull();
+    expect(result.content).toBe(input);
   });
 
   test("detects TOML fences", () => {
@@ -74,7 +83,7 @@ describe("parseMarkdown", () => {
     const input = [
       "+++",
       "title = \"Hello\\nWorld\"",
-      "summary = \"\"\"Line1\\nLine2\"\"\"",
+      "summary = \"\"\"Line1\\nLine2\"\"\" # note",
       "note = '''LineA",
       "LineB'''",
       "+++",

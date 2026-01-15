@@ -128,8 +128,14 @@ export function parseMarkdown(input: string): ParsedMarkdown {
     }
 
     const frontmatter = jsonBlock.jsonText;
-    const content = normalizedWithoutBom.slice(jsonBlock.endIndex + 1);
+    let content = normalizedWithoutBom.slice(jsonBlock.endIndex + 1);
+    if (content.startsWith("\n")) {
+      content = content.slice(1);
+    }
     const data = parseFrontmatter(frontmatter, "json");
+    if (!data) {
+      return { frontmatter: null, content: normalizedWithoutBom, data: null, frontmatterType: null };
+    }
 
     return {
       frontmatter,

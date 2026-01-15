@@ -60,11 +60,15 @@ export function parseTomlFrontmatter(frontmatter: string): Record<string, unknow
       return null;
     }
 
-    if (
-      (valueRaw.startsWith('"""') && !/"""\s*$/.test(valueRaw)) ||
-      (valueRaw.startsWith("'''") && !/'''\s*$/.test(valueRaw))
-    ) {
-      const delimiter = valueRaw.startsWith('"""') ? '"""' : "'''";
+    const tripleDelimiter = valueRaw.startsWith('"""') ? '"""' : valueRaw.startsWith("'''") ? "'''" : null;
+    if (tripleDelimiter) {
+      const closingIndex = valueRaw.indexOf(tripleDelimiter, tripleDelimiter.length);
+      if (closingIndex !== -1) {
+        const after = valueRaw.slice(closingIndex + tripleDelimiter.length);
+        const strippedAfter = stripInlineComment(after);
+        valueRaw = `${valueRaw.slice(0, closingIndex + tripleDelimiter.length)}${strippedAfter}`;
+      } else {
+        const delimiter = tripleDelimiter;
       let combined = valueRaw;
       let closed = false;
       while (index + 1 < lines.length) {
@@ -80,6 +84,7 @@ export function parseTomlFrontmatter(frontmatter: string): Record<string, unknow
         return null;
       }
       valueRaw = combined;
+      }
     }
 
     const normalized = normalizeValue(valueRaw);
