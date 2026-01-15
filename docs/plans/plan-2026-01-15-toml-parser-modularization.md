@@ -1,7 +1,7 @@
 ---
 title: "Modularize TOML Frontmatter Parser"
 date: 2026-01-15
-status: draft
+status: completed
 agent: Codex
 ---
 
