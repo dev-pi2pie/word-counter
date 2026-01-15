@@ -167,6 +167,8 @@ Example (trimmed):
 ```json
 {
   "section": "split-per-key",
+  "frontmatterType": "yaml",
+  "total": 7,
   "items": [
     { "name": "content", "source": "frontmatter", "result": { "total": 3 } },
     { "name": "content", "source": "content", "result": { "total": 4 } }
