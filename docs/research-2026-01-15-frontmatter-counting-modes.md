@@ -1,7 +1,7 @@
 ---
 title: "Frontmatter vs Content Counting Modes: Parsing Options"
 date: 2026-01-15
-status: draft
+status: completed
 agent: codex
 ---
 

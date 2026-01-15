@@ -1,7 +1,7 @@
 ---
 title: "Custom YAML Frontmatter Split for Two Counting Modes"
 date: 2026-01-15
-status: active
+status: completed
 agent: codex
 ---
 
