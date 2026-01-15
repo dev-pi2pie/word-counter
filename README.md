@@ -131,6 +131,49 @@ word-counter --mode segments "飛鳥 bird 貓 cat; how do you do?"
 word-counter -m collector "飛鳥 bird 貓 cat; how do you do?"
 ```
 
+### Section Modes (Frontmatter)
+
+Use `--section` to control which parts of a markdown document are counted:
+
+- `all` (default) – count the whole file (fast path, no section split).
+- `split` – count frontmatter and content separately.
+- `frontmatter` – count frontmatter only.
+- `content` – count content only.
+- `per-key` – count frontmatter per key (frontmatter only).
+- `split-per-key` – per-key frontmatter counts plus a content total.
+
+Supported frontmatter formats:
+
+- YAML fenced with `---`
+- TOML fenced with `+++`
+- JSON fenced with `;;;` or a top-of-file JSON object (`{ ... }`)
+
+Examples:
+
+```bash
+word-counter --section split -p examples/yaml-basic.md
+word-counter --section per-key -p examples/yaml-basic.md
+word-counter --section split-per-key -p examples/yaml-basic.md
+```
+
+JSON output includes a `source` field (`frontmatter` or `content`) to avoid key collisions:
+
+```bash
+word-counter --section split-per-key --format json -p examples/yaml-content-key.md
+```
+
+Example (trimmed):
+
+```json
+{
+  "section": "split-per-key",
+  "items": [
+    { "name": "content", "source": "frontmatter", "result": { "total": 3 } },
+    { "name": "content", "source": "content", "result": { "total": 4 } }
+  ]
+}
+```
+
 ### Output Formats
 
 Select how results are printed with `--format`:
