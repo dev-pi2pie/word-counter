@@ -70,7 +70,7 @@ function extractJsonBlock(text: string, startIndex: number): { jsonText: string;
         continue;
       }
 
-      if (char === "\\\\") {
+      if (char === "\\") {
         escaped = true;
         continue;
       }
