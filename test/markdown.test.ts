@@ -45,6 +45,7 @@ describe("parseMarkdown", () => {
       "+++",
       "title = \"Hello\"",
       "tags = [\"a\", \"b\"]",
+      "params.author = \"Ada\"",
       "[params]",
       "author = \"Ada\"",
       "+++",
@@ -56,10 +57,53 @@ describe("parseMarkdown", () => {
     expect(result.data?.["params.author"]).toBe("Ada");
   });
 
-  test("rejects unsupported TOML constructs", () => {
+  test("parses TOML inline tables", () => {
+    const input = [
+      "+++",
+      "author = { name = \"Ada\", role = \"Editor\", tags = [\"a\", \"b\"] }",
+      "+++",
+      "Body",
+    ].join("\n");
+    const result = parseMarkdown(input);
+    expect(result.data?.["author.name"]).toBe("Ada");
+    expect(result.data?.["author.role"]).toBe("Editor");
+    expect(result.data?.["author.tags"]).toBe("a, b");
+  });
+
+  test("parses TOML multiline strings and escapes", () => {
+    const input = [
+      "+++",
+      "title = \"Hello\\nWorld\"",
+      "summary = \"\"\"Line1\\nLine2\"\"\"",
+      "note = '''LineA",
+      "LineB'''",
+      "+++",
+      "Body",
+    ].join("\n");
+    const result = parseMarkdown(input);
+    expect(result.data?.title).toBe("Hello\nWorld");
+    expect(result.data?.summary).toBe("Line1\nLine2");
+    expect(result.data?.note).toBe("LineA\nLineB");
+  });
+
+  test("parses TOML arrays of tables (single entry)", () => {
     const input = ["+++", "[[items]]", "name = \"bad\"", "+++", "Body"].join("\n");
     const result = parseMarkdown(input);
-    expect(result.data).toBeNull();
+    expect(result.data?.items).toBe("name=bad");
+  });
+
+  test("parses TOML arrays of tables", () => {
+    const input = [
+      "+++",
+      "[[authors]]",
+      "name = \"Ada\"",
+      "[[authors]]",
+      "name = \"Grace\"",
+      "+++",
+      "Body",
+    ].join("\n");
+    const result = parseMarkdown(input);
+    expect(result.data?.authors).toBe("name=Ada | name=Grace");
   });
 
   test("ignores unterminated frontmatter", () => {

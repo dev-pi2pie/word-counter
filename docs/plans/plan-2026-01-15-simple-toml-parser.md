@@ -24,7 +24,7 @@ Provide a minimal TOML parser for frontmatter so `--section per-key` and `--sect
 
 ## Non-Goals
 - Full TOML v1.1.0 compliance.
-- Nested tables, arrays of tables, and datetime type fidelity.
+- Datetime type fidelity.
 - Preserving type information beyond conversion to plain text.
 
 ## Compatibility Target (Hugo-like)
@@ -32,14 +32,15 @@ Aim to support the most common Hugo TOML frontmatter patterns:
 - Top-level key/value pairs.
 - Tables (`[table]`) and dotted keys.
 - Arrays of primitives and arrays of strings.
-- Inline tables and arrays of tables are **out of scope** for the initial parser.
+- Inline tables and arrays of tables are supported in a flattened, text-only form.
 
 ## Plan
 1. Define the supported TOML subset:
    - Top-level `key = value` only.
    - Supported values: strings, integers, floats, booleans, datetimes (as text), arrays of primitives.
    - Support tables (`[table]`) and dotted keys by flattening to dotted form (e.g., `params.author`).
-   - Defer inline tables (`{}`) and arrays of tables (`[[table]]`) for now.
+   - Support inline tables (`{}`) by flattening to dotted keys.
+   - Support arrays of tables (`[[table]]`) by joining entries into a single plain-text field.
 2. Parser behavior and error strategy:
    - Fail **silently** by returning `null` data when TOML is out of scope or malformed.
    - Keep raw frontmatter available for `split`/`frontmatter` modes.
@@ -52,6 +53,8 @@ Aim to support the most common Hugo TOML frontmatter patterns:
    - Convert values to plain text by JSON stringification or direct string conversion **before counting**.
    - When a table header is encountered (`[table]`), prefix subsequent keys with the table path.
    - Arrays are converted to a joined string (`", "` separator) before counting.
+   - Inline tables are parsed into dotted keys under their parent key (e.g., `author.name`).
+   - Arrays of tables are reduced to a joined string with a stable delimiter (e.g., `name=Ada | name=Grace`).
 4. Integration points:
    - Add a `parseTomlFrontmatter` helper in `src/markdown/parse-markdown.ts`.
    - Use it when `frontmatterType === "toml"`.
