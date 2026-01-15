@@ -57,6 +57,16 @@ export function countSections(
   section: SectionMode,
   mode: WordCounterMode,
 ): SectionedResult {
+  if (section === "all") {
+    const result = wordCounter(input, { mode });
+    return {
+      section,
+      total: result.total,
+      frontmatterType: null,
+      items: [{ name: "all", source: "content", result }],
+    };
+  }
+
   const parsed = parseMarkdown(input);
   const frontmatterText = parsed.frontmatter ?? "";
   const contentText = parsed.content ?? "";
