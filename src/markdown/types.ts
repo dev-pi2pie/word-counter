@@ -19,5 +19,9 @@ export interface SectionedResult {
   section: SectionMode;
   total: number;
   frontmatterType: FrontmatterType | null;
-  items: Array<{ name: string; result: import("../wc/types").WordCounterResult }>;
+  items: Array<{
+    name: string;
+    source: "frontmatter" | "content";
+    result: import("../wc/types").WordCounterResult;
+  }>;
 }

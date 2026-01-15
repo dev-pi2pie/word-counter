@@ -67,11 +67,46 @@ function renderStandardResult(result: WordCounterResult): void {
   renderChunkBreakdown(result.breakdown.items);
 }
 
+function buildSectionLabel(
+  sectionName: string,
+  sectionMode: SectionMode,
+  source: "frontmatter" | "content",
+): string {
+  if (sectionMode === "frontmatter") {
+    return `[Frontmatter] (total)`;
+  }
+
+  if (sectionMode === "content") {
+    return `[Content] (total)`;
+  }
+
+  if (sectionMode === "split") {
+    if (source === "frontmatter") {
+      return `[Frontmatter] (total)`;
+    }
+    return `[Content] (total)`;
+  }
+
+  if (sectionMode === "per-key") {
+    return `[Frontmatter] ${sectionName} (total)`;
+  }
+
+  if (sectionMode === "split-per-key") {
+    if (source === "content") {
+      return `[Content] (total)`;
+    }
+    return `[Frontmatter] ${sectionName} (total)`;
+  }
+
+  return `[Section] ${sectionName} (total)`;
+}
+
 function renderStandardSectionedResult(result: SectionedResult): void {
   console.log(`Total words: ${result.total}`);
 
   for (const item of result.items) {
-    console.log(pc.bold(`Section ${item.name}: ${showSingularOrPluralWord(item.result.total, "word")}`));
+    const label = buildSectionLabel(item.name, result.section, item.source);
+    console.log(pc.cyan(pc.bold(`${label}: ${showSingularOrPluralWord(item.result.total, "word")}`)));
 
     if (item.result.breakdown.mode === "segments") {
       renderSegmentBreakdown(item.result.breakdown.items);

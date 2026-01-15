@@ -23,7 +23,7 @@ function normalizeText(value: unknown): string {
 function buildPerKeyItems(
   data: Record<string, unknown> | null,
   mode: WordCounterMode,
-): Array<{ name: string; result: WordCounterResult }> {
+): Array<{ name: string; source: "frontmatter"; result: WordCounterResult }> {
   if (!data || typeof data !== "object" || Array.isArray(data)) {
     return [];
   }
@@ -33,13 +33,19 @@ function buildPerKeyItems(
     const text = valueText ? `${key}: ${valueText}` : key;
     return {
       name: key,
+      source: "frontmatter",
       result: wordCounter(text, { mode }),
     };
   });
 }
 
-function buildSingleItem(name: string, text: string, mode: WordCounterMode) {
-  return [{ name, result: wordCounter(text, { mode }) }];
+function buildSingleItem(
+  name: string,
+  text: string,
+  mode: WordCounterMode,
+  source: "frontmatter" | "content",
+) {
+  return [{ name, source, result: wordCounter(text, { mode }) }];
 }
 
 function sumTotals(items: Array<{ result: WordCounterResult }>): number {
@@ -55,21 +61,24 @@ export function countSections(
   const frontmatterText = parsed.frontmatter ?? "";
   const contentText = parsed.content ?? "";
 
-  let items: Array<{ name: string; result: WordCounterResult }> = [];
+  let items: Array<{ name: string; source: "frontmatter" | "content"; result: WordCounterResult }> = [];
 
   if (section === "frontmatter") {
-    items = buildSingleItem("frontmatter", frontmatterText, mode);
+    items = buildSingleItem("frontmatter", frontmatterText, mode, "frontmatter");
   } else if (section === "content") {
-    items = buildSingleItem("content", contentText, mode);
+    items = buildSingleItem("content", contentText, mode, "content");
   } else if (section === "split") {
     items = [
-      ...buildSingleItem("frontmatter", frontmatterText, mode),
-      ...buildSingleItem("content", contentText, mode),
+      ...buildSingleItem("frontmatter", frontmatterText, mode, "frontmatter"),
+      ...buildSingleItem("content", contentText, mode, "content"),
     ];
   } else if (section === "per-key") {
     items = buildPerKeyItems(parsed.data, mode);
   } else if (section === "split-per-key") {
-    items = [...buildPerKeyItems(parsed.data, mode), ...buildSingleItem("content", contentText, mode)];
+    items = [
+      ...buildPerKeyItems(parsed.data, mode),
+      ...buildSingleItem("content", contentText, mode, "content"),
+    ];
   }
 
   return {
