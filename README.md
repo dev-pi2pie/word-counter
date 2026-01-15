@@ -63,6 +63,10 @@ npm install -g @dev-pi2pie/word-counter@latest
 If your scope is configured to use npmjs instead, the same scoped package name
 will resolve from npmjs.com (see the npm registry section above).
 
+> [!note]
+> **npm** may show newer releases (for example, `v0.0.6`) while GitHub Packages still lists `v0.0.5`.
+> This is historical; releases kept in sync starting with `v0.0.6`.
+
 ## Usage
 
 Once installed (via `npm link`, npm registry, or GitHub Packages), you can use the CLI directly:
