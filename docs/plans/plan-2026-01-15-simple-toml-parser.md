@@ -27,12 +27,19 @@ Provide a minimal TOML parser for frontmatter so `--section per-key` and `--sect
 - Nested tables, arrays of tables, and datetime type fidelity.
 - Preserving type information beyond conversion to plain text.
 
+## Compatibility Target (Hugo-like)
+Aim to support the most common Hugo TOML frontmatter patterns:
+- Top-level key/value pairs.
+- Tables (`[table]`) and dotted keys.
+- Arrays of primitives and arrays of strings.
+- Inline tables and arrays of tables are **out of scope** for the initial parser.
+
 ## Plan
 1. Define the supported TOML subset:
    - Top-level `key = value` only.
    - Supported values: strings, integers, floats, booleans, datetimes (as text), arrays of primitives.
-   - Support simple tables (`[table]`) by flattening keys to dotted form (e.g., `params.author`).
-   - Reject or ignore inline tables (`{}`) and arrays of tables (`[[table]]`) for now.
+   - Support tables (`[table]`) and dotted keys by flattening to dotted form (e.g., `params.author`).
+   - Defer inline tables (`{}`) and arrays of tables (`[[table]]`) for now.
 2. Parser behavior and error strategy:
    - Fail **silently** by returning `null` data when TOML is out of scope or malformed.
    - Keep raw frontmatter available for `split`/`frontmatter` modes.
@@ -41,6 +48,7 @@ Provide a minimal TOML parser for frontmatter so `--section per-key` and `--sect
    - Split on newlines; skip blank lines and comments (`#`).
    - Match `key = value` with a safe, non-greedy parser.
    - Parse quoted strings (single/double), basic numbers, booleans, and simple arrays.
+   - Allow dotted keys in assignments (e.g., `params.author = "Ada"`).
    - Convert values to plain text by JSON stringification or direct string conversion **before counting**.
    - When a table header is encountered (`[table]`), prefix subsequent keys with the table path.
    - Arrays are converted to a joined string (`", "` separator) before counting.

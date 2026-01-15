@@ -37,6 +37,28 @@ describe("parseMarkdown", () => {
     const input = ["+++", "title = \"Hello\"", "+++", "Body"].join("\n");
     const result = parseMarkdown(input);
     expect(result.frontmatterType).toBe("toml");
+    expect(result.data?.title).toBe("Hello");
+  });
+
+  test("parses TOML tables and arrays", () => {
+    const input = [
+      "+++",
+      "title = \"Hello\"",
+      "tags = [\"a\", \"b\"]",
+      "[params]",
+      "author = \"Ada\"",
+      "+++",
+      "Body",
+    ].join("\n");
+    const result = parseMarkdown(input);
+    expect(result.data?.title).toBe("Hello");
+    expect(result.data?.tags).toBe("a, b");
+    expect(result.data?.["params.author"]).toBe("Ada");
+  });
+
+  test("rejects unsupported TOML constructs", () => {
+    const input = ["+++", "[[items]]", "name = \"bad\"", "+++", "Body"].join("\n");
+    const result = parseMarkdown(input);
     expect(result.data).toBeNull();
   });
 

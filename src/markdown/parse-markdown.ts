@@ -1,4 +1,5 @@
 import { parseDocument } from "yaml";
+import { parseTomlFrontmatter } from "./toml-simple";
 import type { FrontmatterType, ParsedMarkdown } from "./types";
 
 const FENCE_TO_TYPE: Record<string, FrontmatterType> = {
@@ -46,6 +47,10 @@ function parseFrontmatter(frontmatter: string, type: FrontmatterType | null): Re
       return null;
     }
     return data as Record<string, unknown>;
+  }
+
+  if (type === "toml") {
+    return parseTomlFrontmatter(frontmatter);
   }
 
   return null;
