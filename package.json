@@ -1,6 +1,18 @@
 {
   "name": "@dev-pi2pie/word-counter",
-  "version": "0.0.6",
+  "version": "0.0.7",
+  "keywords": [
+    "cli",
+    "intl-segmenter",
+    "language-detection",
+    "nodejs",
+    "text-processing",
+    "typescript",
+    "unicode",
+    "word-count",
+    "word-counter"
+  ],
+  "license": "MIT",
   "bin": {
     "word-counter": "./dist/esm/bin.mjs"
   },
