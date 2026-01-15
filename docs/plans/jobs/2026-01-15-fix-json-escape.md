@@ -1,6 +1,6 @@
 ---
 title: "Fix JSON frontmatter escape handling"
-date: 2025-09-20
+date: 2026-01-15
 status: completed
 agent: codex
 ---
