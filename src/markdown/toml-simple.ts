@@ -391,7 +391,7 @@ export function parseTomlFrontmatter(frontmatter: string): Record<string, unknow
       continue;
     }
 
-    if (/^\[\[/.test(trimmedLine)) {
+    if (trimmedLine.startsWith('[[')) {
       const match = trimmedLine.match(/^\[\[([^\]]+)]]$/);
       if (!match) {
         return null;
