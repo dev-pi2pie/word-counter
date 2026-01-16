@@ -26,6 +26,7 @@ export type WordCounterMode = "chunk" | "segments" | "collector";
 
 export interface WordCounterOptions {
   mode?: WordCounterMode;
+  latinLocaleHint?: string;
 }
 
 export type WordCounterBreakdown =

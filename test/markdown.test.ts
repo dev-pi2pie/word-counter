@@ -125,13 +125,13 @@ describe("parseMarkdown", () => {
 
 describe("countSections", () => {
   test("returns per-key items for frontmatter", () => {
-    const result = countSections(YAML_SAMPLE, "per-key", "chunk");
+    const result = countSections(YAML_SAMPLE, "per-key", { mode: "chunk" });
     expect(result.items.map((item) => item.name)).toEqual(["title", "summary"]);
     expect(result.total).toBeGreaterThan(0);
   });
 
   test("split-per-key includes content", () => {
-    const result = countSections(YAML_SAMPLE, "split-per-key", "chunk");
+    const result = countSections(YAML_SAMPLE, "split-per-key", { mode: "chunk" });
     const names = result.items.map((item) => item.name);
     expect(names).toContain("content");
   });

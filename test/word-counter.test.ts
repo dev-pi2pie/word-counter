@@ -17,6 +17,11 @@ describe("wordCounter", () => {
       expect(firstItem.segments.length).toBe(2);
     }
   });
+
+  test("counts words with emoji and punctuation", () => {
+    expect(wordCounter("Hi 👋 world").total).toBe(2);
+    expect(countWordsForLocale("Hello, world!", "en")).toBe(2);
+  });
 });
 
 describe("segmentTextByLocale", () => {
@@ -24,6 +29,11 @@ describe("segmentTextByLocale", () => {
     const chunks = segmentTextByLocale("Hello 世界");
     const locales = chunks.map((chunk) => chunk.locale);
     expect(locales).toEqual(["und-Latn", "zh-Hans"]);
+  });
+
+  test("applies Latin locale hints for ambiguous text", () => {
+    const chunks = segmentTextByLocale("Hello world", { latinLocaleHint: "en" });
+    expect(chunks[0]?.locale).toBe("en");
   });
 
   test("uses diacritics to hint Latin language buckets", () => {
@@ -39,10 +49,20 @@ describe("segmentTextByLocale", () => {
       expect(chunks[0]?.locale).toBe(locale);
     }
   });
+
+  test("keeps leading neutral characters with the first script run", () => {
+    const chunks = segmentTextByLocale("🙂こんにちは");
+    expect(chunks[0]?.locale).toBe("ja");
+  });
 });
 
 describe("countWordsForLocale", () => {
   test("counts words for a specific locale", () => {
     expect(countWordsForLocale("Hello world", "und-Latn")).toBe(2);
+  });
+
+  test("handles apostrophes and URLs", () => {
+    expect(countWordsForLocale("Don't stop", "en")).toBe(2);
+    expect(countWordsForLocale("Visit https://example.com today", "en")).toBe(4);
   });
 });

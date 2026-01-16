@@ -87,6 +87,12 @@ You can also pipe text:
 echo "こんにちは world مرحبا" | word-counter
 ```
 
+Hint a locale for ambiguous Latin text (ASCII-heavy content):
+
+```bash
+word-counter --latin-locale en "Hello world"
+```
+
 Or read from a file:
 
 ```bash
@@ -107,6 +113,8 @@ import wordCounter, {
   segmentTextByLocale,
   showSingularOrPluralWord,
 } from "@dev-pi2pie/word-counter";
+
+wordCounter("Hello world", { latinLocaleHint: "en" });
 ```
 
 ### CJS
@@ -120,6 +128,8 @@ const {
   segmentTextByLocale,
   showSingularOrPluralWord,
 } = wordCounter;
+
+wordCounter("Hello world", { latinLocaleHint: "en" });
 ```
 
 ### Export Summary
@@ -241,6 +251,7 @@ word-counter --format json --pretty "Hello world"
 - Ambiguous Latin text now uses `und-Latn` instead of defaulting to `en`.
 - Use `--mode chunk`/`--mode segments` or `--format json` to see the exact locale assigned to each chunk.
 - Regex/script-only detection cannot reliably identify English vs. other Latin-script languages; 100% certainty requires explicit metadata (document language tags, user-provided locale, headers) or a language-ID model.
+- Provide a hint with `--latin-locale <locale>` or `latinLocaleHint` when you know the intended Latin language.
 
 ## Testing
 

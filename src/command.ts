@@ -176,6 +176,7 @@ export async function runCli(argv: string[] = process.argv): Promise<void> {
         .choices(SECTION_CHOICES)
         .default("all"),
     )
+    .option("--latin-locale <locale>", "hint the locale for Latin script text")
     .option("--pretty", "pretty print JSON output", false)
     .option("-p, --path <file>", "read input from a text file")
     .argument("[text...]", "text to count")
@@ -189,6 +190,7 @@ export async function runCli(argv: string[] = process.argv): Promise<void> {
         format: OutputFormat;
         pretty: boolean;
         section: SectionMode;
+        latinLocale?: string;
         path?: string;
       },
     ) => {
@@ -208,9 +210,13 @@ export async function runCli(argv: string[] = process.argv): Promise<void> {
       }
 
       const useSection = options.section !== "all";
+      const wcOptions = {
+        mode: options.mode,
+        latinLocaleHint: options.latinLocale,
+      };
       const result: WordCounterResult | SectionedResult = useSection
-        ? countSections(trimmed, options.section, options.mode)
-        : wordCounter(trimmed, { mode: options.mode });
+        ? countSections(trimmed, options.section, wcOptions)
+        : wordCounter(trimmed, wcOptions);
 
       if (options.format === "raw") {
         console.log(result.total);
