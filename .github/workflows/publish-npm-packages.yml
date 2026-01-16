@@ -108,6 +108,8 @@ jobs:
               run: bun run build
 
             - name: Publish
+              env:
+                  NODE_AUTH_TOKEN: ""
               run: |
                   if [[ "${{ steps.prerelease.outputs.IS_PRERELEASE }}" == "true" ]]; then
                     npm publish --registry https://registry.npmjs.org --access public --provenance --tag next
