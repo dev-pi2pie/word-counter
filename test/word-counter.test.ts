@@ -31,12 +31,14 @@ describe("wordCounter", () => {
     expect(first?.nonWords?.counts.emoji).toBe(1);
     expect(first?.nonWords?.counts.symbols).toBe(0);
     expect(first?.nonWords?.counts.punctuation).toBe(2);
+    expect(result.total).toBe(5);
   });
 
   test("does not include non-words when disabled", () => {
     const result = wordCounter("Hi 👋, world!");
     const first = result.breakdown.items[0];
     expect(first && "nonWords" in first ? first.nonWords : undefined).toBeUndefined();
+    expect(result.total).toBe(2);
   });
 });
 

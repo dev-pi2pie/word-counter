@@ -29,7 +29,16 @@ export function wordCounter(
   const collectNonWords = Boolean(options.nonWords);
   const chunks = segmentTextByLocale(text, { latinLocaleHint: options.latinLocaleHint });
   const analyzed = chunks.map((chunk) => analyzeChunk(chunk, collectNonWords));
-  const total = analyzed.reduce((sum, chunk) => sum + chunk.words, 0);
+  const total = analyzed.reduce((sum, chunk) => {
+    let chunkTotal = chunk.words;
+    if (collectNonWords && chunk.nonWords) {
+      chunkTotal +=
+        chunk.nonWords.counts.emoji +
+        chunk.nonWords.counts.symbols +
+        chunk.nonWords.counts.punctuation;
+    }
+    return sum + chunkTotal;
+  }, 0);
 
   if (mode === "segments") {
     const items: ChunkWithSegments[] = analyzed.map((chunk) => ({

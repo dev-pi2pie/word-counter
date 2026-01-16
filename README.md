@@ -257,7 +257,7 @@ word-counter --format json --pretty "Hello world"
 
 ### Non-Word Collection
 
-Use `--non-words` (or `nonWords: true` in the API) to collect emoji, symbols, and punctuation as separate categories. This does not affect the word count; it only adds extra fields in the breakdown payload.
+Use `--non-words` (or `nonWords: true` in the API) to collect emoji, symbols, and punctuation as separate categories. When enabled, the `total` includes both words and non-words.
 
 ```bash
 word-counter --non-words "Hi 👋, world!"
