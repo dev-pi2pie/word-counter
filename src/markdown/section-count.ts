@@ -1,4 +1,4 @@
-import type { WordCounterMode, WordCounterResult } from "../wc/types";
+import type { WordCounterMode, WordCounterOptions, WordCounterResult } from "../wc/types";
 import wordCounter from "../wc";
 import { parseMarkdown } from "./parse-markdown";
 import type { SectionMode, SectionedResult } from "./types";
@@ -23,6 +23,7 @@ function normalizeText(value: unknown): string {
 function buildPerKeyItems(
   data: Record<string, unknown> | null,
   mode: WordCounterMode,
+  options: WordCounterOptions,
 ): Array<{ name: string; source: "frontmatter"; result: WordCounterResult }> {
   if (!data || typeof data !== "object" || Array.isArray(data)) {
     return [];
@@ -34,7 +35,7 @@ function buildPerKeyItems(
     return {
       name: key,
       source: "frontmatter",
-      result: wordCounter(text, { mode }),
+      result: wordCounter(text, options),
     };
   });
 }
@@ -43,9 +44,10 @@ function buildSingleItem(
   name: string,
   text: string,
   mode: WordCounterMode,
+  options: WordCounterOptions,
   source: "frontmatter" | "content",
 ) {
-  return [{ name, source, result: wordCounter(text, { mode }) }];
+  return [{ name, source, result: wordCounter(text, options) }];
 }
 
 function sumTotals(items: Array<{ result: WordCounterResult }>): number {
@@ -55,10 +57,11 @@ function sumTotals(items: Array<{ result: WordCounterResult }>): number {
 export function countSections(
   input: string,
   section: SectionMode,
-  mode: WordCounterMode,
+  options: WordCounterOptions = {},
 ): SectionedResult {
+  const mode: WordCounterMode = options.mode ?? "chunk";
   if (section === "all") {
-    const result = wordCounter(input, { mode });
+    const result = wordCounter(input, options);
     return {
       section,
       total: result.total,
@@ -74,20 +77,20 @@ export function countSections(
   let items: Array<{ name: string; source: "frontmatter" | "content"; result: WordCounterResult }> = [];
 
   if (section === "frontmatter") {
-    items = buildSingleItem("frontmatter", frontmatterText, mode, "frontmatter");
+    items = buildSingleItem("frontmatter", frontmatterText, mode, options, "frontmatter");
   } else if (section === "content") {
-    items = buildSingleItem("content", contentText, mode, "content");
+    items = buildSingleItem("content", contentText, mode, options, "content");
   } else if (section === "split") {
     items = [
-      ...buildSingleItem("frontmatter", frontmatterText, mode, "frontmatter"),
-      ...buildSingleItem("content", contentText, mode, "content"),
+      ...buildSingleItem("frontmatter", frontmatterText, mode, options, "frontmatter"),
+      ...buildSingleItem("content", contentText, mode, options, "content"),
     ];
   } else if (section === "per-key") {
-    items = buildPerKeyItems(parsed.data, mode);
+    items = buildPerKeyItems(parsed.data, mode, options);
   } else if (section === "split-per-key") {
     items = [
-      ...buildPerKeyItems(parsed.data, mode),
-      ...buildSingleItem("content", contentText, mode, "content"),
+      ...buildPerKeyItems(parsed.data, mode, options),
+      ...buildSingleItem("content", contentText, mode, options, "content"),
     ];
   }
 

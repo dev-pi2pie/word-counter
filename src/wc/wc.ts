@@ -23,7 +23,7 @@ export function wordCounter(
   options: WordCounterOptions = {}
 ): WordCounterResult {
   const mode: WordCounterMode = options.mode ?? "chunk";
-  const chunks = segmentTextByLocale(text);
+  const chunks = segmentTextByLocale(text, { latinLocaleHint: options.latinLocaleHint });
   const analyzed = chunks.map(analyzeChunk);
   const total = analyzed.reduce((sum, chunk) => sum + chunk.words, 0);
 

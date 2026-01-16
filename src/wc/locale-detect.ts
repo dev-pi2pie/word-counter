@@ -1,5 +1,9 @@
 export const DEFAULT_LOCALE = "und-Latn";
 
+export interface LocaleDetectOptions {
+  latinLocaleHint?: string;
+}
+
 const regex = {
   hiragana: /\p{Script=Hiragana}/u,
   katakana: /\p{Script=Katakana}/u,
@@ -39,7 +43,8 @@ function detectLatinLocale(char: string): string {
 
 export function detectLocaleForChar(
   char: string,
-  previousLocale?: string | null
+  previousLocale?: string | null,
+  options: LocaleDetectOptions = {}
 ): string | null {
   if (regex.hiragana.test(char) || regex.katakana.test(char)) {
     return "ja";
@@ -71,6 +76,9 @@ export function detectLocaleForChar(
     const hintedLocale = detectLatinLocale(char);
     if (hintedLocale !== DEFAULT_LOCALE) {
       return hintedLocale;
+    }
+    if (options.latinLocaleHint) {
+      return options.latinLocaleHint;
     }
     if (previousLocale && isLatinLocale(previousLocale)) {
       return previousLocale;

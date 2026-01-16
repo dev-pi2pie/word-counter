@@ -1,20 +1,37 @@
-import { DEFAULT_LOCALE, detectLocaleForChar, isLatinLocale } from "./locale-detect";
+import {
+  DEFAULT_LOCALE,
+  detectLocaleForChar,
+  isLatinLocale,
+  type LocaleDetectOptions,
+} from "./locale-detect";
 import type { LocaleChunk } from "./types";
 
-export function segmentTextByLocale(text: string): LocaleChunk[] {
+export function segmentTextByLocale(
+  text: string,
+  options: LocaleDetectOptions = {}
+): LocaleChunk[] {
   const chunks: LocaleChunk[] = [];
   // Keep currentLocale as a non-null string to simplify type-narrowing.
   let currentLocale: string = DEFAULT_LOCALE;
   let buffer = "";
+  let bufferHasScript = false;
 
   for (const char of text) {
-    const detected = detectLocaleForChar(char, currentLocale);
+    const detected = detectLocaleForChar(char, currentLocale, options);
     const targetLocale = detected ?? currentLocale;
 
     // If buffer is empty, this is the first character for a new chunk.
     if (buffer === "") {
       currentLocale = targetLocale;
       buffer = char;
+      bufferHasScript = detected !== null;
+      continue;
+    }
+
+    if (detected !== null && !bufferHasScript) {
+      currentLocale = targetLocale;
+      buffer += char;
+      bufferHasScript = true;
       continue;
     }
 
@@ -22,16 +39,21 @@ export function segmentTextByLocale(text: string): LocaleChunk[] {
       if (currentLocale === DEFAULT_LOCALE && isLatinLocale(targetLocale)) {
         currentLocale = targetLocale;
         buffer += char;
+        bufferHasScript = true;
         continue;
       }
       // currentLocale is guaranteed to be a string here.
       chunks.push({ locale: currentLocale, text: buffer });
       currentLocale = targetLocale;
       buffer = char;
+      bufferHasScript = true;
       continue;
     }
 
     buffer += char;
+    if (detected !== null) {
+      bufferHasScript = true;
+    }
   }
 
   if (buffer.length > 0) {
