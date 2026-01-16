@@ -1,6 +1,7 @@
 import type { NonWordCollection } from "./types";
 
-const emojiRegex = /\p{Emoji_Presentation}/u;
+const emojiRegex = /(?:\p{Extended_Pictographic}|\p{Emoji_Presentation})/u;
+const keycapEmojiRegex = /[0-9#*]\uFE0F?\u20E3/u;
 const symbolRegex = /\p{S}/u;
 const punctuationRegex = /\p{P}/u;
 
@@ -39,7 +40,7 @@ export function addNonWord(
 export function classifyNonWordSegment(
   segment: string,
 ): "emoji" | "symbol" | "punctuation" | null {
-  if (emojiRegex.test(segment)) {
+  if (keycapEmojiRegex.test(segment) || emojiRegex.test(segment)) {
     return "emoji";
   }
   if (symbolRegex.test(segment)) {

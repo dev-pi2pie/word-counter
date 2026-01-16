@@ -24,14 +24,14 @@ describe("wordCounter", () => {
   });
 
   test("collects non-word categories when enabled", () => {
-    const result = wordCounter("Hi 👋, world!", {
+    const result = wordCounter("Hi 👋, world! 1️⃣", {
       nonWords: true,
     });
     const first = result.breakdown.items[0];
-    expect(first?.nonWords?.counts.emoji).toBe(1);
+    expect(first?.nonWords?.counts.emoji).toBe(2);
     expect(first?.nonWords?.counts.symbols).toBe(0);
     expect(first?.nonWords?.counts.punctuation).toBe(2);
-    expect(result.total).toBe(5);
+    expect(result.total).toBe(6);
   });
 
   test("does not include non-words when disabled", () => {
