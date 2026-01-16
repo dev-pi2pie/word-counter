@@ -146,35 +146,35 @@ wordCounter("Hi 👋, world!", { nonWords: true });
 
 #### Core API
 
-| Export | Kind | Notes |
-| --- | --- | --- |
-| `default` | function | `wordCounter(text, options?) -> WordCounterResult` |
-| `wordCounter` | function | Alias of the default export. |
-| `countWordsForLocale` | function | Low-level helper for per-locale counts. |
-| `segmentTextByLocale` | function | Low-level helper for locale-aware segmentation. |
+| Export                | Kind     | Notes                                              |
+| --------------------- | -------- | -------------------------------------------------- |
+| `default`             | function | `wordCounter(text, options?) -> WordCounterResult` |
+| `wordCounter`         | function | Alias of the default export.                       |
+| `countWordsForLocale` | function | Low-level helper for per-locale counts.            |
+| `segmentTextByLocale` | function | Low-level helper for locale-aware segmentation.    |
 
 #### Markdown Helpers
 
-| Export | Kind | Notes |
-| --- | --- | --- |
-| `parseMarkdown` | function | Parses Markdown and detects frontmatter. |
+| Export          | Kind     | Notes                                         |
+| --------------- | -------- | --------------------------------------------- |
+| `parseMarkdown` | function | Parses Markdown and detects frontmatter.      |
 | `countSections` | function | Counts words by frontmatter/content sections. |
 
 #### Utility Helpers
 
-| Export | Kind | Notes |
-| --- | --- | --- |
+| Export                     | Kind     | Notes                          |
+| -------------------------- | -------- | ------------------------------ |
 | `showSingularOrPluralWord` | function | Formats singular/plural words. |
 
 #### Types
 
-| Export | Kind | Notes |
-| --- | --- | --- |
-| `WordCounterOptions` | type | Options for the `wordCounter` function. |
-| `WordCounterResult` | type | Returned by `wordCounter`. |
+| Export                 | Kind | Notes                                     |
+| ---------------------- | ---- | ----------------------------------------- |
+| `WordCounterOptions`   | type | Options for the `wordCounter` function.   |
+| `WordCounterResult`    | type | Returned by `wordCounter`.                |
 | `WordCounterBreakdown` | type | Breakdown payload in `WordCounterResult`. |
-| `WordCounterMode` | type | `"chunk" \| "segments" \| "collector"`. |
-| `NonWordCollection` | type | Non-word segments + counts payload. |
+| `WordCounterMode`      | type | `"chunk" \| "segments" \| "collector"`.   |
+| `NonWordCollection`    | type | Non-word segments + counts payload.       |
 
 ### Display Modes
 
@@ -266,6 +266,9 @@ word-counter --non-words "Hi 👋, world!"
 ```
 
 Example: `total = words + emoji + symbols + punctuation` when enabled.
+
+> [!Note]
+> Text-default symbols (e.g. ©) count as `symbols` unless explicitly emoji-presented (e.g. ©️ with VS16).
 
 ## Locale Detection Notes (Migration)
 

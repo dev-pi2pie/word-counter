@@ -1,6 +1,7 @@
 import type { NonWordCollection } from "./types";
 
 const emojiRegex = /(?:\p{Extended_Pictographic}|\p{Emoji_Presentation})/u;
+const emojiPresentationRegex = /\p{Emoji_Presentation}/u;
 const keycapEmojiRegex = /[0-9#*]\uFE0F?\u20E3/u;
 const symbolRegex = /\p{S}/u;
 const punctuationRegex = /\p{P}/u;
@@ -40,7 +41,12 @@ export function addNonWord(
 export function classifyNonWordSegment(
   segment: string,
 ): "emoji" | "symbol" | "punctuation" | null {
-  if (keycapEmojiRegex.test(segment) || emojiRegex.test(segment)) {
+  const hasEmojiVariationSelector = segment.includes("\uFE0F");
+  if (
+    keycapEmojiRegex.test(segment) ||
+    emojiPresentationRegex.test(segment) ||
+    (hasEmojiVariationSelector && emojiRegex.test(segment))
+  ) {
     return "emoji";
   }
   if (symbolRegex.test(segment)) {
