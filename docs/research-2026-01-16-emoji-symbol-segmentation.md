@@ -1,7 +1,7 @@
 ---
 title: "Emoji + symbol segmentation add-on"
 date: 2026-01-16
-status: in-progress
+status: completed
 agent: Codex
 ---
 

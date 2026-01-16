@@ -99,6 +99,8 @@ Collect non-word segments (emoji, symbols, punctuation):
 word-counter --non-words "Hi 👋, world!"
 ```
 
+When enabled, `total` includes words + non-words (emoji, symbols, punctuation).
+
 Or read from a file:
 
 ```bash
@@ -262,6 +264,8 @@ Use `--non-words` (or `nonWords: true` in the API) to collect emoji, symbols, an
 ```bash
 word-counter --non-words "Hi 👋, world!"
 ```
+
+Example: `total = words + emoji + symbols + punctuation` when enabled.
 
 ## Locale Detection Notes (Migration)
 
