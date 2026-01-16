@@ -1,6 +1,6 @@
 {
   "name": "@dev-pi2pie/word-counter",
-  "version": "0.0.8-canary.2",
+  "version": "0.0.8",
   "keywords": [
     "cli",
     "intl-segmenter",
@@ -15,7 +15,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dev-pi2pie/word-counter.git"
+    "url": "https://github.com/dev-pi2pie/word-counter"
   },
   "bin": {
     "word-counter": "dist/esm/bin.mjs"

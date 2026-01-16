@@ -1,7 +1,7 @@
 ---
 title: "Emoji + symbol segmentation add-on"
 date: 2026-01-16
-status: in-progress
+status: completed
 agent: Codex
 ---
 
@@ -19,9 +19,9 @@ Explore an add-on that collects emoji and symbol segments alongside word counts,
   - `chunk`: for each chunk, collect non-word segments with a per-chunk list/count (emoji + symbols) in the breakdown payload.
   - `segments`: include non-word segments in a parallel list to `segments`, or include a structured `nonWordSegments` array with categories.
   - `collector`: aggregate emoji/symbol counts (and/or segment lists) across the whole input, independent of locale or as a special locale bucket.
-- Prefer a new option flag that is opt-in (e.g., `collectNonWords: boolean` or `nonWordSegments: "emoji-symbols" | "all"`). Keep defaults unchanged.
+- Prefer a new option flag that is opt-in (e.g., `nonWords: boolean`). Keep defaults unchanged.
 - Classification approach for the add-on:
-  - Emoji detection: use Unicode property regex for emoji (e.g., `\p{Extended_Pictographic}`) with `u` flag.
+  - Emoji detection: use Unicode property regex for emoji presentation (e.g., `\p{Emoji_Presentation}`) with `u` flag.
   - Symbols detection: use general category `\p{S}` to capture symbols. Exclude punctuation (`\p{P}`) unless explicitly requested.
   - For CLI/JSON output, return both counts and raw segment strings for traceability, similar to `segments` mode.
 

@@ -93,6 +93,14 @@ Hint a locale for ambiguous Latin text (ASCII-heavy content):
 word-counter --latin-locale en "Hello world"
 ```
 
+Collect non-word segments (emoji, symbols, punctuation):
+
+```bash
+word-counter --non-words "Hi 👋, world!"
+```
+
+When enabled, `total` includes words + non-words (emoji, symbols, punctuation).
+
 Or read from a file:
 
 ```bash
@@ -115,6 +123,7 @@ import wordCounter, {
 } from "@dev-pi2pie/word-counter";
 
 wordCounter("Hello world", { latinLocaleHint: "en" });
+wordCounter("Hi 👋, world!", { nonWords: true });
 ```
 
 ### CJS
@@ -130,40 +139,42 @@ const {
 } = wordCounter;
 
 wordCounter("Hello world", { latinLocaleHint: "en" });
+wordCounter("Hi 👋, world!", { nonWords: true });
 ```
 
 ### Export Summary
 
 #### Core API
 
-| Export | Kind | Notes |
-| --- | --- | --- |
-| `default` | function | `wordCounter(text, options?) -> WordCounterResult` |
-| `wordCounter` | function | Alias of the default export. |
-| `countWordsForLocale` | function | Low-level helper for per-locale counts. |
-| `segmentTextByLocale` | function | Low-level helper for locale-aware segmentation. |
+| Export                | Kind     | Notes                                              |
+| --------------------- | -------- | -------------------------------------------------- |
+| `default`             | function | `wordCounter(text, options?) -> WordCounterResult` |
+| `wordCounter`         | function | Alias of the default export.                       |
+| `countWordsForLocale` | function | Low-level helper for per-locale counts.            |
+| `segmentTextByLocale` | function | Low-level helper for locale-aware segmentation.    |
 
 #### Markdown Helpers
 
-| Export | Kind | Notes |
-| --- | --- | --- |
-| `parseMarkdown` | function | Parses Markdown and detects frontmatter. |
+| Export          | Kind     | Notes                                         |
+| --------------- | -------- | --------------------------------------------- |
+| `parseMarkdown` | function | Parses Markdown and detects frontmatter.      |
 | `countSections` | function | Counts words by frontmatter/content sections. |
 
 #### Utility Helpers
 
-| Export | Kind | Notes |
-| --- | --- | --- |
+| Export                     | Kind     | Notes                          |
+| -------------------------- | -------- | ------------------------------ |
 | `showSingularOrPluralWord` | function | Formats singular/plural words. |
 
 #### Types
 
-| Export | Kind | Notes |
-| --- | --- | --- |
-| `WordCounterOptions` | type | Options for the `wordCounter` function. |
-| `WordCounterResult` | type | Returned by `wordCounter`. |
+| Export                 | Kind | Notes                                     |
+| ---------------------- | ---- | ----------------------------------------- |
+| `WordCounterOptions`   | type | Options for the `wordCounter` function.   |
+| `WordCounterResult`    | type | Returned by `wordCounter`.                |
 | `WordCounterBreakdown` | type | Breakdown payload in `WordCounterResult`. |
-| `WordCounterMode` | type | `"chunk" \| "segments" \| "collector"`. |
+| `WordCounterMode`      | type | `"chunk" \| "segments" \| "collector"`.   |
+| `NonWordCollection`    | type | Non-word segments + counts payload.       |
 
 ### Display Modes
 
@@ -245,6 +256,20 @@ Examples:
 word-counter --format raw "Hello world"
 word-counter --format json --pretty "Hello world"
 ```
+
+### Non-Word Collection
+
+Use `--non-words` (or `nonWords: true` in the API) to collect emoji, symbols, and punctuation as separate categories. When enabled, the `total` includes both words and non-words.
+
+```bash
+word-counter --non-words "Hi 👋, world!"
+```
+
+Example: `total = words + emoji + symbols + punctuation` when enabled.
+Standard output labels this as `Total count` to reflect the combined total; `--format raw` still prints a single number.
+
+> [!Note]
+> Text-default symbols (e.g. ©) count as `symbols` unless explicitly emoji-presented (e.g. ©️ with VS16).
 
 ## Locale Detection Notes (Migration)
 
