@@ -100,15 +100,60 @@ The package exports can be used after installing from GitHub Packages or linking
 ### ESM
 
 ```js
-import wordCounter, { countWordsForLocale, segmentTextByLocale } from "@dev-pi2pie/word-counter";
+import wordCounter, {
+  countWordsForLocale,
+  countSections,
+  parseMarkdown,
+  segmentTextByLocale,
+  showSingularOrPluralWord,
+} from "@dev-pi2pie/word-counter";
 ```
 
 ### CJS
 
 ```js
 const wordCounter = require("@dev-pi2pie/word-counter");
-const { countWordsForLocale, segmentTextByLocale, showSingularOrPluralWord } = wordCounter;
+const {
+  countWordsForLocale,
+  countSections,
+  parseMarkdown,
+  segmentTextByLocale,
+  showSingularOrPluralWord,
+} = wordCounter;
 ```
+
+### Export Summary
+
+#### Core API
+
+| Export | Kind | Notes |
+| --- | --- | --- |
+| `default` | function | `wordCounter(text, options?) -> WordCounterResult` |
+| `wordCounter` | function | Alias of the default export. |
+| `countWordsForLocale` | function | Low-level helper for per-locale counts. |
+| `segmentTextByLocale` | function | Low-level helper for locale-aware segmentation. |
+
+#### Markdown Helpers
+
+| Export | Kind | Notes |
+| --- | --- | --- |
+| `parseMarkdown` | function | Parses Markdown and detects frontmatter. |
+| `countSections` | function | Counts words by frontmatter/content sections. |
+
+#### Utility Helpers
+
+| Export | Kind | Notes |
+| --- | --- | --- |
+| `showSingularOrPluralWord` | function | Formats singular/plural words. |
+
+#### Types
+
+| Export | Kind | Notes |
+| --- | --- | --- |
+| `WordCounterOptions` | type | Options for the `wordCounter` function. |
+| `WordCounterResult` | type | Returned by `wordCounter`. |
+| `WordCounterBreakdown` | type | Breakdown payload in `WordCounterResult`. |
+| `WordCounterMode` | type | `"chunk" \| "segments" \| "collector"`. |
 
 ### Display Modes
 
