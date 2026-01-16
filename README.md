@@ -93,6 +93,12 @@ Hint a locale for ambiguous Latin text (ASCII-heavy content):
 word-counter --latin-locale en "Hello world"
 ```
 
+Collect non-word segments (emoji, symbols, punctuation):
+
+```bash
+word-counter --non-words "Hi 👋, world!"
+```
+
 Or read from a file:
 
 ```bash
@@ -115,6 +121,7 @@ import wordCounter, {
 } from "@dev-pi2pie/word-counter";
 
 wordCounter("Hello world", { latinLocaleHint: "en" });
+wordCounter("Hi 👋, world!", { nonWords: true });
 ```
 
 ### CJS
@@ -130,6 +137,7 @@ const {
 } = wordCounter;
 
 wordCounter("Hello world", { latinLocaleHint: "en" });
+wordCounter("Hi 👋, world!", { nonWords: true });
 ```
 
 ### Export Summary
@@ -164,6 +172,7 @@ wordCounter("Hello world", { latinLocaleHint: "en" });
 | `WordCounterResult` | type | Returned by `wordCounter`. |
 | `WordCounterBreakdown` | type | Breakdown payload in `WordCounterResult`. |
 | `WordCounterMode` | type | `"chunk" \| "segments" \| "collector"`. |
+| `NonWordCollection` | type | Non-word segments + counts payload. |
 
 ### Display Modes
 
@@ -244,6 +253,14 @@ Examples:
 ```bash
 word-counter --format raw "Hello world"
 word-counter --format json --pretty "Hello world"
+```
+
+### Non-Word Collection
+
+Use `--non-words` (or `nonWords: true` in the API) to collect emoji, symbols, and punctuation as separate categories. This does not affect the word count; it only adds extra fields in the breakdown payload.
+
+```bash
+word-counter --non-words "Hi 👋, world!"
 ```
 
 ## Locale Detection Notes (Migration)

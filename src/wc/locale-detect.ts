@@ -77,7 +77,7 @@ export function detectLocaleForChar(
     if (hintedLocale !== DEFAULT_LOCALE) {
       return hintedLocale;
     }
-    if (previousLocale && isLatinLocale(previousLocale)) {
+    if (previousLocale && isLatinLocale(previousLocale) && previousLocale !== DEFAULT_LOCALE) {
       return previousLocale;
     }
     if (options.latinLocaleHint) {

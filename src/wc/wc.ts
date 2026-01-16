@@ -1,15 +1,18 @@
 import { analyzeChunk, aggregateByLocale } from "./analyze";
 import { segmentTextByLocale } from "./segment";
 import { countWordsForLocale } from "./segmenter";
+import { createNonWordCollection, mergeNonWordCollections } from "./non-words";
 import type {
   ChunkBreakdown,
   ChunkWithSegments,
+  NonWordCollection,
   WordCounterMode,
   WordCounterOptions,
   WordCounterResult,
 } from "./types";
 
 export type {
+  NonWordCollection,
   WordCounterMode,
   WordCounterOptions,
   WordCounterResult,
@@ -23,8 +26,9 @@ export function wordCounter(
   options: WordCounterOptions = {}
 ): WordCounterResult {
   const mode: WordCounterMode = options.mode ?? "chunk";
+  const collectNonWords = Boolean(options.nonWords);
   const chunks = segmentTextByLocale(text, { latinLocaleHint: options.latinLocaleHint });
-  const analyzed = chunks.map(analyzeChunk);
+  const analyzed = chunks.map((chunk) => analyzeChunk(chunk, collectNonWords));
   const total = analyzed.reduce((sum, chunk) => sum + chunk.words, 0);
 
   if (mode === "segments") {
@@ -33,6 +37,7 @@ export function wordCounter(
       text: chunk.text,
       words: chunk.words,
       segments: chunk.segments,
+      nonWords: chunk.nonWords,
     }));
     return {
       total,
@@ -45,11 +50,13 @@ export function wordCounter(
 
   if (mode === "collector") {
     const items = aggregateByLocale(analyzed);
+    const nonWords = collectNonWordsAggregate(analyzed, collectNonWords);
     return {
       total,
       breakdown: {
         mode,
         items,
+        nonWords,
       },
     };
   }
@@ -58,6 +65,7 @@ export function wordCounter(
     locale: chunk.locale,
     text: chunk.text,
     words: chunk.words,
+    nonWords: chunk.nonWords,
   }));
 
   return {
@@ -67,4 +75,21 @@ export function wordCounter(
       items,
     },
   };
+}
+
+function collectNonWordsAggregate(
+  analyzed: Array<{ nonWords?: NonWordCollection }>,
+  enabled: boolean,
+): NonWordCollection | undefined {
+  if (!enabled) {
+    return undefined;
+  }
+  const collection = createNonWordCollection();
+  for (const chunk of analyzed) {
+    if (!chunk.nonWords) {
+      continue;
+    }
+    mergeNonWordCollections(collection, chunk.nonWords);
+  }
+  return collection;
 }

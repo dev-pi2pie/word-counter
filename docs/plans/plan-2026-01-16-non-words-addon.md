@@ -1,7 +1,7 @@
 ---
 title: "Non-word segment add-on (--non-words)"
 date: 2026-01-16
-status: active
+status: completed
 agent: Codex
 ---
 
@@ -9,8 +9,8 @@ agent: Codex
 Add an opt-in `--non-words` feature that collects emoji, symbols, and punctuation as separate categories while keeping the default word-only behavior driven by `Intl.Segmenter`.
 
 ## Scope
-- Add a new CLI flag `--non-words <list>` where list is a comma-separated set of categories: `emoji`, `symbol`, `punctuation`.
-- Extend `WordCounterOptions` to accept `nonWordCategories?: Array<"emoji" | "symbol" | "punctuation">`.
+- Add a new CLI flag `--non-words` to collect all non-word categories.
+- Extend `WordCounterOptions` to accept `nonWords?: boolean`.
 - Extend result payloads for all `--mode` values to include optional `nonWords` data when enabled.
 - Add tests to ensure default output is unchanged and new output is deterministic.
 - Update README usage docs and API surface summary.

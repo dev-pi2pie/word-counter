@@ -1,12 +1,33 @@
 import { getSegmenter } from "./segmenter";
-import type { ChunkAnalysis, CollectorBreakdown, LocaleChunk } from "./types";
+import {
+  addNonWord,
+  classifyNonWordSegment,
+  createNonWordCollection,
+} from "./non-words";
+import type {
+  ChunkAnalysis,
+  CollectorBreakdown,
+  LocaleChunk,
+  NonWordCollection,
+} from "./types";
 
-export function analyzeChunk(chunk: LocaleChunk): ChunkAnalysis {
+export function analyzeChunk(
+  chunk: LocaleChunk,
+  collectNonWords?: boolean,
+): ChunkAnalysis {
   const segmenter = getSegmenter(chunk.locale);
   const segments: string[] = [];
+  const nonWords: NonWordCollection | null = collectNonWords
+    ? createNonWordCollection()
+    : null;
   for (const part of segmenter.segment(chunk.text)) {
     if (part.isWordLike) {
       segments.push(part.segment);
+    } else if (collectNonWords && nonWords) {
+      const category = classifyNonWordSegment(part.segment);
+      if (category) {
+        addNonWord(nonWords, category, part.segment);
+      }
     }
   }
   return {
@@ -14,6 +35,7 @@ export function analyzeChunk(chunk: LocaleChunk): ChunkAnalysis {
     text: chunk.text,
     segments,
     words: segments.length,
+    nonWords: nonWords ?? undefined,
   };
 }
 

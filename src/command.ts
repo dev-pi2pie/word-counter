@@ -3,7 +3,11 @@ import { readFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { resolve as resolvePath } from "node:path";
 import { showSingularOrPluralWord } from "./utils";
-import wordCounter, { type WordCounterMode, type WordCounterResult } from "./wc";
+import wordCounter, {
+  type NonWordCollection,
+  type WordCounterMode,
+  type WordCounterResult,
+} from "./wc";
 import { countSections } from "./markdown";
 import type { SectionMode, SectionedResult } from "./markdown";
 import pc from "picocolors";
@@ -29,19 +33,23 @@ function getPackageVersion(): string {
   return pc.bgBlack(pc.bold(pc.italic(` word-counter ${pc.cyanBright(`ver.${version}`)} `)));
 }
 
-function renderChunkBreakdown(items: Array<{ locale: string; words: number }>): void {
+function renderChunkBreakdown(
+  items: Array<{ locale: string; words: number; nonWords?: NonWordCollection }>,
+): void {
   for (const item of items) {
     console.log(`Locale ${item.locale}: ${showSingularOrPluralWord(item.words, "word")}`);
+    renderNonWords(item.nonWords, false);
   }
 }
 
 function renderSegmentBreakdown(
-  items: Array<{ locale: string; words: number; segments: string[] }>,
+  items: Array<{ locale: string; words: number; segments: string[]; nonWords?: NonWordCollection }>,
 ): void {
   for (const item of items) {
     console.log(
       `Locale ${item.locale}: ${JSON.stringify(item.segments)} (${showSingularOrPluralWord(item.words, "word")})`,
     );
+    renderNonWords(item.nonWords, true);
   }
 }
 
@@ -61,6 +69,7 @@ function renderStandardResult(result: WordCounterResult): void {
 
   if (result.breakdown.mode === "collector") {
     renderCollectorBreakdown(result.breakdown.items);
+    renderNonWords(result.breakdown.nonWords, false);
     return;
   }
 
@@ -115,6 +124,7 @@ function renderStandardSectionedResult(result: SectionedResult): void {
 
     if (item.result.breakdown.mode === "collector") {
       renderCollectorBreakdown(item.result.breakdown.items);
+      renderNonWords(item.result.breakdown.nonWords, false);
       continue;
     }
 
@@ -126,6 +136,35 @@ function isSectionedResult(
   result: WordCounterResult | SectionedResult,
 ): result is SectionedResult {
   return "section" in result;
+}
+
+function renderNonWords(nonWords: NonWordCollection | undefined, verbose: boolean): void {
+  if (!nonWords || !hasNonWords(nonWords)) {
+    return;
+  }
+  if (verbose) {
+    console.log(
+      pc.yellow(
+        `Non-words: emoji=${JSON.stringify(nonWords.emoji)} symbols=${JSON.stringify(
+          nonWords.symbols,
+        )} punctuation=${JSON.stringify(nonWords.punctuation)}`,
+      ),
+    );
+    return;
+  }
+  console.log(
+    pc.yellow(
+      `Non-words: emoji ${nonWords.counts.emoji}, symbols ${nonWords.counts.symbols}, punctuation ${nonWords.counts.punctuation}`,
+    ),
+  );
+}
+
+function hasNonWords(nonWords: NonWordCollection): boolean {
+  return (
+    nonWords.counts.emoji > 0 ||
+    nonWords.counts.symbols > 0 ||
+    nonWords.counts.punctuation > 0
+  );
 }
 
 async function readStdin(): Promise<string> {
@@ -177,6 +216,7 @@ export async function runCli(argv: string[] = process.argv): Promise<void> {
         .default("all"),
     )
     .option("--latin-locale <locale>", "hint the locale for Latin script text")
+    .option("--non-words", "collect emoji, symbols, and punctuation")
     .option("--pretty", "pretty print JSON output", false)
     .option("-p, --path <file>", "read input from a text file")
     .argument("[text...]", "text to count")
@@ -191,6 +231,7 @@ export async function runCli(argv: string[] = process.argv): Promise<void> {
         pretty: boolean;
         section: SectionMode;
         latinLocale?: string;
+        nonWords?: boolean;
         path?: string;
       },
     ) => {
@@ -213,6 +254,7 @@ export async function runCli(argv: string[] = process.argv): Promise<void> {
       const wcOptions = {
         mode: options.mode,
         latinLocaleHint: options.latinLocale,
+        nonWords: options.nonWords,
       };
       const result: WordCounterResult | SectionedResult = useSection
         ? countSections(trimmed, options.section, wcOptions)

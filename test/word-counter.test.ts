@@ -22,6 +22,22 @@ describe("wordCounter", () => {
     expect(wordCounter("Hi 👋 world").total).toBe(2);
     expect(countWordsForLocale("Hello, world!", "en")).toBe(2);
   });
+
+  test("collects non-word categories when enabled", () => {
+    const result = wordCounter("Hi 👋, world!", {
+      nonWords: true,
+    });
+    const first = result.breakdown.items[0];
+    expect(first?.nonWords?.counts.emoji).toBe(1);
+    expect(first?.nonWords?.counts.symbols).toBe(0);
+    expect(first?.nonWords?.counts.punctuation).toBe(2);
+  });
+
+  test("does not include non-words when disabled", () => {
+    const result = wordCounter("Hi 👋, world!");
+    const first = result.breakdown.items[0];
+    expect(first && "nonWords" in first ? first.nonWords : undefined).toBeUndefined();
+  });
 });
 
 describe("segmentTextByLocale", () => {
@@ -64,5 +80,18 @@ describe("countWordsForLocale", () => {
   test("handles apostrophes and URLs", () => {
     expect(countWordsForLocale("Don't stop", "en")).toBe(2);
     expect(countWordsForLocale("Visit https://example.com today", "en")).toBe(4);
+  });
+});
+
+describe("collector mode with non-words", () => {
+  test("aggregates non-words into a locale-neutral bucket", () => {
+    const result = wordCounter("© 👋!", {
+      mode: "collector",
+      nonWords: true,
+    });
+    expect(result.breakdown.mode).toBe("collector");
+    expect(result.breakdown.nonWords?.counts.emoji).toBe(1);
+    expect(result.breakdown.nonWords?.counts.symbols).toBe(1);
+    expect(result.breakdown.nonWords?.counts.punctuation).toBe(1);
   });
 });
