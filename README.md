@@ -266,6 +266,7 @@ word-counter --non-words "Hi 👋, world!"
 ```
 
 Example: `total = words + emoji + symbols + punctuation` when enabled.
+Standard output labels this as `Total count` to reflect the combined total; `--format raw` still prints a single number.
 
 > [!Note]
 > Text-default symbols (e.g. ©) count as `symbols` unless explicitly emoji-presented (e.g. ©️ with VS16).

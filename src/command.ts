@@ -59,8 +59,20 @@ function renderCollectorBreakdown(items: Array<{ locale: string; words: number }
   }
 }
 
-function renderStandardResult(result: WordCounterResult): void {
-  console.log(`Total words: ${result.total}`);
+type TotalLabels = {
+  overall: string;
+  section: string;
+};
+
+function getTotalLabels(includeNonWords: boolean): TotalLabels {
+  if (includeNonWords) {
+    return { overall: "Total count", section: "total count" };
+  }
+  return { overall: "Total words", section: "total" };
+}
+
+function renderStandardResult(result: WordCounterResult, totalLabel: string): void {
+  console.log(`${totalLabel}: ${result.total}`);
 
   if (result.breakdown.mode === "segments") {
     renderSegmentBreakdown(result.breakdown.items);
@@ -80,41 +92,42 @@ function buildSectionLabel(
   sectionName: string,
   sectionMode: SectionMode,
   source: "frontmatter" | "content",
+  totalLabel: string,
 ): string {
   if (sectionMode === "frontmatter") {
-    return `[Frontmatter] (total)`;
+    return `[Frontmatter] (${totalLabel})`;
   }
 
   if (sectionMode === "content") {
-    return `[Content] (total)`;
+    return `[Content] (${totalLabel})`;
   }
 
   if (sectionMode === "split") {
     if (source === "frontmatter") {
-      return `[Frontmatter] (total)`;
+      return `[Frontmatter] (${totalLabel})`;
     }
-    return `[Content] (total)`;
+    return `[Content] (${totalLabel})`;
   }
 
   if (sectionMode === "per-key") {
-    return `[Frontmatter] ${sectionName} (total)`;
+    return `[Frontmatter] ${sectionName} (${totalLabel})`;
   }
 
   if (sectionMode === "split-per-key") {
     if (source === "content") {
-      return `[Content] (total)`;
+      return `[Content] (${totalLabel})`;
     }
-    return `[Frontmatter] ${sectionName} (total)`;
+    return `[Frontmatter] ${sectionName} (${totalLabel})`;
   }
 
-  return `[Section] ${sectionName} (total)`;
+  return `[Section] ${sectionName} (${totalLabel})`;
 }
 
-function renderStandardSectionedResult(result: SectionedResult): void {
-  console.log(`Total words: ${result.total}`);
+function renderStandardSectionedResult(result: SectionedResult, labels: TotalLabels): void {
+  console.log(`${labels.overall}: ${result.total}`);
 
   for (const item of result.items) {
-    const label = buildSectionLabel(item.name, result.section, item.source);
+    const label = buildSectionLabel(item.name, result.section, item.source, labels.section);
     console.log(pc.cyan(pc.bold(`${label}: ${showSingularOrPluralWord(item.result.total, "word")}`)));
 
     if (item.result.breakdown.mode === "segments") {
@@ -271,12 +284,13 @@ export async function runCli(argv: string[] = process.argv): Promise<void> {
         return;
       }
 
+      const labels = getTotalLabels(Boolean(options.nonWords));
       if (isSectionedResult(result)) {
-        renderStandardSectionedResult(result);
+        renderStandardSectionedResult(result, labels);
         return;
       }
 
-      renderStandardResult(result);
+      renderStandardResult(result, labels.overall);
     },
   );
 
