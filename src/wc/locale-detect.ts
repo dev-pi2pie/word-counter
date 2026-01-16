@@ -77,11 +77,11 @@ export function detectLocaleForChar(
     if (hintedLocale !== DEFAULT_LOCALE) {
       return hintedLocale;
     }
-    if (options.latinLocaleHint) {
-      return options.latinLocaleHint;
-    }
     if (previousLocale && isLatinLocale(previousLocale)) {
       return previousLocale;
+    }
+    if (options.latinLocaleHint) {
+      return options.latinLocaleHint;
     }
     return DEFAULT_LOCALE;
   }
