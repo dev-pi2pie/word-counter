@@ -1,4 +1,4 @@
-import { getSegmenter } from "./segmenter";
+import { countCharsForLocale, getSegmenter } from "./segmenter";
 import {
   addNonWord,
   classifyNonWordSegment,
@@ -10,6 +10,8 @@ import type {
   LocaleChunk,
   NonWordCollection,
 } from "./types";
+
+type CharAnalysis = LocaleChunk & { chars: number; nonWords?: NonWordCollection };
 
 export function analyzeChunk(
   chunk: LocaleChunk,
@@ -35,6 +37,39 @@ export function analyzeChunk(
     text: chunk.text,
     segments,
     words: segments.length,
+    nonWords: nonWords ?? undefined,
+  };
+}
+
+export function analyzeCharChunk(
+  chunk: LocaleChunk,
+  collectNonWords?: boolean,
+): CharAnalysis {
+  const segmenter = getSegmenter(chunk.locale);
+  const nonWords: NonWordCollection | null = collectNonWords
+    ? createNonWordCollection()
+    : null;
+  let chars = 0;
+
+  for (const part of segmenter.segment(chunk.text)) {
+    if (part.isWordLike) {
+      chars += countCharsForLocale(part.segment, chunk.locale);
+      continue;
+    }
+
+    if (collectNonWords && nonWords) {
+      const category = classifyNonWordSegment(part.segment);
+      if (category) {
+        addNonWord(nonWords, category, part.segment);
+        chars += countCharsForLocale(part.segment, chunk.locale);
+      }
+    }
+  }
+
+  return {
+    locale: chunk.locale,
+    text: chunk.text,
+    chars,
     nonWords: nonWords ?? undefined,
   };
 }

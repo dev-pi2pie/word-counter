@@ -1,8 +1,10 @@
-import { analyzeChunk, aggregateByLocale } from "./analyze";
+import { analyzeCharChunk, analyzeChunk, aggregateByLocale } from "./analyze";
+import { resolveMode } from "./mode";
 import { segmentTextByLocale } from "./segment";
-import { countWordsForLocale } from "./segmenter";
+import { countCharsForLocale, countWordsForLocale } from "./segmenter";
 import { createNonWordCollection, mergeNonWordCollections } from "./non-words";
 import type {
+  CharBreakdown,
   ChunkBreakdown,
   ChunkWithSegments,
   NonWordCollection,
@@ -19,15 +21,34 @@ export type {
   WordCounterBreakdown,
 } from "./types";
 
-export { countWordsForLocale, segmentTextByLocale };
+export { countCharsForLocale, countWordsForLocale, segmentTextByLocale };
 
 export function wordCounter(
   text: string,
   options: WordCounterOptions = {}
 ): WordCounterResult {
-  const mode: WordCounterMode = options.mode ?? "chunk";
+  const mode: WordCounterMode = resolveMode(options.mode, "chunk");
   const collectNonWords = Boolean(options.nonWords);
   const chunks = segmentTextByLocale(text, { latinLocaleHint: options.latinLocaleHint });
+
+  if (mode === "char") {
+    const analyzed = chunks.map((chunk) => analyzeCharChunk(chunk, collectNonWords));
+    const total = analyzed.reduce((sum, chunk) => sum + chunk.chars, 0);
+    const items: CharBreakdown[] = analyzed.map((chunk) => ({
+      locale: chunk.locale,
+      text: chunk.text,
+      chars: chunk.chars,
+      nonWords: chunk.nonWords,
+    }));
+    return {
+      total,
+      breakdown: {
+        mode,
+        items,
+      },
+    };
+  }
+
   const analyzed = chunks.map((chunk) => analyzeChunk(chunk, collectNonWords));
   const total = analyzed.reduce((sum, chunk) => {
     let chunkTotal = chunk.words;

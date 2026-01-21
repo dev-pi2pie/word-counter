@@ -2,7 +2,7 @@
 title: "Character count mode"
 date: 2026-01-21
 modified-date: 2026-01-21
-status: draft
+status: active
 agent: codex
 ---
 
@@ -28,10 +28,10 @@ Current modes (chunk/segments/collector) are word-focused and use `Intl.Segmente
 
 ## Implementation Plan
 
-- [ ] Add `char` to `WordCounterMode` and update option parsing to normalize aliases (CLI + API).
-- [ ] Introduce a grapheme segmenter helper (parallel to word segmenter) and a `countCharsForLocale` function.
-- [ ] Extend the breakdown shape to support `char` mode counts only (no grapheme lists).
-- [ ] Update CLI output labels to ensure mode + `--non-words` differences are clear.
+- [x] Add `char` to `WordCounterMode` and update option parsing to normalize aliases (CLI + API).
+- [x] Introduce a grapheme segmenter helper (parallel to word segmenter) and a `countCharsForLocale` function.
+- [x] Extend the breakdown shape to support `char` mode counts only (no grapheme lists).
+- [x] Update CLI output labels to ensure mode + `--non-words` differences are clear.
 - [ ] Update README/examples for the new mode, alias behavior, and emoji/grapheme counting explanation.
 - [ ] Add unit tests for alias normalization and `char` counts, including emoji (single emoji, ZWJ sequences, variation selectors, flags) and `--non-words` behavior.
 
