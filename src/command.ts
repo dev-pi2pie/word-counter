@@ -8,13 +8,15 @@ import wordCounter, {
   type WordCounterMode,
   type WordCounterResult,
 } from "./wc";
+import { normalizeMode } from "./wc/mode";
 import { countSections } from "./markdown";
 import type { SectionMode, SectionedResult } from "./markdown";
 import pc from "picocolors";
 
 type OutputFormat = "standard" | "raw" | "json";
+type CountUnit = "word" | "character";
 
-const MODE_CHOICES: WordCounterMode[] = ["chunk", "segments", "collector"];
+const MODE_CHOICES: WordCounterMode[] = ["chunk", "segments", "collector", "char"];
 const FORMAT_CHOICES: OutputFormat[] = ["standard", "raw", "json"];
 const SECTION_CHOICES: SectionMode[] = [
   "all",
@@ -33,11 +35,15 @@ function getPackageVersion(): string {
   return pc.bgBlack(pc.bold(pc.italic(` word-counter ${pc.cyanBright(`ver.${version}`)} `)));
 }
 
-function renderChunkBreakdown(
-  items: Array<{ locale: string; words: number; nonWords?: NonWordCollection }>,
-): void {
+type CountBreakdownItem = {
+  locale: string;
+  count: number;
+  nonWords?: NonWordCollection;
+};
+
+function renderCountBreakdown(items: CountBreakdownItem[], unit: CountUnit): void {
   for (const item of items) {
-    console.log(`Locale ${item.locale}: ${showSingularOrPluralWord(item.words, "word")}`);
+    console.log(`Locale ${item.locale}: ${showSingularOrPluralWord(item.count, unit)}`);
     renderNonWords(item.nonWords, false);
   }
 }
@@ -64,11 +70,16 @@ type TotalLabels = {
   section: string;
 };
 
-function getTotalLabels(includeNonWords: boolean): TotalLabels {
+function getCountUnit(mode: WordCounterMode): CountUnit {
+  return mode === "char" ? "character" : "word";
+}
+
+function getTotalLabels(mode: WordCounterMode, includeNonWords: boolean): TotalLabels {
+  const unit = mode === "char" ? "characters" : "words";
   if (includeNonWords) {
     return { overall: "Total count", section: "total count" };
   }
-  return { overall: "Total words", section: "total" };
+  return { overall: `Total ${unit}`, section: `total ${unit}` };
 }
 
 function renderStandardResult(result: WordCounterResult, totalLabel: string): void {
@@ -85,7 +96,26 @@ function renderStandardResult(result: WordCounterResult, totalLabel: string): vo
     return;
   }
 
-  renderChunkBreakdown(result.breakdown.items);
+  if (result.breakdown.mode === "char") {
+    renderCountBreakdown(
+      result.breakdown.items.map((item) => ({
+        locale: item.locale,
+        count: item.chars,
+        nonWords: item.nonWords,
+      })),
+      getCountUnit(result.breakdown.mode),
+    );
+    return;
+  }
+
+  renderCountBreakdown(
+    result.breakdown.items.map((item) => ({
+      locale: item.locale,
+      count: item.words,
+      nonWords: item.nonWords,
+    })),
+    getCountUnit(result.breakdown.mode),
+  );
 }
 
 function buildSectionLabel(
@@ -128,7 +158,8 @@ function renderStandardSectionedResult(result: SectionedResult, labels: TotalLab
 
   for (const item of result.items) {
     const label = buildSectionLabel(item.name, result.section, item.source, labels.section);
-    console.log(pc.cyan(pc.bold(`${label}: ${showSingularOrPluralWord(item.result.total, "word")}`)));
+    const unit = getCountUnit(item.result.breakdown.mode);
+    console.log(pc.cyan(pc.bold(`${label}: ${showSingularOrPluralWord(item.result.total, unit)}`)));
 
     if (item.result.breakdown.mode === "segments") {
       renderSegmentBreakdown(item.result.breakdown.items);
@@ -141,7 +172,26 @@ function renderStandardSectionedResult(result: SectionedResult, labels: TotalLab
       continue;
     }
 
-    renderChunkBreakdown(item.result.breakdown.items);
+    if (item.result.breakdown.mode === "char") {
+      renderCountBreakdown(
+        item.result.breakdown.items.map((chunk) => ({
+          locale: chunk.locale,
+          count: chunk.chars,
+          nonWords: chunk.nonWords,
+        })),
+        unit,
+      );
+      continue;
+    }
+
+    renderCountBreakdown(
+      item.result.breakdown.items.map((chunk) => ({
+        locale: chunk.locale,
+        count: chunk.words,
+        nonWords: chunk.nonWords,
+      })),
+      unit,
+    );
   }
 }
 
@@ -210,13 +260,23 @@ async function resolveInput(textTokens: string[], pathInput?: string): Promise<s
 
 export async function runCli(argv: string[] = process.argv): Promise<void> {
   const program = new Command();
+  const parseMode = (value: string): WordCounterMode => {
+    const normalized = normalizeMode(value);
+    if (!normalized) {
+      throw new Error(`Invalid mode: ${value}`);
+    }
+    return normalized;
+  };
 
   program
     .name("word-counter")
     .description("Locale-aware word counting powered by Intl.Segmenter.")
     .version(getPackageVersion(), "-v, --version", "output the version number")
     .addOption(
-      new Option("-m, --mode <mode>", "breakdown mode").choices(MODE_CHOICES).default("chunk"),
+      new Option("-m, --mode <mode>", "breakdown mode")
+        .choices(MODE_CHOICES)
+        .argParser(parseMode)
+        .default("chunk"),
     )
     .addOption(
       new Option("-f, --format <format>", "output format")
@@ -284,7 +344,7 @@ export async function runCli(argv: string[] = process.argv): Promise<void> {
         return;
       }
 
-      const labels = getTotalLabels(Boolean(options.nonWords));
+      const labels = getTotalLabels(options.mode, Boolean(options.nonWords));
       if (isSectionedResult(result)) {
         renderStandardSectionedResult(result, labels);
         return;

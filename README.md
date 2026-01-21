@@ -47,29 +47,9 @@ npm unlink --global @dev-pi2pie/word-counter
 npm install -g @dev-pi2pie/word-counter@latest
 ```
 
-### From GitHub Packages
-
-If your scope is configured to use GitHub Packages:
-
-```bash
-# ~/.npmrc
-@dev-pi2pie:registry=https://npm.pkg.github.com
-```
-
-```bash
-npm install -g @dev-pi2pie/word-counter@latest
-```
-
-If your scope is configured to use npmjs instead, the same scoped package name
-will resolve from npmjs.com (see the npm registry section above).
-
-> [!note]
-> **npm** may show newer releases (for example, `v0.0.6`) while GitHub Packages still lists `v0.0.5`.
-> This is historical; releases kept in sync starting with `v0.0.6`.
-
 ## Usage
 
-Once installed (via `npm link`, npm registry, or GitHub Packages), you can use the CLI directly:
+Once installed (via `npm link` or the npm registry), you can use the CLI directly:
 
 ```bash
 word-counter "Hello 世界 안녕"
@@ -109,12 +89,13 @@ word-counter --path ./fixtures/sample.txt
 
 ## Library Usage
 
-The package exports can be used after installing from GitHub Packages or linking locally with `npm link`.
+The package exports can be used after installing from the npm registry or linking locally with `npm link`.
 
 ### ESM
 
 ```js
 import wordCounter, {
+  countCharsForLocale,
   countWordsForLocale,
   countSections,
   parseMarkdown,
@@ -124,6 +105,8 @@ import wordCounter, {
 
 wordCounter("Hello world", { latinLocaleHint: "en" });
 wordCounter("Hi 👋, world!", { nonWords: true });
+wordCounter("Hi 👋, world!", { mode: "char", nonWords: true });
+countCharsForLocale("👋", "en");
 ```
 
 ### CJS
@@ -131,6 +114,7 @@ wordCounter("Hi 👋, world!", { nonWords: true });
 ```js
 const wordCounter = require("@dev-pi2pie/word-counter");
 const {
+  countCharsForLocale,
   countWordsForLocale,
   countSections,
   parseMarkdown,
@@ -140,6 +124,8 @@ const {
 
 wordCounter("Hello world", { latinLocaleHint: "en" });
 wordCounter("Hi 👋, world!", { nonWords: true });
+wordCounter("Hi 👋, world!", { mode: "char", nonWords: true });
+countCharsForLocale("👋", "en");
 ```
 
 ### Export Summary
@@ -150,6 +136,7 @@ wordCounter("Hi 👋, world!", { nonWords: true });
 | --------------------- | -------- | -------------------------------------------------- |
 | `default`             | function | `wordCounter(text, options?) -> WordCounterResult` |
 | `wordCounter`         | function | Alias of the default export.                       |
+| `countCharsForLocale` | function | Low-level helper for per-locale char counts.       |
 | `countWordsForLocale` | function | Low-level helper for per-locale counts.            |
 | `segmentTextByLocale` | function | Low-level helper for locale-aware segmentation.    |
 
@@ -173,7 +160,7 @@ wordCounter("Hi 👋, world!", { nonWords: true });
 | `WordCounterOptions`   | type | Options for the `wordCounter` function.   |
 | `WordCounterResult`    | type | Returned by `wordCounter`.                |
 | `WordCounterBreakdown` | type | Breakdown payload in `WordCounterResult`. |
-| `WordCounterMode`      | type | `"chunk" \| "segments" \| "collector"`.   |
+| `WordCounterMode`      | type | `"chunk" \| "segments" \| "collector" \| "char"`.   |
 | `NonWordCollection`    | type | Non-word segments + counts payload.       |
 
 ### Display Modes
@@ -183,6 +170,14 @@ Choose a breakdown style with `--mode` (or `-m`):
 - `chunk` (default) – list each contiguous locale block in order of appearance.
 - `segments` – show the actual wordlike segments used for counting.
 - `collector` – aggregate counts per locale regardless of text position.
+- `char` – count grapheme clusters (user-perceived characters) per locale.
+
+Aliases are normalized for CLI + API:
+
+- `chunk`, `chunks`
+- `segments`, `segment`, `seg`
+- `collector`, `collect`, `colle`
+- `char`, `chars`, `character`, `characters`
 
 Examples:
 
@@ -195,6 +190,9 @@ word-counter --mode segments "飛鳥 bird 貓 cat; how do you do?"
 
 # aggregate per locale
 word-counter -m collector "飛鳥 bird 貓 cat; how do you do?"
+
+# grapheme-aware character count
+word-counter -m char "Hi 👋, world!"
 ```
 
 ### Section Modes (Frontmatter)
