@@ -1,5 +1,9 @@
 import { describe, expect, test } from "bun:test";
-import wordCounter, { countWordsForLocale, segmentTextByLocale } from "../src/wc";
+import wordCounter, {
+  countCharsForLocale,
+  countWordsForLocale,
+  segmentTextByLocale,
+} from "../src/wc";
 
 describe("wordCounter", () => {
   test("counts Latin words in chunk mode by default", () => {
@@ -82,6 +86,42 @@ describe("countWordsForLocale", () => {
   test("handles apostrophes and URLs", () => {
     expect(countWordsForLocale("Don't stop", "en")).toBe(2);
     expect(countWordsForLocale("Visit https://example.com today", "en")).toBe(4);
+  });
+});
+
+describe("countCharsForLocale", () => {
+  test("counts grapheme clusters for emoji sequences", () => {
+    expect(countCharsForLocale("👩‍👩‍👧‍👦", "en")).toBe(1);
+    expect(countCharsForLocale("🇺🇸", "en")).toBe(1);
+    expect(countCharsForLocale("⭐️", "en")).toBe(1);
+  });
+
+  test("counts combining marks as single graphemes", () => {
+    expect(countCharsForLocale("e\u0301", "en")).toBe(1);
+  });
+});
+
+describe("char mode", () => {
+  test("counts grapheme clusters when non-words are enabled", () => {
+    const result = wordCounter("Hi 👋, world!", {
+      mode: "char",
+      nonWords: true,
+    });
+    expect(result.breakdown.mode).toBe("char");
+    expect(result.total).toBe(10);
+  });
+
+  test("excludes non-words when disabled", () => {
+    const result = wordCounter("Hi 👋, world!", {
+      mode: "char",
+    });
+    expect(result.breakdown.mode).toBe("char");
+    expect(result.total).toBe(7);
+  });
+
+  test("normalizes mode aliases", () => {
+    const result = wordCounter("Hi", { mode: "chars" as unknown as "char" });
+    expect(result.breakdown.mode).toBe("char");
   });
 });
 
