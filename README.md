@@ -47,29 +47,9 @@ npm unlink --global @dev-pi2pie/word-counter
 npm install -g @dev-pi2pie/word-counter@latest
 ```
 
-### From GitHub Packages
-
-If your scope is configured to use GitHub Packages:
-
-```bash
-# ~/.npmrc
-@dev-pi2pie:registry=https://npm.pkg.github.com
-```
-
-```bash
-npm install -g @dev-pi2pie/word-counter@latest
-```
-
-If your scope is configured to use npmjs instead, the same scoped package name
-will resolve from npmjs.com (see the npm registry section above).
-
-> [!note]
-> **npm** may show newer releases (for example, `v0.0.6`) while GitHub Packages still lists `v0.0.5`.
-> This is historical; releases kept in sync starting with `v0.0.6`.
-
 ## Usage
 
-Once installed (via `npm link`, npm registry, or GitHub Packages), you can use the CLI directly:
+Once installed (via `npm link` or the npm registry), you can use the CLI directly:
 
 ```bash
 word-counter "Hello 世界 안녕"
@@ -109,7 +89,7 @@ word-counter --path ./fixtures/sample.txt
 
 ## Library Usage
 
-The package exports can be used after installing from GitHub Packages or linking locally with `npm link`.
+The package exports can be used after installing from the npm registry or linking locally with `npm link`.
 
 ### ESM
 
