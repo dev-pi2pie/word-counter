@@ -106,7 +106,35 @@ import wordCounter, {
 wordCounter("Hello world", { latinLocaleHint: "en" });
 wordCounter("Hi 👋, world!", { nonWords: true });
 wordCounter("Hi 👋, world!", { mode: "char", nonWords: true });
+wordCounter("Hi\tthere\n", { nonWords: true, includeWhitespace: true });
 countCharsForLocale("👋", "en");
+```
+
+Note: `includeWhitespace` only affects results when `nonWords: true` is enabled.
+
+Sample output (with `nonWords: true` and `includeWhitespace: true`):
+
+```json
+{
+  "total": 4,
+  "counts": { "words": 2, "nonWords": 2, "total": 4 },
+  "breakdown": {
+    "mode": "chunk",
+    "items": [
+      {
+        // ...
+        "words": 2,
+        "nonWords": {
+          "emoji": [],
+          "symbols": [],
+          "punctuation": [],
+          "counts": { "emoji": 0, "symbols": 0, "punctuation": 0, "whitespace": 2 },
+          "whitespace": { "spaces": 0, "tabs": 1, "newlines": 1, "other": 0 }
+        }
+      }
+    ]
+  }
+}
 ```
 
 ### CJS
@@ -125,7 +153,35 @@ const {
 wordCounter("Hello world", { latinLocaleHint: "en" });
 wordCounter("Hi 👋, world!", { nonWords: true });
 wordCounter("Hi 👋, world!", { mode: "char", nonWords: true });
+wordCounter("Hi\tthere\n", { nonWords: true, includeWhitespace: true });
 countCharsForLocale("👋", "en");
+```
+
+Note: `includeWhitespace` only affects results when `nonWords: true` is enabled.
+
+Sample output (with `nonWords: true` and `includeWhitespace: true`):
+
+```json
+{
+  "total": 4,
+  "counts": { "words": 2, "nonWords": 2, "total": 4 },
+  "breakdown": {
+    "mode": "chunk",
+    "items": [
+      {
+        // ...
+        "words": 2,
+        "nonWords": {
+          "emoji": [],
+          "symbols": [],
+          "punctuation": [],
+          "counts": { "emoji": 0, "symbols": 0, "punctuation": 0, "whitespace": 2 },
+          "whitespace": { "spaces": 0, "tabs": 1, "newlines": 1, "other": 0 }
+        }
+      }
+    ]
+  }
+}
 ```
 
 ### Export Summary
@@ -155,13 +211,13 @@ countCharsForLocale("👋", "en");
 
 #### Types
 
-| Export                 | Kind | Notes                                     |
-| ---------------------- | ---- | ----------------------------------------- |
-| `WordCounterOptions`   | type | Options for the `wordCounter` function.   |
-| `WordCounterResult`    | type | Returned by `wordCounter`.                |
-| `WordCounterBreakdown` | type | Breakdown payload in `WordCounterResult`. |
-| `WordCounterMode`      | type | `"chunk" \| "segments" \| "collector" \| "char"`.   |
-| `NonWordCollection`    | type | Non-word segments + counts payload.       |
+| Export                 | Kind | Notes                                             |
+| ---------------------- | ---- | ------------------------------------------------- |
+| `WordCounterOptions`   | type | Options for the `wordCounter` function.           |
+| `WordCounterResult`    | type | Returned by `wordCounter`.                        |
+| `WordCounterBreakdown` | type | Breakdown payload in `WordCounterResult`.         |
+| `WordCounterMode`      | type | `"chunk" \| "segments" \| "collector" \| "char"`. |
+| `NonWordCollection`    | type | Non-word segments + counts payload.               |
 
 ### Display Modes
 
