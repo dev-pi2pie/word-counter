@@ -1,7 +1,7 @@
 ---
 title: "Whitespace counting via non-words misc bucket"
 date: 2026-02-02
-status: active
+status: completed
 agent: Codex
 ---
 
@@ -30,6 +30,9 @@ Add an opt-in whitespace-like counting path that extends the existing non-words 
 - `nonWords: true` + `includeWhitespace: true` (aka `--misc`):
   - `total = words + nonWords(emoji + symbols + punctuation + whitespace)`
 
+Note: In the CLI, `--include-whitespace` implies `--non-words` (same behavior as `--misc`).
+Note: `--non-words` alone does not include whitespace; use `--include-whitespace` or `--misc` for the combined total.
+
 ## Output Shape (Draft)
 
 - Extend existing `nonWords` structures with `whitespace` counts:
@@ -50,29 +53,30 @@ Add an opt-in whitespace-like counting path that extends the existing non-words 
 ## Implementation Plan
 
 ### Phase 1: Options + totals wiring
-- [ ] Add option normalization to map `--misc` (CLI-only) to `nonWords + includeWhitespace`.
-- [ ] Add `includeWhitespace` to the API options (no `misc` API option).
-- [ ] Update total computation to reflect the rules above.
+- [x] Add option normalization to map `--misc` (CLI-only) to `nonWords + includeWhitespace`.
+- [x] Add `includeWhitespace` to the API options (no `misc` API option).
+- [x] Update total computation to reflect the rules above.
 
 ### Phase 2: Whitespace classification + aggregation
-- [ ] Extend segmentation helpers to classify whitespace-like graphemes (spaces, tabs, newlines, other).
-- [ ] Update non-words aggregation to include `whitespace` when enabled (only under `nonWords`).
-- [ ] Add JSON details `counts` when `nonWords` is enabled (emit explicit totals: `words`, `nonWords`, `total`; include wherever non-words details are already emitted so consumers do not recompute).
+- [x] Extend segmentation helpers to classify whitespace-like graphemes (spaces, tabs, newlines, other).
+- [x] Update non-words aggregation to include `whitespace` when enabled (only under `nonWords`).
+- [x] Add JSON details `counts` when `nonWords` is enabled (emit explicit totals: `words`, `nonWords`, `total`; include wherever non-words details are already emitted so consumers do not recompute).
 
 ### Phase 3: Tests
-- [ ] Add unit tests for default totals (unchanged).
-- [ ] Add unit tests for `--non-words` totals excluding whitespace.
-- [ ] Add unit tests for `--misc` totals including whitespace (spaces, tabs, newlines).
-- [ ] Add unit tests for JSON details: `counts` and `whitespace` appear only when enabled.
+- [x] Add unit tests for default totals (unchanged).
+- [x] Add unit tests for `--non-words` totals excluding whitespace.
+- [x] Add unit tests for `includeWhitespace` totals including whitespace (spaces, tabs, newlines).
+- [x] Add unit tests for JSON details: `counts` and `whitespace` appear only when enabled.
 
 ### Phase 4: Docs
-- [ ] Update README CLI flags for `--include-whitespace` and `--misc`.
-- [ ] Update API reference for `includeWhitespace` and `nonWords` totals behavior.
-- [ ] Add an example output snippet showing `nonWords.whitespace` and `counts`.
+- [x] Update README CLI flags for `--include-whitespace` and `--misc`.
+- [x] Update API reference for `includeWhitespace` and `nonWords` totals behavior.
+- [x] Add an example output snippet showing `nonWords.whitespace` and `counts`.
 
 ## Decisions
 
 - `misc?: boolean` is CLI-only (no API option).
+- In the CLI, `--include-whitespace` implies `--non-words` (same behavior as `--misc`).
 - `whitespace` stays under `nonWords` (no separate top-level object).
 
 ## Related Research

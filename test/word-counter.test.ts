@@ -36,6 +36,7 @@ describe("wordCounter", () => {
     expect(first?.nonWords?.counts.symbols).toBe(0);
     expect(first?.nonWords?.counts.punctuation).toBe(2);
     expect(result.total).toBe(6);
+    expect(result.counts).toEqual({ words: 2, nonWords: 4, total: 6 });
   });
 
   test("does not include non-words when disabled", () => {
@@ -43,6 +44,32 @@ describe("wordCounter", () => {
     const first = result.breakdown.items[0];
     expect(first && "nonWords" in first ? first.nonWords : undefined).toBeUndefined();
     expect(result.total).toBe(2);
+    expect(result.counts).toBeUndefined();
+  });
+
+  test("excludes whitespace from totals when includeWhitespace is false", () => {
+    const result = wordCounter("Hi \tthere\n", {
+      nonWords: true,
+    });
+    const first = result.breakdown.items[0];
+    expect(first?.nonWords?.counts.whitespace ?? 0).toBe(0);
+    expect(result.counts).toEqual({ words: 2, nonWords: 0, total: 2 });
+  });
+
+  test("includes whitespace in totals when includeWhitespace is true", () => {
+    const result = wordCounter("Hi \tthere\n", {
+      nonWords: true,
+      includeWhitespace: true,
+    });
+    const first = result.breakdown.items[0];
+    expect(first?.nonWords?.whitespace).toEqual({
+      spaces: 1,
+      tabs: 1,
+      newlines: 1,
+      other: 0,
+    });
+    expect(first?.nonWords?.counts.whitespace).toBe(3);
+    expect(result.counts).toEqual({ words: 2, nonWords: 3, total: 5 });
   });
 });
 

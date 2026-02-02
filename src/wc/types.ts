@@ -35,12 +35,21 @@ export interface NonWordCounts {
   emoji: number;
   symbols: number;
   punctuation: number;
+  whitespace?: number;
+}
+
+export interface WhitespaceCounts {
+  spaces: number;
+  tabs: number;
+  newlines: number;
+  other: number;
 }
 
 export interface NonWordCollection {
   emoji: string[];
   symbols: string[];
   punctuation: string[];
+  whitespace?: WhitespaceCounts;
   counts: NonWordCounts;
 }
 
@@ -48,6 +57,13 @@ export interface WordCounterOptions {
   mode?: WordCounterMode;
   latinLocaleHint?: string;
   nonWords?: boolean;
+  includeWhitespace?: boolean;
+}
+
+export interface WordCounterCounts {
+  words: number;
+  nonWords: number;
+  total: number;
 }
 
 export type WordCounterBreakdown =
@@ -62,5 +78,6 @@ export type WordCounterBreakdown =
 
 export interface WordCounterResult {
   total: number;
+  counts?: WordCounterCounts;
   breakdown: WordCounterBreakdown;
 }

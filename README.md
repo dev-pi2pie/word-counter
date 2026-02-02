@@ -266,6 +266,37 @@ word-counter --non-words "Hi 👋, world!"
 Example: `total = words + emoji + symbols + punctuation` when enabled.
 Standard output labels this as `Total count` to reflect the combined total; `--format raw` still prints a single number.
 
+Include whitespace-like characters in the non-words bucket (API: `includeWhitespace: true`):
+
+```bash
+word-counter --include-whitespace "Hi\tthere\n"
+word-counter --misc "Hi\tthere\n"
+```
+
+In the CLI, `--include-whitespace` implies `--non-words` (same behavior as `--misc`). `--non-words` alone does not include whitespace. When enabled, whitespace counts appear under `nonWords.whitespace`, and `total = words + nonWords` (emoji + symbols + punctuation + whitespace). JSON output also includes top-level `counts` when `nonWords` is enabled. See `docs/schemas/whitespace-categories.md` for how whitespace is categorized.
+
+Example JSON (trimmed):
+
+```json
+{
+  "total": 5,
+  "counts": { "words": 2, "nonWords": 3, "total": 5 },
+  "breakdown": {
+    "mode": "chunk",
+    "items": [
+      {
+        "locale": "und-Latn",
+        "words": 2,
+        "nonWords": {
+          "counts": { "emoji": 0, "symbols": 0, "punctuation": 0, "whitespace": 3 },
+          "whitespace": { "spaces": 1, "tabs": 1, "newlines": 1, "other": 0 }
+        }
+      }
+    ]
+  }
+}
+```
+
 > [!Note]
 > Text-default symbols (e.g. ©) count as `symbols` unless explicitly emoji-presented (e.g. ©️ with VS16).
 

@@ -29,10 +29,13 @@ export function wordCounter(
 ): WordCounterResult {
   const mode: WordCounterMode = resolveMode(options.mode, "chunk");
   const collectNonWords = Boolean(options.nonWords);
+  const includeWhitespace = Boolean(options.includeWhitespace);
   const chunks = segmentTextByLocale(text, { latinLocaleHint: options.latinLocaleHint });
 
   if (mode === "char") {
-    const analyzed = chunks.map((chunk) => analyzeCharChunk(chunk, collectNonWords));
+    const analyzed = chunks.map((chunk) =>
+      analyzeCharChunk(chunk, collectNonWords, includeWhitespace),
+    );
     const total = analyzed.reduce((sum, chunk) => sum + chunk.chars, 0);
     const items: CharBreakdown[] = analyzed.map((chunk) => ({
       locale: chunk.locale,
@@ -40,8 +43,16 @@ export function wordCounter(
       chars: chunk.chars,
       nonWords: chunk.nonWords,
     }));
+    const counts = collectNonWords
+      ? {
+          words: analyzed.reduce((sum, chunk) => sum + chunk.wordChars, 0),
+          nonWords: analyzed.reduce((sum, chunk) => sum + chunk.nonWordChars, 0),
+          total,
+        }
+      : undefined;
     return {
       total,
+      counts,
       breakdown: {
         mode,
         items,
@@ -49,17 +60,27 @@ export function wordCounter(
     };
   }
 
-  const analyzed = chunks.map((chunk) => analyzeChunk(chunk, collectNonWords));
+  const analyzed = chunks.map((chunk) =>
+    analyzeChunk(chunk, collectNonWords, includeWhitespace),
+  );
+  const wordsTotal = analyzed.reduce((sum, chunk) => sum + chunk.words, 0);
+  const nonWordsTotal = collectNonWords
+    ? analyzed.reduce((sum, chunk) => {
+        if (!chunk.nonWords) {
+          return sum;
+        }
+        return sum + getNonWordTotal(chunk.nonWords);
+      }, 0)
+    : 0;
   const total = analyzed.reduce((sum, chunk) => {
     let chunkTotal = chunk.words;
     if (collectNonWords && chunk.nonWords) {
-      chunkTotal +=
-        chunk.nonWords.counts.emoji +
-        chunk.nonWords.counts.symbols +
-        chunk.nonWords.counts.punctuation;
+      chunkTotal += getNonWordTotal(chunk.nonWords);
     }
     return sum + chunkTotal;
   }, 0);
+
+  const counts = collectNonWords ? { words: wordsTotal, nonWords: nonWordsTotal, total } : undefined;
 
   if (mode === "segments") {
     const items: ChunkWithSegments[] = analyzed.map((chunk) => ({
@@ -71,6 +92,7 @@ export function wordCounter(
     }));
     return {
       total,
+      counts,
       breakdown: {
         mode,
         items,
@@ -83,6 +105,7 @@ export function wordCounter(
     const nonWords = collectNonWordsAggregate(analyzed, collectNonWords);
     return {
       total,
+      counts,
       breakdown: {
         mode,
         items,
@@ -100,12 +123,23 @@ export function wordCounter(
 
   return {
     total,
+    counts,
     breakdown: {
       mode,
       items,
     },
   };
 }
+
+function getNonWordTotal(nonWords: NonWordCollection): number {
+  return (
+    nonWords.counts.emoji +
+    nonWords.counts.symbols +
+    nonWords.counts.punctuation +
+    (nonWords.counts.whitespace ?? 0)
+  );
+}
+
 
 function collectNonWordsAggregate(
   analyzed: Array<{ nonWords?: NonWordCollection }>,
