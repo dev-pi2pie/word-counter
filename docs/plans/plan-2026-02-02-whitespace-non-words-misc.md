@@ -19,8 +19,9 @@ Add an opt-in whitespace-like counting path that extends the existing non-words 
 
 - Add `--misc` as a convenience flag for `--non-words --include-whitespace`.
 - Introduce `includeWhitespace: true` in the API to extend non-words with whitespace (tabs/newlines included).
-- When `nonWords` is enabled, emit explicit totals for `words`, `nonWords`, and `total` in JSON details.
+- When `nonWords` is enabled, emit explicit totals for `words`, `nonWords`, and `total` at the top level in JSON details.
 - When `includeWhitespace` is enabled, the `nonWords` total includes whitespace counts.
+- `includeWhitespace` only affects modes that already emit non-words data.
 
 ## Totals Rules
 
@@ -33,7 +34,7 @@ Add an opt-in whitespace-like counting path that extends the existing non-words 
 
 - Extend existing `nonWords` structures with `whitespace` counts:
   - `whitespace: { spaces: number; tabs: number; newlines: number; other: number }`
-- Add optional `counts` in JSON details when `nonWords` is enabled:
+- Add optional top-level `counts` in JSON details when `nonWords` is enabled:
   - `counts: { words: number; nonWords: number; total: number }`
 - Preserve the current payload shapes for each mode; only add fields when the flags are enabled.
 
