@@ -106,7 +106,35 @@ import wordCounter, {
 wordCounter("Hello world", { latinLocaleHint: "en" });
 wordCounter("Hi 👋, world!", { nonWords: true });
 wordCounter("Hi 👋, world!", { mode: "char", nonWords: true });
+wordCounter("Hi\tthere\n", { nonWords: true, includeWhitespace: true });
 countCharsForLocale("👋", "en");
+```
+
+Note: `includeWhitespace` only affects results when `nonWords: true` is enabled.
+
+Sample output (with `nonWords: true` and `includeWhitespace: true`):
+
+```json
+{
+  "total": 4,
+  "counts": { "words": 2, "nonWords": 2, "total": 4 },
+  "breakdown": {
+    "mode": "chunk",
+    "items": [
+      {
+        // ...
+        "words": 2,
+        "nonWords": {
+          "emoji": [],
+          "symbols": [],
+          "punctuation": [],
+          "counts": { "emoji": 0, "symbols": 0, "punctuation": 0, "whitespace": 2 },
+          "whitespace": { "spaces": 0, "tabs": 1, "newlines": 1, "other": 0 }
+        }
+      }
+    ]
+  }
+}
 ```
 
 ### CJS
@@ -125,7 +153,35 @@ const {
 wordCounter("Hello world", { latinLocaleHint: "en" });
 wordCounter("Hi 👋, world!", { nonWords: true });
 wordCounter("Hi 👋, world!", { mode: "char", nonWords: true });
+wordCounter("Hi\tthere\n", { nonWords: true, includeWhitespace: true });
 countCharsForLocale("👋", "en");
+```
+
+Note: `includeWhitespace` only affects results when `nonWords: true` is enabled.
+
+Sample output (with `nonWords: true` and `includeWhitespace: true`):
+
+```json
+{
+  "total": 4,
+  "counts": { "words": 2, "nonWords": 2, "total": 4 },
+  "breakdown": {
+    "mode": "chunk",
+    "items": [
+      {
+        // ...
+        "words": 2,
+        "nonWords": {
+          "emoji": [],
+          "symbols": [],
+          "punctuation": [],
+          "counts": { "emoji": 0, "symbols": 0, "punctuation": 0, "whitespace": 2 },
+          "whitespace": { "spaces": 0, "tabs": 1, "newlines": 1, "other": 0 }
+        }
+      }
+    ]
+  }
+}
 ```
 
 ### Export Summary
@@ -155,13 +211,13 @@ countCharsForLocale("👋", "en");
 
 #### Types
 
-| Export                 | Kind | Notes                                     |
-| ---------------------- | ---- | ----------------------------------------- |
-| `WordCounterOptions`   | type | Options for the `wordCounter` function.   |
-| `WordCounterResult`    | type | Returned by `wordCounter`.                |
-| `WordCounterBreakdown` | type | Breakdown payload in `WordCounterResult`. |
-| `WordCounterMode`      | type | `"chunk" \| "segments" \| "collector" \| "char"`.   |
-| `NonWordCollection`    | type | Non-word segments + counts payload.       |
+| Export                 | Kind | Notes                                             |
+| ---------------------- | ---- | ------------------------------------------------- |
+| `WordCounterOptions`   | type | Options for the `wordCounter` function.           |
+| `WordCounterResult`    | type | Returned by `wordCounter`.                        |
+| `WordCounterBreakdown` | type | Breakdown payload in `WordCounterResult`.         |
+| `WordCounterMode`      | type | `"chunk" \| "segments" \| "collector" \| "char"`. |
+| `NonWordCollection`    | type | Non-word segments + counts payload.               |
 
 ### Display Modes
 
@@ -265,6 +321,37 @@ word-counter --non-words "Hi 👋, world!"
 
 Example: `total = words + emoji + symbols + punctuation` when enabled.
 Standard output labels this as `Total count` to reflect the combined total; `--format raw` still prints a single number.
+
+Include whitespace-like characters in the non-words bucket (API: `includeWhitespace: true`):
+
+```bash
+word-counter --include-whitespace "Hi\tthere\n"
+word-counter --misc "Hi\tthere\n"
+```
+
+In the CLI, `--include-whitespace` implies with `--non-words` (same behavior as `--misc`). `--non-words` alone does not include whitespace. When enabled, whitespace counts appear under `nonWords.whitespace`, and `total = words + nonWords` (emoji + symbols + punctuation + whitespace). JSON output also includes top-level `counts` when `nonWords` is enabled. See `docs/schemas/whitespace-categories.md` for how whitespace is categorized.
+
+Example JSON (trimmed):
+
+```json
+{
+  "total": 5,
+  "counts": { "words": 2, "nonWords": 3, "total": 5 },
+  "breakdown": {
+    "mode": "chunk",
+    "items": [
+      {
+        "locale": "und-Latn",
+        "words": 2,
+        "nonWords": {
+          "counts": { "emoji": 0, "symbols": 0, "punctuation": 0, "whitespace": 3 },
+          "whitespace": { "spaces": 1, "tabs": 1, "newlines": 1, "other": 0 }
+        }
+      }
+    ]
+  }
+}
+```
 
 > [!Note]
 > Text-default symbols (e.g. ©) count as `symbols` unless explicitly emoji-presented (e.g. ©️ with VS16).

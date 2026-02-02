@@ -206,27 +206,32 @@ function renderNonWords(nonWords: NonWordCollection | undefined, verbose: boolea
     return;
   }
   if (verbose) {
+    const whitespace = nonWords.whitespace ? ` whitespace=${JSON.stringify(nonWords.whitespace)}` : "";
     console.log(
       pc.yellow(
         `Non-words: emoji=${JSON.stringify(nonWords.emoji)} symbols=${JSON.stringify(
           nonWords.symbols,
-        )} punctuation=${JSON.stringify(nonWords.punctuation)}`,
+        )} punctuation=${JSON.stringify(nonWords.punctuation)}${whitespace}`,
       ),
     );
     return;
   }
+  const whitespaceCount = nonWords.counts.whitespace ?? 0;
+  const whitespaceLabel = whitespaceCount > 0 ? `, whitespace ${whitespaceCount}` : "";
   console.log(
     pc.yellow(
-      `Non-words: emoji ${nonWords.counts.emoji}, symbols ${nonWords.counts.symbols}, punctuation ${nonWords.counts.punctuation}`,
+      `Non-words: emoji ${nonWords.counts.emoji}, symbols ${nonWords.counts.symbols}, punctuation ${nonWords.counts.punctuation}${whitespaceLabel}`,
     ),
   );
 }
 
 function hasNonWords(nonWords: NonWordCollection): boolean {
+  const whitespaceCount = nonWords.counts.whitespace ?? 0;
   return (
     nonWords.counts.emoji > 0 ||
     nonWords.counts.symbols > 0 ||
-    nonWords.counts.punctuation > 0
+    nonWords.counts.punctuation > 0 ||
+    whitespaceCount > 0
   );
 }
 
@@ -289,7 +294,12 @@ export async function runCli(argv: string[] = process.argv): Promise<void> {
         .default("all"),
     )
     .option("--latin-locale <locale>", "hint the locale for Latin script text")
-    .option("--non-words", "collect emoji, symbols, and punctuation")
+    .option("--non-words", "collect emoji, symbols, and punctuation (excludes whitespace)")
+    .option(
+      "--include-whitespace",
+      "include whitespace counts (implies with --non-words; same as --misc)",
+    )
+    .option("--misc", "collect non-words plus whitespace (alias for --include-whitespace)")
     .option("--pretty", "pretty print JSON output", false)
     .option("-p, --path <file>", "read input from a text file")
     .argument("[text...]", "text to count")
@@ -305,6 +315,8 @@ export async function runCli(argv: string[] = process.argv): Promise<void> {
         section: SectionMode;
         latinLocale?: string;
         nonWords?: boolean;
+        includeWhitespace?: boolean;
+        misc?: boolean;
         path?: string;
       },
     ) => {
@@ -324,10 +336,13 @@ export async function runCli(argv: string[] = process.argv): Promise<void> {
       }
 
       const useSection = options.section !== "all";
+      const enableNonWords = Boolean(options.nonWords || options.includeWhitespace || options.misc);
+      const enableWhitespace = Boolean(options.includeWhitespace || options.misc);
       const wcOptions = {
         mode: options.mode,
         latinLocaleHint: options.latinLocale,
-        nonWords: options.nonWords,
+        nonWords: enableNonWords,
+        includeWhitespace: enableWhitespace,
       };
       const result: WordCounterResult | SectionedResult = useSection
         ? countSections(trimmed, options.section, wcOptions)
@@ -344,7 +359,7 @@ export async function runCli(argv: string[] = process.argv): Promise<void> {
         return;
       }
 
-      const labels = getTotalLabels(options.mode, Boolean(options.nonWords));
+      const labels = getTotalLabels(options.mode, enableNonWords);
       if (isSectionedResult(result)) {
         renderStandardSectionedResult(result, labels);
         return;

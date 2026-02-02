@@ -1,6 +1,7 @@
 import { countCharsForLocale, getSegmenter } from "./segmenter";
 import {
   addNonWord,
+  addWhitespace,
   classifyNonWordSegment,
   createNonWordCollection,
 } from "./non-words";
@@ -16,6 +17,7 @@ type CharAnalysis = LocaleChunk & { chars: number; nonWords?: NonWordCollection 
 export function analyzeChunk(
   chunk: LocaleChunk,
   collectNonWords?: boolean,
+  includeWhitespace?: boolean,
 ): ChunkAnalysis {
   const segmenter = getSegmenter(chunk.locale);
   const segments: string[] = [];
@@ -26,6 +28,9 @@ export function analyzeChunk(
     if (part.isWordLike) {
       segments.push(part.segment);
     } else if (collectNonWords && nonWords) {
+      if (includeWhitespace) {
+        addWhitespace(nonWords, part.segment);
+      }
       const category = classifyNonWordSegment(part.segment);
       if (category) {
         addNonWord(nonWords, category, part.segment);
@@ -44,24 +49,37 @@ export function analyzeChunk(
 export function analyzeCharChunk(
   chunk: LocaleChunk,
   collectNonWords?: boolean,
-): CharAnalysis {
+  includeWhitespace?: boolean,
+): CharAnalysis & { wordChars: number; nonWordChars: number } {
   const segmenter = getSegmenter(chunk.locale);
   const nonWords: NonWordCollection | null = collectNonWords
     ? createNonWordCollection()
     : null;
   let chars = 0;
+  let wordChars = 0;
+  let nonWordChars = 0;
 
   for (const part of segmenter.segment(chunk.text)) {
     if (part.isWordLike) {
-      chars += countCharsForLocale(part.segment, chunk.locale);
+      const count = countCharsForLocale(part.segment, chunk.locale);
+      chars += count;
+      wordChars += count;
       continue;
     }
 
     if (collectNonWords && nonWords) {
+      let whitespaceCount = 0;
+      if (includeWhitespace) {
+        whitespaceCount = addWhitespace(nonWords, part.segment);
+      }
       const category = classifyNonWordSegment(part.segment);
       if (category) {
         addNonWord(nonWords, category, part.segment);
-        chars += countCharsForLocale(part.segment, chunk.locale);
+      }
+      if (category || whitespaceCount > 0) {
+        const count = countCharsForLocale(part.segment, chunk.locale);
+        chars += count;
+        nonWordChars += count;
       }
     }
   }
@@ -70,6 +88,8 @@ export function analyzeCharChunk(
     locale: chunk.locale,
     text: chunk.text,
     chars,
+    wordChars,
+    nonWordChars,
     nonWords: nonWords ?? undefined,
   };
 }

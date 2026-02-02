@@ -1,7 +1,7 @@
 ---
 title: "Whitespace and tab counting options"
 date: 2026-01-21
-status: draft
+status: completed
 agent: codex
 ---
 
