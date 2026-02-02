@@ -294,9 +294,12 @@ export async function runCli(argv: string[] = process.argv): Promise<void> {
         .default("all"),
     )
     .option("--latin-locale <locale>", "hint the locale for Latin script text")
-    .option("--non-words", "collect emoji, symbols, and punctuation")
-    .option("--include-whitespace", "include whitespace counts when collecting non-words")
-    .option("--misc", "collect non-words plus whitespace (alias for --non-words --include-whitespace)")
+    .option("--non-words", "collect emoji, symbols, and punctuation (excludes whitespace)")
+    .option(
+      "--include-whitespace",
+      "include whitespace counts (implies with --non-words; same as --misc)",
+    )
+    .option("--misc", "collect non-words plus whitespace (alias for --include-whitespace)")
     .option("--pretty", "pretty print JSON output", false)
     .option("-p, --path <file>", "read input from a text file")
     .argument("[text...]", "text to count")

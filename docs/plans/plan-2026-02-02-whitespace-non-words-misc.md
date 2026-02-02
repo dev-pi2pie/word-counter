@@ -30,7 +30,7 @@ Add an opt-in whitespace-like counting path that extends the existing non-words 
 - `nonWords: true` + `includeWhitespace: true` (aka `--misc`):
   - `total = words + nonWords(emoji + symbols + punctuation + whitespace)`
 
-Note: In the CLI, `--include-whitespace` implies `--non-words` (same behavior as `--misc`).
+Note: In the CLI, `--include-whitespace` implies with `--non-words` (same behavior as `--misc`).
 Note: `--non-words` alone does not include whitespace; use `--include-whitespace` or `--misc` for the combined total.
 
 ## Output Shape (Draft)
