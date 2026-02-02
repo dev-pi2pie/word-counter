@@ -17,7 +17,7 @@ describe("wordCounter", () => {
     const result = wordCounter("Hello world", { mode: "segments" });
     expect(result.breakdown.mode).toBe("segments");
     const firstItem = result.breakdown.items[0];
-    if (firstItem && 'segments' in firstItem) {
+    if (firstItem && "segments" in firstItem) {
       expect(firstItem.segments.length).toBe(2);
     }
   });
@@ -32,9 +32,11 @@ describe("wordCounter", () => {
       nonWords: true,
     });
     const first = result.breakdown.items[0];
-    expect(first?.nonWords?.counts.emoji).toBe(2);
-    expect(first?.nonWords?.counts.symbols).toBe(0);
-    expect(first?.nonWords?.counts.punctuation).toBe(2);
+    if (first && "nonWords" in first) {
+      expect(first.nonWords?.counts.emoji).toBe(2);
+      expect(first.nonWords?.counts.symbols).toBe(0);
+      expect(first.nonWords?.counts.punctuation).toBe(2);
+    }
     expect(result.total).toBe(6);
     expect(result.counts).toEqual({ words: 2, nonWords: 4, total: 6 });
   });
@@ -52,7 +54,9 @@ describe("wordCounter", () => {
       nonWords: true,
     });
     const first = result.breakdown.items[0];
-    expect(first?.nonWords?.counts.whitespace ?? 0).toBe(0);
+    const whitespaceCount =
+      first && "nonWords" in first ? (first.nonWords?.counts.whitespace ?? 0) : 0;
+    expect(whitespaceCount).toBe(0);
     expect(result.counts).toEqual({ words: 2, nonWords: 0, total: 2 });
   });
 
@@ -62,13 +66,15 @@ describe("wordCounter", () => {
       includeWhitespace: true,
     });
     const first = result.breakdown.items[0];
-    expect(first?.nonWords?.whitespace).toEqual({
-      spaces: 1,
-      tabs: 1,
-      newlines: 1,
-      other: 0,
-    });
-    expect(first?.nonWords?.counts.whitespace).toBe(3);
+    if (first && "nonWords" in first) {
+      expect(first.nonWords?.whitespace).toEqual({
+        spaces: 1,
+        tabs: 1,
+        newlines: 1,
+        other: 0,
+      });
+      expect(first.nonWords?.counts.whitespace).toBe(3);
+    }
     expect(result.counts).toEqual({ words: 2, nonWords: 3, total: 5 });
   });
 });
@@ -159,9 +165,11 @@ describe("collector mode with non-words", () => {
       nonWords: true,
     });
     expect(result.breakdown.mode).toBe("collector");
-    expect(result.breakdown.nonWords?.counts.emoji).toBe(1);
-    expect(result.breakdown.nonWords?.counts.symbols).toBe(1);
-    expect(result.breakdown.nonWords?.counts.punctuation).toBe(1);
+    if (result.breakdown.mode === "collector") {
+      expect(result.breakdown.nonWords?.counts.emoji).toBe(1);
+      expect(result.breakdown.nonWords?.counts.symbols).toBe(1);
+      expect(result.breakdown.nonWords?.counts.punctuation).toBe(1);
+    }
   });
 
   test("treats emoji presentation as emoji even for text-default symbols", () => {
@@ -170,8 +178,10 @@ describe("collector mode with non-words", () => {
       nonWords: true,
     });
     expect(result.breakdown.mode).toBe("collector");
-    expect(result.breakdown.nonWords?.counts.emoji).toBe(1);
-    expect(result.breakdown.nonWords?.counts.symbols).toBe(0);
-    expect(result.breakdown.nonWords?.counts.punctuation).toBe(0);
+    if (result.breakdown.mode === "collector") {
+      expect(result.breakdown.nonWords?.counts.emoji).toBe(1);
+      expect(result.breakdown.nonWords?.counts.symbols).toBe(0);
+      expect(result.breakdown.nonWords?.counts.punctuation).toBe(0);
+    }
   });
 });
