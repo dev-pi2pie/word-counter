@@ -1,6 +1,6 @@
 ---
 title: "Lighten checkout and keep tag validation reliable"
-date: 2026-01-21
+created-date: 2026-01-21
 status: completed
 agent: Codex
 ---

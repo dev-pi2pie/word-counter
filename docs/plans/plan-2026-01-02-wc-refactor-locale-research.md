@@ -1,6 +1,6 @@
 ---
 title: "Refactor wc.ts and Improve Locale Detection"
-date: 2026-01-02
+created-date: 2026-01-02
 modified-date: 2026-01-14
 status: completed
 agent: Codex

@@ -1,6 +1,6 @@
 ---
 title: "Add CJS interop test and build notice"
-date: 2026-01-01
+created-date: 2026-01-01
 status: completed
 agent: Codex
 ---

@@ -1,6 +1,6 @@
 ---
 title: "Address PR review findings"
-date: 2026-01-15
+created-date: 2026-01-15
 status: completed
 agent: Codex
 ---

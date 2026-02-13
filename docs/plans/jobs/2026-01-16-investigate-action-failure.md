@@ -1,6 +1,6 @@
 ---
 title: "Investigate GitHub Actions failure for release/publish"
-date: 2026-01-16
+created-date: 2026-01-16
 status: completed
 agent: codex
 ---

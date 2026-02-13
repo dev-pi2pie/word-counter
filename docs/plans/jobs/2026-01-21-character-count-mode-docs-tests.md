@@ -1,6 +1,6 @@
 ---
 title: "Character count mode docs + tests"
-date: 2026-01-21
+created-date: 2026-01-21
 status: completed
 agent: codex
 ---

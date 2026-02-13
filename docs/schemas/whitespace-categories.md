@@ -1,6 +1,6 @@
 ---
 title: "Whitespace Categories (nonWords.whitespace)"
-date: 2026-02-02
+created-date: 2026-02-02
 ---
 
 # Whitespace Categories (nonWords.whitespace)

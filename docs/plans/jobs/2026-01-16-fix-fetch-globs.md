@@ -1,6 +1,6 @@
 ---
 title: "Fix branch glob fetching in release workflows"
-date: 2026-01-16
+created-date: 2026-01-16
 status: completed
 agent: codex
 ---

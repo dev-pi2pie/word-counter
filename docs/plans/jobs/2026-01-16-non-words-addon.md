@@ -1,6 +1,6 @@
 ---
 title: "Implement --non-words add-on"
-date: 2026-01-16
+created-date: 2026-01-16
 status: completed
 agent: Codex
 ---

@@ -1,6 +1,6 @@
 ---
 title: "Character count mode initial implementation"
-date: 2026-01-21
+created-date: 2026-01-21
 status: completed
 agent: codex
 ---
