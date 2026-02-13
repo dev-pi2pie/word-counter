@@ -1,6 +1,6 @@
 ---
 title: "WordCounterOptions: Current vs Future Config"
-date: 2026-01-02
+created-date: 2026-01-02
 modified-date: 2026-01-15
 status: completed
 agent: Codex

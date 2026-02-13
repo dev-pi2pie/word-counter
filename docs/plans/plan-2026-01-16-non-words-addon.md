@@ -1,6 +1,6 @@
 ---
 title: "Non-word segment add-on (--non-words)"
-date: 2026-01-16
+created-date: 2026-01-16
 status: completed
 agent: Codex
 ---

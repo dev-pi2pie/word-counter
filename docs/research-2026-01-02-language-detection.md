@@ -1,6 +1,6 @@
 ---
 title: "Language Detection With Unicode Scripts and Regex"
-date: 2026-01-02
+created-date: 2026-01-02
 modified-date: 2026-01-14
 status: in-progress
 agent: Codex

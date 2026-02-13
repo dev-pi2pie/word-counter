@@ -1,6 +1,6 @@
 ---
 title: "Fix non-word emoji classification for keycap sequences"
-date: 2026-01-16
+created-date: 2026-01-16
 status: completed
 agent: codex
 ---

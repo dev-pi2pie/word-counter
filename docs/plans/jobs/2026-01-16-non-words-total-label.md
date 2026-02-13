@@ -1,6 +1,6 @@
 ---
 title: "Adjust total labels for non-word counting"
-date: 2026-01-16
+created-date: 2026-01-16
 status: completed
 agent: codex
 ---

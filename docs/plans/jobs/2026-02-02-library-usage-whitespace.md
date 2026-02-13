@@ -1,6 +1,6 @@
 ---
 title: "Update library usage whitespace docs"
-date: 2026-02-02
+created-date: 2026-02-02
 modified-date: 2026-02-02
 status: completed
 agent: Codex

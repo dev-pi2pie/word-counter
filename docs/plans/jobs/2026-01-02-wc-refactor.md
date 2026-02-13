@@ -1,6 +1,6 @@
 ---
 title: "Refactor wc.ts Into Modules"
-date: 2026-01-02
+created-date: 2026-01-02
 status: completed
 agent: Codex
 ---

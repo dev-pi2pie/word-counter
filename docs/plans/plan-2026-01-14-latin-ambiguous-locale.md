@@ -1,6 +1,6 @@
 ---
 title: "Handle Ambiguous Latin Locale with und-Latn"
-date: 2026-01-14
+created-date: 2026-01-14
 modified-date: 2026-01-15
 status: completed
 agent: Codex

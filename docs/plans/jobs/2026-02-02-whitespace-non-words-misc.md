@@ -1,6 +1,6 @@
 ---
 title: "Implement whitespace non-words misc"
-date: 2026-02-02
+created-date: 2026-02-02
 status: completed
 agent: Codex
 ---

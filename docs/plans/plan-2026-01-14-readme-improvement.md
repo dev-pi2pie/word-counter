@@ -1,6 +1,6 @@
 ---
 title: "README Improvement: Installation and Usage Clarity"
-date: 2026-01-14
+created-date: 2026-01-14
 status: completed
 agent: GitHub Copilot
 ---
