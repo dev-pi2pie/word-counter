@@ -89,10 +89,14 @@ agent: <agent name>
 Suggested sections:
 
 - Goal
+- Milestone Goal (optional but recommended)
 - Key Findings
 - Implications or Recommendations
 - Open Questions (optional)
 - References (use footnote-style links)
+
+Optional metadata:
+- `milestone: v0.1.0` (or another release milestone) for feature-track research.
 
 Traceability:
 
