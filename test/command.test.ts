@@ -170,6 +170,50 @@ describe("batch aggregation", () => {
 });
 
 describe("CLI batch output", () => {
+  test("counts large multi-markdown batches in collector mode", async () => {
+    const root = await makeTempFixture("cli-many-markdown-files");
+    const fileCount = 1091;
+
+    for (let index = 0; index < fileCount; index += 1) {
+      const name = `file-${String(index).padStart(4, "0")}.md`;
+      await writeFile(join(root, name), "alpha beta!");
+    }
+
+    const output = await captureCli([
+      "--path",
+      root,
+      "--mode",
+      "collector",
+      "--non-words",
+      "--format",
+      "raw",
+      "--quiet-skips",
+    ]);
+
+    expect(output.stderr.some((line) => line.includes("Maximum call stack"))).toBeFalse();
+    expect(output.stdout).toEqual([String(fileCount * 3)]);
+  });
+
+  test("handles large collector merges without stack overflow", async () => {
+    const root = await makeTempFixture("cli-collector-large-merge");
+    await writeFile(join(root, "a.md"), "hello");
+    await writeFile(join(root, "z.md"), "word ".repeat(900_000).trimEnd());
+
+    const output = await captureCli([
+      "--path",
+      root,
+      "--mode",
+      "collector",
+      "--non-words",
+      "--format",
+      "raw",
+      "--quiet-skips",
+    ]);
+
+    expect(output.stderr.some((line) => line.includes("Maximum call stack"))).toBeFalse();
+    expect(output.stdout).toEqual(["900001"]);
+  });
+
   test("supports per-file output plus merged summary", async () => {
     const root = await makeTempFixture("cli-per-file");
     await writeFile(join(root, "a.txt"), "alpha words");

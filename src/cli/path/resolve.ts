@@ -1,6 +1,7 @@
 import { type Dirent } from "node:fs";
 import { readdir, stat } from "node:fs/promises";
 import { resolve as resolvePath } from "node:path";
+import { appendAll } from "../../utils/append-all";
 import type { BatchSkip, PathMode } from "../types";
 import {
   buildDirectoryExtensionFilter,
@@ -50,7 +51,7 @@ async function expandDirectory(
     }
 
     const nestedFiles = await expandDirectory(entryPath, recursive, filter, skipped);
-    files.push(...nestedFiles);
+    appendAll(files, nestedFiles);
   }
 
   return files;

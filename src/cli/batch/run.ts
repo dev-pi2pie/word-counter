@@ -1,4 +1,5 @@
 import type { SectionMode } from "../../markdown";
+import { appendAll } from "../../utils/append-all";
 import type wordCounter from "../../wc";
 import type { DebugChannel } from "../debug/channel";
 import { type DirectoryExtensionFilter } from "../path/filter";
@@ -75,7 +76,8 @@ export async function runBatchCount(options: RunBatchCountOptions): Promise<Batc
     });
   }
 
-  summary.skipped.push(...resolved.skipped, ...loaded.skipped);
+  appendAll(summary.skipped, resolved.skipped);
+  appendAll(summary.skipped, loaded.skipped);
   options.debug.emit("batch.aggregate.complete", {
     files: summary.files.length,
     skipped: summary.skipped.length,
