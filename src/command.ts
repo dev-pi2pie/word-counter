@@ -2,15 +2,13 @@ import { Command, Option } from "commander";
 import { readFileSync } from "node:fs";
 import type { SectionMode, SectionedResult } from "./markdown";
 import { countSections } from "./markdown";
-import {
-  buildBatchSummary,
-} from "./cli/batch/aggregate";
+import { runBatchCount } from "./cli/batch/run";
+import { createDebugChannel } from "./cli/debug/channel";
 import {
   buildDirectoryExtensionFilter,
   collectExtensionOption,
 } from "./cli/path/filter";
-import { loadBatchInputs } from "./cli/path/load";
-import { resolveBatchFilePaths } from "./cli/path/resolve";
+import { createBatchProgressReporter, type ProgressOutputStream } from "./cli/progress/reporter";
 import type { BatchOptions, BatchScope, PathMode } from "./cli/types";
 import {
   getTotalLabels,
@@ -111,7 +109,11 @@ function hasPathInput(pathValues: string[] | undefined): pathValues is string[] 
   return Array.isArray(pathValues) && pathValues.length > 0;
 }
 
-export async function runCli(argv: string[] = process.argv): Promise<void> {
+type RunCliOptions = {
+  stderr?: ProgressOutputStream;
+};
+
+export async function runCli(argv: string[] = process.argv, runtime: RunCliOptions = {}): Promise<void> {
   const program = new Command();
   const parseMode = (value: string): WordCounterMode => {
     const normalized = normalizeMode(value);
@@ -161,6 +163,8 @@ export async function runCli(argv: string[] = process.argv): Promise<void> {
     .option("--debug", "enable debug diagnostics on stderr")
     .option("--merged", "show merged aggregate output (default)")
     .option("--per-file", "show per-file output plus merged summary")
+    .option("--no-progress", "disable batch progress indicator")
+    .option("--keep-progress", "keep final batch progress line visible in standard mode")
     .option("--no-recursive", "disable recursive directory traversal")
     .option("--quiet-skips", "hide skip diagnostics (applies when --debug is enabled)")
     .option(
@@ -198,6 +202,8 @@ export async function runCli(argv: string[] = process.argv): Promise<void> {
         path?: string[];
         pathMode: PathMode;
         recursive: boolean;
+        progress: boolean;
+        keepProgress?: boolean;
         quietSkips?: boolean;
         debug?: boolean;
         includeExt?: string[];
@@ -266,18 +272,31 @@ export async function runCli(argv: string[] = process.argv): Promise<void> {
         quietSkips: Boolean(options.quietSkips),
       };
 
+      const debug = createDebugChannel(Boolean(options.debug));
       const extensionFilter = buildDirectoryExtensionFilter(options.includeExt, options.excludeExt);
-      const resolved = await resolveBatchFilePaths(options.path, {
-        pathMode: batchOptions.pathMode,
-        recursive: batchOptions.recursive,
+      const summary = await runBatchCount({
+        pathInputs: options.path,
+        batchOptions,
         extensionFilter,
+        section: options.section,
+        wcOptions,
+        debug,
+        progressReporter: createBatchProgressReporter({
+          enabled: options.format === "standard" && options.progress,
+          stream: runtime.stderr ?? (process.stderr as unknown as ProgressOutputStream),
+          clearOnFinish: !Boolean(options.debug || options.keepProgress),
+        }),
       });
-      const loaded = await loadBatchInputs(resolved.files);
-      const summary = await buildBatchSummary(loaded.files, options.section, wcOptions);
-      summary.skipped.push(...resolved.skipped, ...loaded.skipped);
 
       const showSkipDiagnostics = Boolean(options.debug) && !batchOptions.quietSkips;
+      debug.emit("batch.skips.policy", {
+        enabled: showSkipDiagnostics,
+        quietSkips: batchOptions.quietSkips,
+      });
       if (showSkipDiagnostics) {
+        debug.emit("batch.skips.report", {
+          count: summary.skipped.length,
+        });
         reportSkipped(summary.skipped);
       }
 

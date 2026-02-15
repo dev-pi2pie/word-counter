@@ -125,6 +125,25 @@ Show per-file results plus merged summary:
 word-counter --path ./examples/test-case-multi-files-support --per-file
 ```
 
+Batch progress is auto-enabled for multi-file standard output and is transient:
+
+```bash
+word-counter --path ./examples/test-case-multi-files-support
+word-counter --path ./examples/test-case-multi-files-support --no-progress
+word-counter --path ./examples/test-case-multi-files-support --keep-progress
+```
+
+Progress updates follow this style while running:
+
+```text
+Counting files [██████░░░░░░░░░░░░]  31%  37/120 elapsed 00:01.2
+Counting files [███████████░░░░░░░]  58%  70/120 elapsed 00:02.8
+Counting files [████████████████████] 100% 120/120 elapsed 00:04.1
+```
+
+Single-input runs do not show progress by default. Progress is also suppressed in `--format raw` and `--format json`.
+Use `--keep-progress` when you want the final progress line to stay visible after completion.
+
 Restrict directory scanning extensions:
 
 ```bash
@@ -138,6 +157,9 @@ Use `--debug` to print skipped-file diagnostics to `stderr`:
 ```bash
 word-counter --path ./examples/test-case-multi-files-support --debug
 ```
+
+With `--debug`, batch resolution/progress lifecycle diagnostics are emitted as structured `[debug]` entries on `stderr` (stdout remains clean).
+In `--debug` mode, the final progress line is kept visible (not auto-cleared).
 
 ## Library Usage
 

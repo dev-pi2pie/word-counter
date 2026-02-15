@@ -64,14 +64,15 @@ Deliver `v0.1.0` through phased canary releases with clear priority ordering, ex
 
 ### Phase 3 - Progress UX and Debug Channel (`v0.1.0-canary.2`)
 
-- [ ] Add batch TUI progress bar auto-enabled in standard mode (`#18`).
-- [ ] Add `--no-progress` opt-out and ensure single-input runs do not show progress by default.
-- [ ] Ensure progress output is transient and cleared before final output.
-- [ ] Ensure `raw` and `json` outputs stay clean (no progress artifacts).
-- [ ] Extend `--debug` beyond skip diagnostics: add structured diagnostics for batch resolution/progress lifecycle (still `stderr` only, no `stdout` pollution).
-- [ ] Add tests for progress mode behavior (`auto`, `--no-progress`) and `stderr`/`stdout` separation.
-- [ ] Compatibility gate (`#20`): verify final standard output remains concise and parse-safe for existing use cases.
-- [ ] Compatibility gate (`#20`): verify no output noise is introduced in `raw`/`json` modes.
+- [x] Add batch TUI progress bar auto-enabled in standard mode (`#18`).
+- [x] Add `--no-progress` opt-out and ensure single-input runs do not show progress by default.
+- [x] Ensure progress output is transient and cleared before final output.
+- [x] Ensure `raw` and `json` outputs stay clean (no progress artifacts).
+- [x] Extend `--debug` beyond skip diagnostics: add structured diagnostics for batch resolution/progress lifecycle (still `stderr` only, no `stdout` pollution).
+- [x] Add tests for progress mode behavior (`auto`, `--no-progress`) and `stderr`/`stdout` separation.
+- [x] Add `--keep-progress` opt-in to keep the final progress line visible in standard batch mode.
+- [x] Compatibility gate (`#20`): verify final standard output remains concise and parse-safe for existing use cases.
+- [x] Compatibility gate (`#20`): verify no output noise is introduced in `raw`/`json` modes.
 
 ### Phase 4 - Selective Totals via `--total-of` (`v0.1.0-canary.3`)
 
