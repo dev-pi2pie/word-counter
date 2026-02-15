@@ -280,6 +280,7 @@ export async function runCli(argv: string[] = process.argv, runtime: RunCliOptio
         extensionFilter,
         section: options.section,
         wcOptions,
+        preserveCollectorSegments: options.format === "json",
         debug,
         progressReporter: createBatchProgressReporter({
           enabled: options.format === "standard" && options.progress,

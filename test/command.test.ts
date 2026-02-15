@@ -167,6 +167,37 @@ describe("batch aggregation", () => {
     expect(frontmatter?.result.total).toBe(2);
     expect(content?.result.total).toBe(5);
   });
+
+  test("can compact collector segments during batch aggregation", async () => {
+    const summary = await buildBatchSummary(
+      [
+        { path: "/tmp/a.txt", content: "alpha beta" },
+        { path: "/tmp/b.txt", content: "gamma delta" },
+      ],
+      "all",
+      { mode: "collector" },
+      { preserveCollectorSegments: false },
+    );
+
+    if ("section" in summary.aggregate) {
+      throw new Error("Expected non-section aggregate result.");
+    }
+
+    expect(summary.aggregate.breakdown.mode).toBe("collector");
+    if (summary.aggregate.breakdown.mode === "collector") {
+      expect(summary.aggregate.breakdown.items.every((item) => item.segments.length === 0)).toBeTrue();
+    }
+
+    for (const file of summary.files) {
+      if ("section" in file.result) {
+        continue;
+      }
+      if (file.result.breakdown.mode !== "collector") {
+        continue;
+      }
+      expect(file.result.breakdown.items.every((item) => item.segments.length === 0)).toBeTrue();
+    }
+  });
 });
 
 describe("CLI batch output", () => {
@@ -223,6 +254,26 @@ describe("CLI batch output", () => {
 
     expect(output.stdout.some((line) => line.includes("[File]"))).toBeTrue();
     expect(output.stdout.some((line) => line.includes("[Merged] 2 file(s)"))).toBeTrue();
+  });
+
+  test("keeps collector segments in merged json output", async () => {
+    const root = await makeTempFixture("cli-collector-json-segments");
+    await writeFile(join(root, "a.txt"), "alpha beta");
+    await writeFile(join(root, "b.txt"), "gamma delta");
+
+    const output = await captureCli([
+      "--path",
+      root,
+      "--mode",
+      "collector",
+      "--format",
+      "json",
+      "--quiet-skips",
+    ]);
+    const parsed = JSON.parse(output.stdout[0] ?? "{}");
+
+    expect(parsed.breakdown.mode).toBe("collector");
+    expect(parsed.breakdown.items.some((item: { segments?: string[] }) => (item.segments?.length ?? 0) > 0)).toBeTrue();
   });
 
   test("shows skip diagnostics only with --debug", async () => {
@@ -317,6 +368,9 @@ describe("CLI progress output", () => {
       /Counting files \[[█░]{20}\]\s+\d{1,3}%\s+\d+\/\d+\s+elapsed \d{2}:\d{2}\.\d/.test(chunk),
     );
     expect(hasPattern).toBeTrue();
+    expect(
+      progress.writes.some((chunk) => /Finalizing aggregate\.\.\. elapsed \d{2}:\d{2}\.\d/.test(chunk)),
+    ).toBeTrue();
     expect(progress.writes.some((chunk) => /\r +\r/.test(chunk))).toBeTrue();
     expect(output.stdout[0]).toBe("Total words: 4");
   });
@@ -431,15 +485,23 @@ describe("CLI debug diagnostics", () => {
     ]);
     const events = output.stderr
       .filter((line) => line.startsWith("[debug] "))
-      .map((line) => JSON.parse(line.slice(8)) as { event?: string });
+      .map((line) => JSON.parse(line.slice(8)) as { event?: string; stage?: string });
     const eventNames = events
       .map((item) => item.event)
       .filter((event): event is string => typeof event === "string");
+    const stageTimingNames = events
+      .filter((item) => item.event === "batch.stage.timing")
+      .map((item) => item.stage)
+      .filter((stage): stage is string => typeof stage === "string");
 
     expect(eventNames.includes("batch.resolve.start")).toBeTrue();
     expect(eventNames.includes("batch.resolve.complete")).toBeTrue();
     expect(eventNames.includes("batch.progress.start")).toBeTrue();
     expect(eventNames.includes("batch.progress.complete")).toBeTrue();
+    expect(stageTimingNames.includes("resolve")).toBeTrue();
+    expect(stageTimingNames.includes("load")).toBeTrue();
+    expect(stageTimingNames.includes("count")).toBeTrue();
+    expect(stageTimingNames.includes("finalize")).toBeTrue();
     expect(output.stdout).toEqual(["2"]);
   });
 });

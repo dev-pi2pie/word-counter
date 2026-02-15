@@ -15,12 +15,14 @@ type RunBatchCountOptions = {
   extensionFilter: DirectoryExtensionFilter;
   section: SectionMode;
   wcOptions: Parameters<typeof wordCounter>[1];
+  preserveCollectorSegments: boolean;
   debug: DebugChannel;
   progressReporter: BatchProgressReporter;
 };
 
 export async function runBatchCount(options: RunBatchCountOptions): Promise<BatchSummary> {
   const batchStartedAtMs = Date.now();
+  const resolveStartedAtMs = Date.now();
 
   options.debug.emit("batch.resolve.start", {
     inputs: options.pathInputs.length,
@@ -33,18 +35,31 @@ export async function runBatchCount(options: RunBatchCountOptions): Promise<Batc
     recursive: options.batchOptions.recursive,
     extensionFilter: options.extensionFilter,
   });
+  const resolveElapsedMs = Date.now() - resolveStartedAtMs;
   options.debug.emit("batch.resolve.complete", {
     files: resolved.files.length,
     skipped: resolved.skipped.length,
+    elapsedMs: resolveElapsedMs,
+  });
+  options.debug.emit("batch.stage.timing", {
+    stage: "resolve",
+    elapsedMs: resolveElapsedMs,
   });
 
+  const loadStartedAtMs = Date.now();
   options.debug.emit("batch.load.start", {
     files: resolved.files.length,
   });
   const loaded = await loadBatchInputs(resolved.files);
+  const loadElapsedMs = Date.now() - loadStartedAtMs;
   options.debug.emit("batch.load.complete", {
     files: loaded.files.length,
     skipped: loaded.skipped.length,
+    elapsedMs: loadElapsedMs,
+  });
+  options.debug.emit("batch.stage.timing", {
+    stage: "load",
+    elapsedMs: loadElapsedMs,
   });
 
   const progressEnabled = options.progressReporter.enabled && loaded.files.length > 1;
@@ -58,6 +73,9 @@ export async function runBatchCount(options: RunBatchCountOptions): Promise<Batc
   }
 
   let summary: BatchSummary;
+  const countStartedAtMs = Date.now();
+  let finalizeStartedAtMs: number | null = null;
+  let emittedCountTiming = false;
   try {
     summary = await buildBatchSummary(loaded.files, options.section, options.wcOptions, {
       onFileCounted: (snapshot) => {
@@ -65,6 +83,20 @@ export async function runBatchCount(options: RunBatchCountOptions): Promise<Batc
           options.progressReporter.advance(snapshot);
         }
       },
+      onFinalizeStart: () => {
+        finalizeStartedAtMs = Date.now();
+        if (progressEnabled) {
+          options.progressReporter.startFinalizing();
+        }
+
+        const countElapsedMs = finalizeStartedAtMs - countStartedAtMs;
+        options.debug.emit("batch.stage.timing", {
+          stage: "count",
+          elapsedMs: countElapsedMs,
+        });
+        emittedCountTiming = true;
+      },
+      preserveCollectorSegments: options.preserveCollectorSegments,
     });
   } finally {
     if (progressEnabled) {
@@ -75,6 +107,20 @@ export async function runBatchCount(options: RunBatchCountOptions): Promise<Batc
       total: loaded.files.length,
     });
   }
+
+  if (!emittedCountTiming) {
+    const countElapsedMs = Date.now() - countStartedAtMs;
+    options.debug.emit("batch.stage.timing", {
+      stage: "count",
+      elapsedMs: countElapsedMs,
+    });
+  }
+
+  const finalizeElapsedMs = finalizeStartedAtMs === null ? 0 : Date.now() - finalizeStartedAtMs;
+  options.debug.emit("batch.stage.timing", {
+    stage: "finalize",
+    elapsedMs: finalizeElapsedMs,
+  });
 
   appendAll(summary.skipped, resolved.skipped);
   appendAll(summary.skipped, loaded.skipped);

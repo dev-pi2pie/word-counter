@@ -12,6 +12,7 @@ export type BatchProgressReporter = {
   enabled: boolean;
   start: (total: number, startedAtMs?: number) => void;
   advance: (snapshot: BatchProgressSnapshot) => void;
+  startFinalizing: () => void;
   finish: () => void;
 };
 
@@ -56,6 +57,11 @@ function buildProgressLine(completed: number, total: number, startedAtMs: number
   return `Counting files [${bar}] ${percentText} ${completedText}/${safeTotal} elapsed ${elapsed}`;
 }
 
+function buildFinalizingLine(startedAtMs: number): string {
+  const elapsed = formatElapsed(startedAtMs);
+  return `Finalizing aggregate... elapsed ${elapsed}`;
+}
+
 export function createBatchProgressReporter(
   options: BatchProgressReporterOptions,
 ): BatchProgressReporter {
@@ -67,6 +73,14 @@ export function createBatchProgressReporter(
   let lastLineLength = 0;
   let startedAtMs = 0;
   let lastRenderedPercent = -1;
+  let finalizingStarted = false;
+
+  const writeTTYLine = (line: string): void => {
+    const trailingPadding =
+      lastLineLength > line.length ? " ".repeat(lastLineLength - line.length) : "";
+    options.stream.write(`\r${line}${trailingPadding}`);
+    lastLineLength = line.length;
+  };
 
   const render = (completed: number): void => {
     const line = buildProgressLine(completed, total, startedAtMs);
@@ -78,12 +92,12 @@ export function createBatchProgressReporter(
 
     lastRenderedPercent = percent;
 
-    lastLineLength = line.length;
     if (isTTY) {
-      options.stream.write(`\r${line}`);
+      writeTTYLine(line);
       return;
     }
 
+    lastLineLength = line.length;
     options.stream.write(`${line}\n`);
   };
 
@@ -106,6 +120,7 @@ export function createBatchProgressReporter(
       active = true;
       startedAtMs = nextStartedAtMs ?? Date.now();
       lastRenderedPercent = -1;
+      finalizingStarted = false;
       render(0);
     },
     advance(snapshot) {
@@ -114,6 +129,21 @@ export function createBatchProgressReporter(
       }
 
       render(snapshot.completed);
+    },
+    startFinalizing() {
+      if (!active || finalizingStarted) {
+        return;
+      }
+
+      finalizingStarted = true;
+      const line = buildFinalizingLine(startedAtMs);
+      if (isTTY) {
+        writeTTYLine(line);
+        return;
+      }
+
+      lastLineLength = line.length;
+      options.stream.write(`${line}\n`);
     },
     finish() {
       if (!active) {
