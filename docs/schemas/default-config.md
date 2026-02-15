@@ -1,7 +1,7 @@
 ---
 title: "Default Config Schema (Draft)"
 created-date: 2026-02-13
-modified-date: 2026-02-13
+modified-date: 2026-02-15
 status: draft
 agent: Codex
 milestone: v0.1.0
@@ -37,7 +37,7 @@ path:
   excludeExtensions: []
   detectBinary: true
 reporting:
-  skippedFiles: true
+  skippedFiles: false
 progress:
   mode: auto # auto | on | off
 logging:
@@ -58,7 +58,8 @@ logging:
 - `path.detectBinary`
   - when true, extensionless/unknown files are inspected and skipped if binary-like.
 - `reporting.skippedFiles`
-  - when true, report unreadable/skipped files in output summary.
+  - when true, emit skipped-file diagnostics.
+  - in current CLI behavior, diagnostics are emitted only when debug mode is enabled.
 - `progress.mode`
   - `auto`: enable progress for batch runs and suppress for single-input runs.
   - `on`: always attempt to show progress where format permits.
@@ -73,9 +74,9 @@ logging:
 - `--recursive` / `--no-recursive` -> `path.recursive`
 - `--include-ext <list>` -> `path.includeExtensions`
 - `--exclude-ext <list>` -> `path.excludeExtensions`
-- `--quiet-skips` -> `reporting.skippedFiles = false`
-- `--progress` / `--no-progress` -> `progress.mode` (`on` / `off`; default `auto`)
 - `--debug` -> `logging.level = debug`
+- `--quiet-skips` -> `reporting.skippedFiles = false` (override; suppress skip diagnostics even in debug mode)
+- `--progress` / `--no-progress` -> `progress.mode` (`on` / `off`; default `auto`)
 
 - `WORD_COUNTER_PATH_MODE` -> `path.mode`
 - `WORD_COUNTER_RECURSIVE` -> `path.recursive`
@@ -87,6 +88,6 @@ logging:
 
 ## Notes
 
-- `--quiet-skips` is designed to hide info-level skipped-file summaries while still counting valid files.
+- Skip diagnostics are debug-gated in current CLI behavior (`--debug`); `--quiet-skips` suppresses them explicitly.
 - `--progress` is optional in `auto` mode because batch runs enable progress by default.
 - Future config-file implementation should reuse these keys directly to avoid migration churn.

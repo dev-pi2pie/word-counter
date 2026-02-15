@@ -87,6 +87,43 @@ Or read from a file:
 word-counter --path ./fixtures/sample.txt
 ```
 
+`--path` accepts any readable text-like file, including empty or whitespace-only files.
+Such files are treated as valid inputs and contribute zero words by default.
+
+### Batch Counting
+
+Process multiple files by repeating `--path`:
+
+```bash
+word-counter --path ./docs/a.md --path ./docs/b.txt
+```
+
+Pass a directory path to scan files recursively (default):
+
+```bash
+word-counter --path ./examples/test-case-multi-files-support
+```
+
+Show per-file results plus merged summary:
+
+```bash
+word-counter --path ./examples/test-case-multi-files-support --per-file
+```
+
+Restrict directory scanning extensions:
+
+```bash
+word-counter --path ./examples/test-case-multi-files-support --include-ext .md,.mdx
+word-counter --path ./examples/test-case-multi-files-support --include-ext .md,.txt --exclude-ext .txt
+```
+
+Skip diagnostics are debug-gated. By default, skipped-file details are hidden.
+Use `--debug` to print skipped-file diagnostics to `stderr`:
+
+```bash
+word-counter --path ./examples/test-case-multi-files-support --debug
+```
+
 ## Library Usage
 
 The package exports can be used after installing from the npm registry or linking locally with `npm link`.

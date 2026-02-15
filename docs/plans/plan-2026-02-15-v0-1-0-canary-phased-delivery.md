@@ -33,18 +33,21 @@ Deliver `v0.1.0` through phased canary releases with clear priority ordering, ex
 
 ### Phase 1 - Batch Counting Foundation (`v0.1.0-canary.0`)
 
-- [ ] Implement repeated `--path` support for multi-file counting (`#17`).
-- [ ] Implement batch scope flags: default `--merged` and explicit opposite `--per-file`.
-- [ ] Implement directory path handling with `path.mode=auto` behavior (file vs directory by metadata).
-- [ ] Implement recursive directory traversal default with opt-out (`--no-recursive`).
-- [ ] Implement default text-like include set (`.md`, `.markdown`, `.mdx`, `.mdc`, `.txt`) and binary skipping.
-- [ ] Implement unreadable-file continue-on-error behavior and skip reporting toggle (`--quiet-skips`).
-- [ ] Implement batch + `--section` contract: count sections per file internally, then aggregate section totals.
-- [ ] Implement mixed-input section behavior: files without frontmatter contribute content-only (frontmatter count = 0).
-- [ ] Add tests for multi-path aggregation, directory traversal, deterministic ordering, scope behavior (`--merged`/`--per-file`), and skip handling.
-- [ ] Add tests for batch + `--section` across markdown and non-markdown text files.
-- [ ] Compatibility gate (`#20`): verify single-input (`text`, `stdin`, single `--path`) behavior remains unchanged.
-- [ ] Compatibility gate (`#20`): verify `--format raw` and current `--format json` default contracts are unchanged.
+- [x] Implement repeated `--path` support for multi-file counting (`#17`).
+- [x] Implement batch scope flags: default `--merged` and explicit opposite `--per-file`.
+- [x] Implement directory path handling with `path.mode=auto` behavior (file vs directory by metadata).
+- [x] Implement recursive directory traversal default with opt-out (`--no-recursive`).
+- [x] Implement default text-like include set (`.md`, `.markdown`, `.mdx`, `.mdc`, `.txt`) and binary skipping.
+- [x] Implement unreadable-file continue-on-error behavior and skip reporting toggle (`--quiet-skips`).
+- [x] Refactor CLI implementation into `src/cli/*` modules while preserving `src/command.ts` compatibility exports.
+- [x] Add extension-filter controls for directory scans (`--include-ext`, `--exclude-ext`) with deterministic precedence.
+- [x] Implement batch + `--section` contract: count sections per file internally, then aggregate section totals.
+- [x] Implement mixed-input section behavior: files without frontmatter contribute content-only (frontmatter count = 0).
+- [x] Add tests for multi-path aggregation, directory traversal, deterministic ordering, scope behavior (`--merged`/`--per-file`), and skip handling.
+- [x] Add tests for batch + `--section` across markdown and non-markdown text files.
+- [x] Compatibility gate (`#20`): verify single-input (`text`, `stdin`, single `--path`) behavior remains unchanged.
+- [x] Compatibility gate (`#20`): verify `--format raw` and current `--format json` default contracts are unchanged.
+- [x] Add baseline `--debug` gating for skip diagnostics: default run should not print skipped-file details; with `--debug`, print skip diagnostics to `stderr` only.
 
 ### Phase 2 - Progress UX and Debug Channel (`v0.1.0-canary.1`)
 
@@ -52,7 +55,7 @@ Deliver `v0.1.0` through phased canary releases with clear priority ordering, ex
 - [ ] Add `--no-progress` opt-out and ensure single-input runs do not show progress by default.
 - [ ] Ensure progress output is transient and cleared before final output.
 - [ ] Ensure `raw` and `json` outputs stay clean (no progress artifacts).
-- [ ] Add `--debug` design implementation with diagnostics on `stderr` only.
+- [ ] Extend `--debug` beyond skip diagnostics: add structured diagnostics for batch resolution/progress lifecycle (still `stderr` only, no `stdout` pollution).
 - [ ] Add tests for progress mode behavior (`auto`, `--no-progress`) and `stderr`/`stdout` separation.
 - [ ] Compatibility gate (`#20`): verify final standard output remains concise and parse-safe for existing use cases.
 - [ ] Compatibility gate (`#20`): verify no output noise is introduced in `raw`/`json` modes.
@@ -97,4 +100,4 @@ Deliver `v0.1.0` through phased canary releases with clear priority ordering, ex
 
 ## Related Plans
 
-None.
+- `docs/plans/plan-2026-02-15-command-modularization-and-extension-filters.md`

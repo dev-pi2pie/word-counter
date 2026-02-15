@@ -1,20 +1,33 @@
 import { Command, Option } from "commander";
 import { readFileSync } from "node:fs";
-import { readFile } from "node:fs/promises";
-import { resolve as resolvePath } from "node:path";
-import { showSingularOrPluralWord } from "./utils";
+import type { SectionMode, SectionedResult } from "./markdown";
+import { countSections } from "./markdown";
+import {
+  buildBatchSummary,
+} from "./cli/batch/aggregate";
+import {
+  buildDirectoryExtensionFilter,
+  collectExtensionOption,
+} from "./cli/path/filter";
+import { loadBatchInputs } from "./cli/path/load";
+import { resolveBatchFilePaths } from "./cli/path/resolve";
+import type { BatchOptions, BatchScope, PathMode } from "./cli/types";
+import {
+  getTotalLabels,
+  isSectionedResult,
+  renderPerFileStandard,
+  renderStandardResult,
+  renderStandardSectionedResult,
+  reportSkipped,
+} from "./cli/output/render";
 import wordCounter, {
-  type NonWordCollection,
   type WordCounterMode,
   type WordCounterResult,
 } from "./wc";
 import { normalizeMode } from "./wc/mode";
-import { countSections } from "./markdown";
-import type { SectionMode, SectionedResult } from "./markdown";
 import pc from "picocolors";
 
 type OutputFormat = "standard" | "raw" | "json";
-type CountUnit = "word" | "character";
 
 const MODE_CHOICES: WordCounterMode[] = ["chunk", "segments", "collector", "char"];
 const FORMAT_CHOICES: OutputFormat[] = ["standard", "raw", "json"];
@@ -26,213 +39,29 @@ const SECTION_CHOICES: SectionMode[] = [
   "per-key",
   "split-per-key",
 ];
+const PATH_MODE_CHOICES: PathMode[] = ["auto", "manual"];
 
 function getPackageVersion(): string {
-  const packageUrl = new URL("../../package.json", import.meta.url);
-  const raw = readFileSync(packageUrl, "utf8");
-  const data = JSON.parse(raw) as { version?: string };
-  const version = data.version ?? "0.0.0";
+  const packageCandidates = [
+    new URL("../package.json", import.meta.url),
+    new URL("../../package.json", import.meta.url),
+  ];
+
+  let version = "0.0.0";
+  for (const packageUrl of packageCandidates) {
+    try {
+      const raw = readFileSync(packageUrl, "utf8");
+      const data = JSON.parse(raw) as { version?: string };
+      if (data.version) {
+        version = data.version;
+        break;
+      }
+    } catch {
+      continue;
+    }
+  }
+
   return pc.bgBlack(pc.bold(pc.italic(` word-counter ${pc.cyanBright(`ver.${version}`)} `)));
-}
-
-type CountBreakdownItem = {
-  locale: string;
-  count: number;
-  nonWords?: NonWordCollection;
-};
-
-function renderCountBreakdown(items: CountBreakdownItem[], unit: CountUnit): void {
-  for (const item of items) {
-    console.log(`Locale ${item.locale}: ${showSingularOrPluralWord(item.count, unit)}`);
-    renderNonWords(item.nonWords, false);
-  }
-}
-
-function renderSegmentBreakdown(
-  items: Array<{ locale: string; words: number; segments: string[]; nonWords?: NonWordCollection }>,
-): void {
-  for (const item of items) {
-    console.log(
-      `Locale ${item.locale}: ${JSON.stringify(item.segments)} (${showSingularOrPluralWord(item.words, "word")})`,
-    );
-    renderNonWords(item.nonWords, true);
-  }
-}
-
-function renderCollectorBreakdown(items: Array<{ locale: string; words: number }>): void {
-  for (const item of items) {
-    console.log(`Locale ${item.locale}: ${showSingularOrPluralWord(item.words, "word")}`);
-  }
-}
-
-type TotalLabels = {
-  overall: string;
-  section: string;
-};
-
-function getCountUnit(mode: WordCounterMode): CountUnit {
-  return mode === "char" ? "character" : "word";
-}
-
-function getTotalLabels(mode: WordCounterMode, includeNonWords: boolean): TotalLabels {
-  const unit = mode === "char" ? "characters" : "words";
-  if (includeNonWords) {
-    return { overall: "Total count", section: "total count" };
-  }
-  return { overall: `Total ${unit}`, section: `total ${unit}` };
-}
-
-function renderStandardResult(result: WordCounterResult, totalLabel: string): void {
-  console.log(`${totalLabel}: ${result.total}`);
-
-  if (result.breakdown.mode === "segments") {
-    renderSegmentBreakdown(result.breakdown.items);
-    return;
-  }
-
-  if (result.breakdown.mode === "collector") {
-    renderCollectorBreakdown(result.breakdown.items);
-    renderNonWords(result.breakdown.nonWords, false);
-    return;
-  }
-
-  if (result.breakdown.mode === "char") {
-    renderCountBreakdown(
-      result.breakdown.items.map((item) => ({
-        locale: item.locale,
-        count: item.chars,
-        nonWords: item.nonWords,
-      })),
-      getCountUnit(result.breakdown.mode),
-    );
-    return;
-  }
-
-  renderCountBreakdown(
-    result.breakdown.items.map((item) => ({
-      locale: item.locale,
-      count: item.words,
-      nonWords: item.nonWords,
-    })),
-    getCountUnit(result.breakdown.mode),
-  );
-}
-
-function buildSectionLabel(
-  sectionName: string,
-  sectionMode: SectionMode,
-  source: "frontmatter" | "content",
-  totalLabel: string,
-): string {
-  if (sectionMode === "frontmatter") {
-    return `[Frontmatter] (${totalLabel})`;
-  }
-
-  if (sectionMode === "content") {
-    return `[Content] (${totalLabel})`;
-  }
-
-  if (sectionMode === "split") {
-    if (source === "frontmatter") {
-      return `[Frontmatter] (${totalLabel})`;
-    }
-    return `[Content] (${totalLabel})`;
-  }
-
-  if (sectionMode === "per-key") {
-    return `[Frontmatter] ${sectionName} (${totalLabel})`;
-  }
-
-  if (sectionMode === "split-per-key") {
-    if (source === "content") {
-      return `[Content] (${totalLabel})`;
-    }
-    return `[Frontmatter] ${sectionName} (${totalLabel})`;
-  }
-
-  return `[Section] ${sectionName} (${totalLabel})`;
-}
-
-function renderStandardSectionedResult(result: SectionedResult, labels: TotalLabels): void {
-  console.log(`${labels.overall}: ${result.total}`);
-
-  for (const item of result.items) {
-    const label = buildSectionLabel(item.name, result.section, item.source, labels.section);
-    const unit = getCountUnit(item.result.breakdown.mode);
-    console.log(pc.cyan(pc.bold(`${label}: ${showSingularOrPluralWord(item.result.total, unit)}`)));
-
-    if (item.result.breakdown.mode === "segments") {
-      renderSegmentBreakdown(item.result.breakdown.items);
-      continue;
-    }
-
-    if (item.result.breakdown.mode === "collector") {
-      renderCollectorBreakdown(item.result.breakdown.items);
-      renderNonWords(item.result.breakdown.nonWords, false);
-      continue;
-    }
-
-    if (item.result.breakdown.mode === "char") {
-      renderCountBreakdown(
-        item.result.breakdown.items.map((chunk) => ({
-          locale: chunk.locale,
-          count: chunk.chars,
-          nonWords: chunk.nonWords,
-        })),
-        unit,
-      );
-      continue;
-    }
-
-    renderCountBreakdown(
-      item.result.breakdown.items.map((chunk) => ({
-        locale: chunk.locale,
-        count: chunk.words,
-        nonWords: chunk.nonWords,
-      })),
-      unit,
-    );
-  }
-}
-
-function isSectionedResult(
-  result: WordCounterResult | SectionedResult,
-): result is SectionedResult {
-  return "section" in result;
-}
-
-function renderNonWords(nonWords: NonWordCollection | undefined, verbose: boolean): void {
-  if (!nonWords || !hasNonWords(nonWords)) {
-    return;
-  }
-  if (verbose) {
-    const whitespace = nonWords.whitespace ? ` whitespace=${JSON.stringify(nonWords.whitespace)}` : "";
-    console.log(
-      pc.yellow(
-        `Non-words: emoji=${JSON.stringify(nonWords.emoji)} symbols=${JSON.stringify(
-          nonWords.symbols,
-        )} punctuation=${JSON.stringify(nonWords.punctuation)}${whitespace}`,
-      ),
-    );
-    return;
-  }
-  const whitespaceCount = nonWords.counts.whitespace ?? 0;
-  const whitespaceLabel = whitespaceCount > 0 ? `, whitespace ${whitespaceCount}` : "";
-  console.log(
-    pc.yellow(
-      `Non-words: emoji ${nonWords.counts.emoji}, symbols ${nonWords.counts.symbols}, punctuation ${nonWords.counts.punctuation}${whitespaceLabel}`,
-    ),
-  );
-}
-
-function hasNonWords(nonWords: NonWordCollection): boolean {
-  const whitespaceCount = nonWords.counts.whitespace ?? 0;
-  return (
-    nonWords.counts.emoji > 0 ||
-    nonWords.counts.symbols > 0 ||
-    nonWords.counts.punctuation > 0 ||
-    whitespaceCount > 0
-  );
 }
 
 async function readStdin(): Promise<string> {
@@ -250,17 +79,36 @@ async function readStdin(): Promise<string> {
   });
 }
 
-async function resolveInput(textTokens: string[], pathInput?: string): Promise<string> {
-  if (pathInput) {
-    const resolved = resolvePath(pathInput);
-    return readFile(resolved, "utf8");
-  }
-
+async function resolveInput(textTokens: string[]): Promise<string> {
   if (textTokens.length > 0) {
     return textTokens.join(" ");
   }
 
   return readStdin();
+}
+
+function collectPathValue(value: string, previous: string[] = []): string[] {
+  return [...previous, value];
+}
+
+function resolveBatchScope(argv: string[]): BatchScope {
+  let scope: BatchScope = "merged";
+  for (const token of argv) {
+    if (token === "--merged") {
+      scope = "merged";
+      continue;
+    }
+
+    if (token === "--per-file") {
+      scope = "per-file";
+    }
+  }
+
+  return scope;
+}
+
+function hasPathInput(pathValues: string[] | undefined): pathValues is string[] {
+  return Array.isArray(pathValues) && pathValues.length > 0;
 }
 
 export async function runCli(argv: string[] = process.argv): Promise<void> {
@@ -293,6 +141,11 @@ export async function runCli(argv: string[] = process.argv): Promise<void> {
         .choices(SECTION_CHOICES)
         .default("all"),
     )
+    .addOption(
+      new Option("--path-mode <mode>", "path resolution mode")
+        .choices(PATH_MODE_CHOICES)
+        .default("auto"),
+    )
     .option("--latin-locale <locale>", "hint the locale for Latin script text")
     .option("--non-words", "collect emoji, symbols, and punctuation (excludes whitespace)")
     .option(
@@ -301,7 +154,24 @@ export async function runCli(argv: string[] = process.argv): Promise<void> {
     )
     .option("--misc", "collect non-words plus whitespace (alias for --include-whitespace)")
     .option("--pretty", "pretty print JSON output", false)
-    .option("-p, --path <file>", "read input from a text file")
+    .option("--debug", "enable debug diagnostics on stderr")
+    .option("--merged", "show merged aggregate output (default)")
+    .option("--per-file", "show per-file output plus merged summary")
+    .option("--no-recursive", "disable recursive directory traversal")
+    .option("--quiet-skips", "hide skip diagnostics (applies when --debug is enabled)")
+    .option(
+      "--include-ext <exts>",
+      "comma-separated extensions to include during directory scanning",
+      collectExtensionOption,
+      [],
+    )
+    .option(
+      "--exclude-ext <exts>",
+      "comma-separated extensions to exclude during directory scanning",
+      collectExtensionOption,
+      [],
+    )
+    .option("-p, --path <path>", "read input from file or directory", collectPathValue, [])
     .argument("[text...]", "text to count")
     .showHelpAfterError();
 
@@ -317,24 +187,15 @@ export async function runCli(argv: string[] = process.argv): Promise<void> {
         nonWords?: boolean;
         includeWhitespace?: boolean;
         misc?: boolean;
-        path?: string;
+        path?: string[];
+        pathMode: PathMode;
+        recursive: boolean;
+        quietSkips?: boolean;
+        debug?: boolean;
+        includeExt?: string[];
+        excludeExt?: string[];
       },
     ) => {
-      let input: string;
-      try {
-        input = await resolveInput(textTokens, options.path);
-      } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        program.error(`Failed to read input: ${message}`);
-        return;
-      }
-
-      const trimmed = input.trim();
-      if (!trimmed) {
-        program.error(pc.red("No input provided. Pass text, pipe stdin, or use --path."));
-        return;
-      }
-
       const useSection = options.section !== "all";
       const enableNonWords = Boolean(options.nonWords || options.includeWhitespace || options.misc);
       const enableWhitespace = Boolean(options.includeWhitespace || options.misc);
@@ -344,30 +205,121 @@ export async function runCli(argv: string[] = process.argv): Promise<void> {
         nonWords: enableNonWords,
         includeWhitespace: enableWhitespace,
       };
-      const result: WordCounterResult | SectionedResult = useSection
-        ? countSections(trimmed, options.section, wcOptions)
-        : wordCounter(trimmed, wcOptions);
+
+      if (!hasPathInput(options.path)) {
+        let input: string;
+        try {
+          input = await resolveInput(textTokens);
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          program.error(`Failed to read input: ${message}`);
+          return;
+        }
+
+        const trimmed = input.trim();
+        if (!trimmed) {
+          program.error(pc.red("No input provided. Pass text, pipe stdin, or use --path."));
+          return;
+        }
+
+        const result: WordCounterResult | SectionedResult = useSection
+          ? countSections(trimmed, options.section, wcOptions)
+          : wordCounter(trimmed, wcOptions);
+
+        if (options.format === "raw") {
+          console.log(result.total);
+          return;
+        }
+
+        if (options.format === "json") {
+          const spacing = options.pretty ? 2 : 0;
+          console.log(JSON.stringify(result, null, spacing));
+          return;
+        }
+
+        const labels = getTotalLabels(options.mode, enableNonWords);
+        if (isSectionedResult(result)) {
+          renderStandardSectionedResult(result, labels);
+          return;
+        }
+
+        renderStandardResult(result, labels.overall);
+        return;
+      }
+
+      const batchOptions: BatchOptions = {
+        scope: resolveBatchScope(argv),
+        pathMode: options.pathMode,
+        recursive: options.recursive,
+        quietSkips: Boolean(options.quietSkips),
+      };
+
+      const extensionFilter = buildDirectoryExtensionFilter(options.includeExt, options.excludeExt);
+      const resolved = await resolveBatchFilePaths(options.path, {
+        pathMode: batchOptions.pathMode,
+        recursive: batchOptions.recursive,
+        extensionFilter,
+      });
+      const loaded = await loadBatchInputs(resolved.files);
+      const summary = await buildBatchSummary(loaded.files, options.section, wcOptions);
+      summary.skipped.push(...resolved.skipped, ...loaded.skipped);
+
+      const showSkipDiagnostics = Boolean(options.debug) && !batchOptions.quietSkips;
+      if (showSkipDiagnostics) {
+        reportSkipped(summary.skipped);
+      }
+
+      if (summary.files.length === 0) {
+        program.error(pc.red("No readable text-like inputs were found from --path."));
+        return;
+      }
 
       if (options.format === "raw") {
-        console.log(result.total);
+        console.log(summary.aggregate.total);
         return;
       }
 
       if (options.format === "json") {
         const spacing = options.pretty ? 2 : 0;
-        console.log(JSON.stringify(result, null, spacing));
+
+        if (batchOptions.scope === "per-file") {
+          const skipped = showSkipDiagnostics ? summary.skipped : undefined;
+          const payload = {
+            scope: "per-file",
+            files: summary.files.map((file) => ({
+              path: file.path,
+              result: file.result,
+            })),
+            ...(skipped ? { skipped } : {}),
+            aggregate: summary.aggregate,
+          };
+          console.log(JSON.stringify(payload, null, spacing));
+          return;
+        }
+
+        console.log(JSON.stringify(summary.aggregate, null, spacing));
         return;
       }
 
       const labels = getTotalLabels(options.mode, enableNonWords);
-      if (isSectionedResult(result)) {
-        renderStandardSectionedResult(result, labels);
+
+      if (batchOptions.scope === "per-file") {
+        renderPerFileStandard(summary, labels);
         return;
       }
 
-      renderStandardResult(result, labels.overall);
+      if (isSectionedResult(summary.aggregate)) {
+        renderStandardSectionedResult(summary.aggregate, labels);
+        return;
+      }
+
+      renderStandardResult(summary.aggregate, labels.overall);
     },
   );
 
   await program.parseAsync(argv);
 }
+
+export { buildBatchSummary } from "./cli/batch/aggregate";
+export { loadBatchInputs } from "./cli/path/load";
+export { resolveBatchFilePaths } from "./cli/path/resolve";
