@@ -47,11 +47,36 @@ function detectLatinLocale(char: string): string {
 }
 
 function resolveLatinHint(options: LocaleDetectOptions): string | undefined {
-  return options.latinTagHint ?? options.latinLanguageHint ?? options.latinLocaleHint;
+  const latinTagHint = options.latinTagHint?.trim();
+  if (latinTagHint) {
+    return latinTagHint;
+  }
+
+  const latinLanguageHint = options.latinLanguageHint?.trim();
+  if (latinLanguageHint) {
+    return latinLanguageHint;
+  }
+
+  const latinLocaleHint = options.latinLocaleHint?.trim();
+  if (latinLocaleHint) {
+    return latinLocaleHint;
+  }
+
+  return undefined;
 }
 
 function resolveHanHint(options: LocaleDetectOptions): string | undefined {
-  return options.hanTagHint ?? options.hanLanguageHint;
+  const hanTagHint = options.hanTagHint?.trim();
+  if (hanTagHint) {
+    return hanTagHint;
+  }
+
+  const hanLanguageHint = options.hanLanguageHint?.trim();
+  if (hanLanguageHint) {
+    return hanLanguageHint;
+  }
+
+  return undefined;
 }
 
 export function detectLocaleForChar(

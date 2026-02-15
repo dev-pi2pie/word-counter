@@ -452,14 +452,51 @@ describe("CLI compatibility gates", () => {
     expect(parsed.breakdown.items[0]?.locale).toBe("de");
   });
 
+  test("treats empty --latin-tag as missing and falls back to --latin-language", async () => {
+    const output = await captureCli([
+      "--format",
+      "json",
+      "--latin-locale",
+      "en",
+      "--latin-language",
+      "fr",
+      "--latin-tag",
+      "",
+      "Hello",
+      "world",
+    ]);
+    const parsed = JSON.parse(output.stdout[0] ?? "{}");
+    expect(parsed.breakdown.items[0]?.locale).toBe("fr");
+  });
+
   test("accepts --han-tag for Han text fallback", async () => {
     const output = await captureCli(["--format", "json", "--han-tag", "zh-Hant", "漢字測試"]);
     const parsed = JSON.parse(output.stdout[0] ?? "{}");
     expect(parsed.breakdown.items[0]?.locale).toBe("zh-Hant");
   });
 
+  test("accepts --han-tag for Simplified Chinese Han text fallback", async () => {
+    const output = await captureCli(["--format", "json", "--han-tag", "zh-Hans", "汉字测试"]);
+    const parsed = JSON.parse(output.stdout[0] ?? "{}");
+    expect(parsed.breakdown.items[0]?.locale).toBe("zh-Hans");
+  });
+
   test("accepts --han-language alias for Han text fallback", async () => {
     const output = await captureCli(["--format", "json", "--han-language", "zh-Hant", "漢字測試"]);
+    const parsed = JSON.parse(output.stdout[0] ?? "{}");
+    expect(parsed.breakdown.items[0]?.locale).toBe("zh-Hant");
+  });
+
+  test("treats empty --han-tag as missing and uses --han-language fallback", async () => {
+    const output = await captureCli([
+      "--format",
+      "json",
+      "--han-tag",
+      "",
+      "--han-language",
+      "zh-Hant",
+      "漢字測試",
+    ]);
     const parsed = JSON.parse(output.stdout[0] ?? "{}");
     expect(parsed.breakdown.items[0]?.locale).toBe("zh-Hant");
   });

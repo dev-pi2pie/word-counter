@@ -100,8 +100,35 @@ describe("segmentTextByLocale", () => {
     expect(chunks[0]?.locale).toBe("de");
   });
 
+  test("treats empty Latin tag hint as missing and falls back to Latin language hint", () => {
+    const chunks = segmentTextByLocale("Hello world", {
+      latinLocaleHint: "en",
+      latinLanguageHint: "fr",
+      latinTagHint: "",
+    });
+    expect(chunks[0]?.locale).toBe("fr");
+  });
+
   test("uses Han tag hint when provided", () => {
     const chunks = segmentTextByLocale("漢字測試", { hanTagHint: "zh-Hant" });
+    expect(chunks[0]?.locale).toBe("zh-Hant");
+  });
+
+  test("uses Han tag hint for Simplified Chinese when provided", () => {
+    const chunks = segmentTextByLocale("汉字测试", { hanTagHint: "zh-Hans" });
+    expect(chunks[0]?.locale).toBe("zh-Hans");
+  });
+
+  test("treats empty Han tag hint as missing and uses fallback", () => {
+    const chunks = segmentTextByLocale("漢字測試", { hanTagHint: "" });
+    expect(chunks[0]?.locale).toBe("zh-Hani");
+  });
+
+  test("falls back to Han language hint when Han tag hint is empty", () => {
+    const chunks = segmentTextByLocale("漢字測試", {
+      hanTagHint: "",
+      hanLanguageHint: "zh-Hant",
+    });
     expect(chunks[0]?.locale).toBe("zh-Hant");
   });
 
