@@ -33,18 +33,18 @@ Deliver `v0.1.0` through phased canary releases with clear priority ordering, ex
 
 ### Phase 1 - Batch Counting Foundation (`v0.1.0-canary.0`)
 
-- [ ] Implement repeated `--path` support for multi-file counting (`#17`).
-- [ ] Implement batch scope flags: default `--merged` and explicit opposite `--per-file`.
-- [ ] Implement directory path handling with `path.mode=auto` behavior (file vs directory by metadata).
-- [ ] Implement recursive directory traversal default with opt-out (`--no-recursive`).
-- [ ] Implement default text-like include set (`.md`, `.markdown`, `.mdx`, `.mdc`, `.txt`) and binary skipping.
-- [ ] Implement unreadable-file continue-on-error behavior and skip reporting toggle (`--quiet-skips`).
-- [ ] Implement batch + `--section` contract: count sections per file internally, then aggregate section totals.
-- [ ] Implement mixed-input section behavior: files without frontmatter contribute content-only (frontmatter count = 0).
-- [ ] Add tests for multi-path aggregation, directory traversal, deterministic ordering, scope behavior (`--merged`/`--per-file`), and skip handling.
-- [ ] Add tests for batch + `--section` across markdown and non-markdown text files.
-- [ ] Compatibility gate (`#20`): verify single-input (`text`, `stdin`, single `--path`) behavior remains unchanged.
-- [ ] Compatibility gate (`#20`): verify `--format raw` and current `--format json` default contracts are unchanged.
+- [x] Implement repeated `--path` support for multi-file counting (`#17`).
+- [x] Implement batch scope flags: default `--merged` and explicit opposite `--per-file`.
+- [x] Implement directory path handling with `path.mode=auto` behavior (file vs directory by metadata).
+- [x] Implement recursive directory traversal default with opt-out (`--no-recursive`).
+- [x] Implement default text-like include set (`.md`, `.markdown`, `.mdx`, `.mdc`, `.txt`) and binary skipping.
+- [x] Implement unreadable-file continue-on-error behavior and skip reporting toggle (`--quiet-skips`).
+- [x] Implement batch + `--section` contract: count sections per file internally, then aggregate section totals.
+- [x] Implement mixed-input section behavior: files without frontmatter contribute content-only (frontmatter count = 0).
+- [x] Add tests for multi-path aggregation, directory traversal, deterministic ordering, scope behavior (`--merged`/`--per-file`), and skip handling.
+- [x] Add tests for batch + `--section` across markdown and non-markdown text files.
+- [x] Compatibility gate (`#20`): verify single-input (`text`, `stdin`, single `--path`) behavior remains unchanged.
+- [x] Compatibility gate (`#20`): verify `--format raw` and current `--format json` default contracts are unchanged.
 
 ### Phase 2 - Progress UX and Debug Channel (`v0.1.0-canary.1`)
 
