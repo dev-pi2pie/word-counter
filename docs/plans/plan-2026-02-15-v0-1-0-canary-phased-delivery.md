@@ -19,6 +19,7 @@ Deliver `v0.1.0` through phased canary releases with clear priority ordering, ex
   - `#24` language-tag alignment and hint-flag migration
   - `#18` TUI progress bar for batch mode
   - `#19` selective total composition via `--total-of`
+  - `#26` predictable multi-directory path resolution semantics
 - Cross-cutting quality issue:
   - `#20` preserve backward-compatible output defaults
 
@@ -85,18 +86,24 @@ Deliver `v0.1.0` through phased canary releases with clear priority ordering, ex
 - [ ] Compatibility gate (`#20`): verify behavior is unchanged when `--total-of` is not provided.
 - [ ] Compatibility gate (`#20`): verify existing consumers can continue using current defaults without migration.
 
-### Phase 5 - Canary Hardening (Deps + README) (`v0.1.0-canary.4`)
+### Phase 5 - Canary Hardening (Deps + README + `#26` Path Resolution) (`v0.1.0-canary.4`)
 
 - [ ] Upgrade targeted dependencies (`commander`, `tsdown`, `oxfmt`, `oxlint`, `@types/node`) and validate build/test workflows.
 - [ ] Reorganize README with `npx @dev-pi2pie/word-counter` as first-path quick start.
 - [ ] Clarify install/usage decision flow (npx vs global install vs library usage).
 - [ ] Add/refresh examples for new batch/progress/`--total-of` flows.
+- [ ] Define and document a stable mixed-input resolution contract for repeated `--path` (file + directory inputs) (`#26`).
+- [ ] Define overlap dedupe rules when the same file is discovered from multiple input roots and keep behavior deterministic (`#26`).
+- [ ] Clarify and document `--include-ext`/`--exclude-ext` behavior for direct file paths versus directory scans (`#26`).
+- [ ] Add `--debug` diagnostics for path-resolution decisions (root expansion, filtering, dedupe) with `stderr`-only output (`#26`).
+- [ ] Add regression tests for multi-directory + mixed-input ordering, overlap dedupe, and filter semantics (`#26`).
+- [ ] Update README and CLI docs with multi-directory resolution examples and troubleshooting notes (`#26`).
 - [ ] Compatibility gate (`#20`): verify docs and examples preserve backward-compatible defaults.
 
 ### Phase 6 - Stable Release Readiness (`v0.1.0`)
 
 - [ ] Run final regression pass across feature and legacy paths (`#21`).
-- [ ] Re-check issue closure and acceptance criteria for `#17`, `#18`, `#19`, `#20`, and `#24`.
+- [ ] Re-check issue closure and acceptance criteria for `#17`, `#18`, `#19`, `#20`, `#24`, and `#26`.
 - [ ] Validate release notes and canary-to-stable changelog clarity.
 - [ ] Confirm stable tag/release only after canary feedback is resolved.
 
