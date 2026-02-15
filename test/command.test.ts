@@ -618,6 +618,80 @@ describe("extension filters", () => {
   });
 });
 
+describe("CLI total-of", () => {
+  test("shows override in standard output only when it differs", async () => {
+    const withOverride = await captureCli([
+      "--non-words",
+      "--total-of",
+      "words",
+      "Hi 👋, world!",
+    ]);
+    expect(withOverride.stdout[0]).toBe("Total count: 5");
+    expect(withOverride.stdout.some((line) => line.includes("Total-of (override: words): 2"))).toBeTrue();
+
+    const withoutOverride = await captureCli(["--total-of", "words", "Hello world"]);
+    expect(withoutOverride.stdout[0]).toBe("Total words: 2");
+    expect(withoutOverride.stdout.some((line) => line.includes("Total-of (override:"))).toBeFalse();
+  });
+
+  test("uses override total in raw output when --total-of is provided", async () => {
+    const output = await captureCli([
+      "--format",
+      "raw",
+      "--non-words",
+      "--total-of",
+      "emoji,punction",
+      "Hi 👋, world!",
+    ]);
+    expect(output.stdout).toEqual(["3"]);
+  });
+
+  test("auto-enables non-word collection when --total-of requires it", async () => {
+    const output = await captureCli([
+      "--format",
+      "json",
+      "--total-of",
+      "punctuation",
+      "Hi, world!",
+    ]);
+    const parsed = JSON.parse(output.stdout[0] ?? "{}");
+    expect(parsed.total).toBe(2);
+    expect(parsed.meta?.totalOf).toEqual(["punctuation"]);
+    expect(parsed.meta?.totalOfOverride).toBe(2);
+    expect(parsed.breakdown.items[0]?.nonWords).toBeUndefined();
+  });
+
+  test("keeps base standard output model unchanged without --non-words", async () => {
+    const output = await captureCli([
+      "--total-of",
+      "words,emoji",
+      "Hi 👋, world!",
+    ]);
+
+    expect(output.stdout[0]).toBe("Total words: 2");
+    expect(output.stdout.some((line) => line.includes("Total-of (override: words, emoji): 3"))).toBeTrue();
+    expect(output.stdout.some((line) => line.startsWith("Non-words:"))).toBeFalse();
+  });
+
+  test("supports --total-of in batch raw mode", async () => {
+    const root = await makeTempFixture("cli-total-of-batch-raw");
+    await writeFile(join(root, "a.txt"), "alpha!");
+    await writeFile(join(root, "b.txt"), "beta?");
+
+    const output = await captureCli([
+      "--path",
+      root,
+      "--format",
+      "raw",
+      "--total-of",
+      "punctuation",
+      "--quiet-skips",
+    ]);
+
+    expect(output.stdout).toEqual(["2"]);
+  });
+});
+
 describe("CLI compatibility gates", () => {
   test("keeps single-input standard output behavior", async () => {
     const output = await captureCli(["Hello", "world"]);

@@ -38,6 +38,8 @@ path:
   detectBinary: true
 reporting:
   skippedFiles: false
+output:
+  totalOf: [] # optional list of parts: words|emoji|symbols|punctuation|whitespace
 progress:
   mode: auto # auto | on | off
 logging:
@@ -60,6 +62,11 @@ logging:
 - `reporting.skippedFiles`
   - when true, emit skipped-file diagnostics.
   - in current CLI behavior, diagnostics are emitted only when debug mode is enabled.
+- `output.totalOf`
+  - optional list of parts to override how total is composed.
+  - supported parts: `words`, `emoji`, `symbols`, `punctuation`, `whitespace`.
+  - when set, standard output may show `Total-of (override: ...)` if override differs from base total.
+  - when set, raw output prints the override total.
 - `progress.mode`
   - `auto`: enable progress for batch runs and suppress for single-input runs.
   - `on`: always attempt to show progress where format permits.
@@ -76,6 +83,7 @@ logging:
 - `--exclude-ext <list>` -> `path.excludeExtensions`
 - `--debug` -> `logging.level = debug`
 - `--quiet-skips` -> `reporting.skippedFiles = false` (override; suppress skip diagnostics even in debug mode)
+- `--total-of <parts>` -> `output.totalOf`
 - `--progress` / `--no-progress` -> `progress.mode` (`on` / `off`; default `auto`)
 
 - `WORD_COUNTER_PATH_MODE` -> `path.mode`
@@ -83,11 +91,13 @@ logging:
 - `WORD_COUNTER_INCLUDE_EXT` -> `path.includeExtensions` (comma-separated)
 - `WORD_COUNTER_EXCLUDE_EXT` -> `path.excludeExtensions` (comma-separated)
 - `WORD_COUNTER_REPORT_SKIPS` -> `reporting.skippedFiles`
+- `WORD_COUNTER_TOTAL_OF` -> `output.totalOf` (comma-separated)
 - `WORD_COUNTER_PROGRESS` -> `progress.mode` (`auto|on|off`)
 - `WORD_COUNTER_LOG_LEVEL` -> `logging.level` (`info|debug`)
 
 ## Notes
 
 - Skip diagnostics are debug-gated in current CLI behavior (`--debug`); `--quiet-skips` suppresses them explicitly.
+- `--total-of` is currently available via CLI; config/env persistence is a draft contract target for future config-file phases.
 - `--progress` is optional in `auto` mode because batch runs enable progress by default.
 - Future config-file implementation should reuse these keys directly to avoid migration churn.

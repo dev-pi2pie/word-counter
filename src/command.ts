@@ -9,7 +9,7 @@ import {
   collectExtensionOption,
 } from "./cli/path/filter";
 import { createBatchProgressReporter, type ProgressOutputStream } from "./cli/progress/reporter";
-import type { BatchOptions, BatchScope, PathMode } from "./cli/types";
+import type { BatchOptions, BatchScope, BatchSummary, PathMode } from "./cli/types";
 import {
   getTotalLabels,
   isSectionedResult,
@@ -18,6 +18,14 @@ import {
   renderStandardSectionedResult,
   reportSkipped,
 } from "./cli/output/render";
+import {
+  parseTotalOfOption,
+  requiresNonWordCollection,
+  requiresWhitespaceCollection,
+  resolveTotalOfOverride,
+  type TotalOfOverride,
+  type TotalOfPart,
+} from "./cli/total-of";
 import wordCounter, {
   type WordCounterMode,
   type WordCounterResult,
@@ -109,6 +117,49 @@ function hasPathInput(pathValues: string[] | undefined): pathValues is string[] 
   return Array.isArray(pathValues) && pathValues.length > 0;
 }
 
+function normalizeWordCounterResultBase(result: WordCounterResult): WordCounterResult {
+  result.total = result.counts?.words ?? result.total;
+  delete result.counts;
+
+  if (result.breakdown.mode === "collector") {
+    delete result.breakdown.nonWords;
+    return result;
+  }
+
+  for (const item of result.breakdown.items) {
+    delete item.nonWords;
+  }
+
+  return result;
+}
+
+function normalizeSectionedResultBase(result: SectionedResult): SectionedResult {
+  let total = 0;
+  for (const item of result.items) {
+    normalizeWordCounterResultBase(item.result);
+    total += item.result.total;
+  }
+  result.total = total;
+  return result;
+}
+
+function normalizeResultBase(
+  result: WordCounterResult | SectionedResult,
+): WordCounterResult | SectionedResult {
+  if ("section" in result) {
+    return normalizeSectionedResultBase(result);
+  }
+  return normalizeWordCounterResultBase(result);
+}
+
+function normalizeBatchSummaryBase(summary: BatchSummary): BatchSummary {
+  for (const file of summary.files) {
+    normalizeResultBase(file.result);
+  }
+  normalizeResultBase(summary.aggregate);
+  return summary;
+}
+
 type RunCliOptions = {
   stderr?: ProgressOutputStream;
 };
@@ -159,6 +210,11 @@ export async function runCli(argv: string[] = process.argv, runtime: RunCliOptio
       "include whitespace counts (implies with --non-words; same as --misc)",
     )
     .option("--misc", "collect non-words plus whitespace (alias for --include-whitespace)")
+    .option(
+      "--total-of <parts>",
+      "override total composition (comma-separated): words,emoji,symbols,punctuation,whitespace",
+      parseTotalOfOption,
+    )
     .option("--pretty", "pretty print JSON output", false)
     .option("--debug", "enable debug diagnostics on stderr")
     .option("--merged", "show merged aggregate output (default)")
@@ -199,6 +255,7 @@ export async function runCli(argv: string[] = process.argv, runtime: RunCliOptio
         nonWords?: boolean;
         includeWhitespace?: boolean;
         misc?: boolean;
+        totalOf?: TotalOfPart[];
         path?: string[];
         pathMode: PathMode;
         recursive: boolean;
@@ -211,8 +268,22 @@ export async function runCli(argv: string[] = process.argv, runtime: RunCliOptio
       },
     ) => {
       const useSection = options.section !== "all";
-      const enableNonWords = Boolean(options.nonWords || options.includeWhitespace || options.misc);
-      const enableWhitespace = Boolean(options.includeWhitespace || options.misc);
+      const totalOfParts = options.totalOf;
+      const requestedNonWords = Boolean(options.nonWords || options.includeWhitespace || options.misc);
+      const collectNonWordsForOverride = requiresNonWordCollection(totalOfParts);
+      const collectWhitespaceForOverride = requiresWhitespaceCollection(totalOfParts);
+      const enableNonWords = Boolean(
+        options.nonWords ||
+          options.includeWhitespace ||
+          options.misc ||
+          collectNonWordsForOverride,
+      );
+      const enableWhitespace = Boolean(
+        options.includeWhitespace ||
+          options.misc ||
+          collectWhitespaceForOverride,
+      );
+      const shouldNormalizeBaseOutput = !requestedNonWords && enableNonWords;
       const wcOptions = {
         mode: options.mode,
         latinLanguageHint: options.latinLanguage,
@@ -243,25 +314,43 @@ export async function runCli(argv: string[] = process.argv, runtime: RunCliOptio
         const result: WordCounterResult | SectionedResult = useSection
           ? countSections(trimmed, options.section, wcOptions)
           : wordCounter(trimmed, wcOptions);
+        const totalOfOverride = resolveTotalOfOverride(result, totalOfParts);
+        const displayResult = shouldNormalizeBaseOutput ? normalizeResultBase(result) : result;
 
         if (options.format === "raw") {
-          console.log(result.total);
+          console.log(totalOfOverride?.total ?? displayResult.total);
           return;
         }
 
         if (options.format === "json") {
           const spacing = options.pretty ? 2 : 0;
-          console.log(JSON.stringify(result, null, spacing));
+          if (!totalOfOverride) {
+            console.log(JSON.stringify(displayResult, null, spacing));
+            return;
+          }
+          console.log(
+            JSON.stringify(
+              {
+                ...displayResult,
+                meta: {
+                  totalOf: totalOfOverride.parts,
+                  totalOfOverride: totalOfOverride.total,
+                },
+              },
+              null,
+              spacing,
+            ),
+          );
           return;
         }
 
-        const labels = getTotalLabels(options.mode, enableNonWords);
-        if (isSectionedResult(result)) {
-          renderStandardSectionedResult(result, labels);
+        const labels = getTotalLabels(options.mode, requestedNonWords);
+        if (isSectionedResult(displayResult)) {
+          renderStandardSectionedResult(displayResult, labels, totalOfOverride);
           return;
         }
 
-        renderStandardResult(result, labels.overall);
+        renderStandardResult(displayResult, labels.overall, totalOfOverride);
         return;
       }
 
@@ -306,8 +395,37 @@ export async function runCli(argv: string[] = process.argv, runtime: RunCliOptio
         return;
       }
 
+      let aggregateTotalOfOverride: TotalOfOverride | undefined;
+      let totalOfOverridesByResult: WeakMap<object, TotalOfOverride> | undefined;
+      if (totalOfParts && totalOfParts.length > 0) {
+        totalOfOverridesByResult = new WeakMap<object, TotalOfOverride>();
+        const aggregateOverride = resolveTotalOfOverride(summary.aggregate, totalOfParts);
+        if (aggregateOverride) {
+          totalOfOverridesByResult.set(summary.aggregate as object, aggregateOverride);
+          aggregateTotalOfOverride = aggregateOverride;
+        }
+
+        for (const file of summary.files) {
+          const fileOverride = resolveTotalOfOverride(file.result, totalOfParts);
+          if (!fileOverride) {
+            continue;
+          }
+          totalOfOverridesByResult.set(file.result as object, fileOverride);
+        }
+      } else {
+        aggregateTotalOfOverride = resolveTotalOfOverride(summary.aggregate, totalOfParts);
+      }
+
+      if (shouldNormalizeBaseOutput) {
+        normalizeBatchSummaryBase(summary);
+      }
+
+      if (!aggregateTotalOfOverride && totalOfOverridesByResult) {
+        aggregateTotalOfOverride = totalOfOverridesByResult.get(summary.aggregate as object);
+      }
+
       if (options.format === "raw") {
-        console.log(summary.aggregate.total);
+        console.log(aggregateTotalOfOverride?.total ?? summary.aggregate.total);
         return;
       }
 
@@ -316,6 +434,14 @@ export async function runCli(argv: string[] = process.argv, runtime: RunCliOptio
 
         if (batchOptions.scope === "per-file") {
           const skipped = showSkipDiagnostics ? summary.skipped : undefined;
+          const meta =
+            totalOfParts && totalOfParts.length > 0
+              ? {
+                  totalOf: totalOfParts,
+                  aggregateTotalOfOverride:
+                    aggregateTotalOfOverride?.total ?? summary.aggregate.total,
+                }
+              : undefined;
           const payload = {
             scope: "per-file",
             files: summary.files.map((file) => ({
@@ -324,28 +450,51 @@ export async function runCli(argv: string[] = process.argv, runtime: RunCliOptio
             })),
             ...(skipped ? { skipped } : {}),
             aggregate: summary.aggregate,
+            ...(meta ? { meta } : {}),
           };
           console.log(JSON.stringify(payload, null, spacing));
           return;
         }
 
-        console.log(JSON.stringify(summary.aggregate, null, spacing));
+        if (!aggregateTotalOfOverride) {
+          console.log(JSON.stringify(summary.aggregate, null, spacing));
+          return;
+        }
+        console.log(
+          JSON.stringify(
+            {
+              ...summary.aggregate,
+              meta: {
+                totalOf: aggregateTotalOfOverride.parts,
+                totalOfOverride: aggregateTotalOfOverride.total,
+              },
+            },
+            null,
+            spacing,
+          ),
+        );
         return;
       }
 
-      const labels = getTotalLabels(options.mode, enableNonWords);
+      const labels = getTotalLabels(options.mode, requestedNonWords);
+      const totalOfResolver =
+        totalOfParts && totalOfParts.length > 0
+          ? (result: WordCounterResult | SectionedResult) =>
+              totalOfOverridesByResult?.get(result as object) ??
+              resolveTotalOfOverride(result, totalOfParts)
+          : undefined;
 
       if (batchOptions.scope === "per-file") {
-        renderPerFileStandard(summary, labels);
+        renderPerFileStandard(summary, labels, totalOfResolver);
         return;
       }
 
       if (isSectionedResult(summary.aggregate)) {
-        renderStandardSectionedResult(summary.aggregate, labels);
+        renderStandardSectionedResult(summary.aggregate, labels, aggregateTotalOfOverride);
         return;
       }
 
-      renderStandardResult(summary.aggregate, labels.overall);
+      renderStandardResult(summary.aggregate, labels.overall, aggregateTotalOfOverride);
     },
   );
 
