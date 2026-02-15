@@ -2,6 +2,7 @@ import { relative as relativePath } from "node:path";
 import type { SectionMode, SectionedResult } from "../../markdown";
 import { showSingularOrPluralWord } from "../../utils";
 import type { NonWordCollection, WordCounterMode, WordCounterResult } from "../../wc";
+import { formatTotalOfParts, type TotalOfOverride } from "../total-of";
 import type { BatchSkip, BatchSummary } from "../types";
 import pc from "picocolors";
 
@@ -90,8 +91,21 @@ function renderCollectorBreakdown(items: Array<{ locale: string; words: number }
   }
 }
 
-export function renderStandardResult(result: WordCounterResult, totalLabel: string): void {
+function renderTotalOfOverride(baseTotal: number, override: TotalOfOverride | undefined): void {
+  if (!override || override.total === baseTotal) {
+    return;
+  }
+
+  console.log(`Total-of (override: ${formatTotalOfParts(override.parts)}): ${override.total}`);
+}
+
+export function renderStandardResult(
+  result: WordCounterResult,
+  totalLabel: string,
+  totalOfOverride?: TotalOfOverride,
+): void {
   console.log(`${totalLabel}: ${result.total}`);
+  renderTotalOfOverride(result.total, totalOfOverride);
 
   if (result.breakdown.mode === "segments") {
     renderSegmentBreakdown(result.breakdown.items);
@@ -159,8 +173,13 @@ function buildSectionLabel(
   return `[Section] ${sectionName} (${totalLabel})`;
 }
 
-export function renderStandardSectionedResult(result: SectionedResult, labels: TotalLabels): void {
+export function renderStandardSectionedResult(
+  result: SectionedResult,
+  labels: TotalLabels,
+  totalOfOverride?: TotalOfOverride,
+): void {
   console.log(`${labels.overall}: ${result.total}`);
+  renderTotalOfOverride(result.total, totalOfOverride);
 
   for (const item of result.items) {
     const label = buildSectionLabel(item.name, result.section, item.source, labels.section);
@@ -226,22 +245,34 @@ export function reportSkipped(skipped: BatchSkip[]): void {
   }
 }
 
-export function renderPerFileStandard(summary: BatchSummary, labels: TotalLabels): void {
+export function renderPerFileStandard(
+  summary: BatchSummary,
+  labels: TotalLabels,
+  resolveTotalOfOverride?: (result: WordCounterResult | SectionedResult) => TotalOfOverride | undefined,
+): void {
   for (const file of summary.files) {
     console.log(pc.bold(`[File] ${toDisplayPath(file.path)}`));
     if (isSectionedResult(file.result)) {
-      renderStandardSectionedResult(file.result, labels);
+      renderStandardSectionedResult(
+        file.result,
+        labels,
+        resolveTotalOfOverride?.(file.result),
+      );
       continue;
     }
 
-    renderStandardResult(file.result, labels.overall);
+    renderStandardResult(file.result, labels.overall, resolveTotalOfOverride?.(file.result));
   }
 
   console.log(pc.bold(`[Merged] ${summary.files.length} file(s)`));
   if (isSectionedResult(summary.aggregate)) {
-    renderStandardSectionedResult(summary.aggregate, labels);
+    renderStandardSectionedResult(
+      summary.aggregate,
+      labels,
+      resolveTotalOfOverride?.(summary.aggregate),
+    );
     return;
   }
 
-  renderStandardResult(summary.aggregate, labels.overall);
+  renderStandardResult(summary.aggregate, labels.overall, resolveTotalOfOverride?.(summary.aggregate));
 }
