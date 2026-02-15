@@ -47,7 +47,7 @@ Deliver `v0.1.0` through phased canary releases with clear priority ordering, ex
 - [x] Add tests for batch + `--section` across markdown and non-markdown text files.
 - [x] Compatibility gate (`#20`): verify single-input (`text`, `stdin`, single `--path`) behavior remains unchanged.
 - [x] Compatibility gate (`#20`): verify `--format raw` and current `--format json` default contracts are unchanged.
-- [ ] Add baseline `--debug` gating for skip diagnostics: default run should not print skipped-file details; with `--debug`, print skip diagnostics to `stderr` only.
+- [x] Add baseline `--debug` gating for skip diagnostics: default run should not print skipped-file details; with `--debug`, print skip diagnostics to `stderr` only.
 
 ### Phase 2 - Progress UX and Debug Channel (`v0.1.0-canary.1`)
 

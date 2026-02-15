@@ -145,14 +145,25 @@ describe("CLI batch output", () => {
     expect(output.stdout.some((line) => line.includes("[Merged] 2 file(s)"))).toBeTrue();
   });
 
-  test("supports quiet skip reporting toggle", async () => {
+  test("shows skip diagnostics only with --debug", async () => {
     const root = await makeTempFixture("cli-skips");
     const binary = join(root, "binary.dat");
     await writeFile(join(root, "note.txt"), "plain text");
     await writeFile(binary, Buffer.from([0, 1, 2, 3]));
 
-    const withSkips = await captureCli(["--path", root, "--path", binary, "--format", "raw"]);
-    expect(withSkips.stderr.some((line) => line.includes("Skipped"))).toBeTrue();
+    const withoutDebug = await captureCli(["--path", root, "--path", binary, "--format", "raw"]);
+    expect(withoutDebug.stderr.some((line) => line.includes("Skipped"))).toBeFalse();
+
+    const withDebug = await captureCli([
+      "--path",
+      root,
+      "--path",
+      binary,
+      "--format",
+      "raw",
+      "--debug",
+    ]);
+    expect(withDebug.stderr.some((line) => line.includes("Skipped"))).toBeTrue();
 
     const quiet = await captureCli([
       "--path",
@@ -161,9 +172,37 @@ describe("CLI batch output", () => {
       binary,
       "--format",
       "raw",
+      "--debug",
       "--quiet-skips",
     ]);
     expect(quiet.stderr.some((line) => line.includes("Skipped"))).toBeFalse();
+  });
+
+  test("omits skipped details from per-file json without --debug", async () => {
+    const root = await makeTempFixture("cli-json-skips");
+    await writeFile(join(root, "note.txt"), "plain text");
+    await writeFile(join(root, "ignore.js"), "const x = 1;");
+
+    const output = await captureCli([
+      "--path",
+      root,
+      "--per-file",
+      "--format",
+      "json",
+    ]);
+    const parsed = JSON.parse(output.stdout[0] ?? "{}");
+    expect(parsed.skipped).toBeUndefined();
+
+    const debugOutput = await captureCli([
+      "--path",
+      root,
+      "--per-file",
+      "--format",
+      "json",
+      "--debug",
+    ]);
+    const debugParsed = JSON.parse(debugOutput.stdout[0] ?? "{}");
+    expect(Array.isArray(debugParsed.skipped)).toBeTrue();
   });
 });
 

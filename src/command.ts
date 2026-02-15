@@ -154,10 +154,11 @@ export async function runCli(argv: string[] = process.argv): Promise<void> {
     )
     .option("--misc", "collect non-words plus whitespace (alias for --include-whitespace)")
     .option("--pretty", "pretty print JSON output", false)
+    .option("--debug", "enable debug diagnostics on stderr")
     .option("--merged", "show merged aggregate output (default)")
     .option("--per-file", "show per-file output plus merged summary")
     .option("--no-recursive", "disable recursive directory traversal")
-    .option("--quiet-skips", "hide unreadable/skipped path reporting")
+    .option("--quiet-skips", "hide skip diagnostics (applies when --debug is enabled)")
     .option(
       "--include-ext <exts>",
       "comma-separated extensions to include during directory scanning",
@@ -190,6 +191,7 @@ export async function runCli(argv: string[] = process.argv): Promise<void> {
         pathMode: PathMode;
         recursive: boolean;
         quietSkips?: boolean;
+        debug?: boolean;
         includeExt?: string[];
         excludeExt?: string[];
       },
@@ -262,7 +264,8 @@ export async function runCli(argv: string[] = process.argv): Promise<void> {
       const summary = await buildBatchSummary(loaded.files, options.section, wcOptions);
       summary.skipped.push(...resolved.skipped, ...loaded.skipped);
 
-      if (!batchOptions.quietSkips) {
+      const showSkipDiagnostics = Boolean(options.debug) && !batchOptions.quietSkips;
+      if (showSkipDiagnostics) {
         reportSkipped(summary.skipped);
       }
 
@@ -280,13 +283,14 @@ export async function runCli(argv: string[] = process.argv): Promise<void> {
         const spacing = options.pretty ? 2 : 0;
 
         if (batchOptions.scope === "per-file") {
+          const skipped = showSkipDiagnostics ? summary.skipped : undefined;
           const payload = {
             scope: "per-file",
             files: summary.files.map((file) => ({
               path: file.path,
               result: file.result,
             })),
-            skipped: summary.skipped,
+            ...(skipped ? { skipped } : {}),
             aggregate: summary.aggregate,
           };
           console.log(JSON.stringify(payload, null, spacing));
