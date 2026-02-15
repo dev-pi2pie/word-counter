@@ -146,7 +146,11 @@ export async function runCli(argv: string[] = process.argv): Promise<void> {
         .choices(PATH_MODE_CHOICES)
         .default("auto"),
     )
-    .option("--latin-locale <locale>", "hint the locale for Latin script text")
+    .option("--latin-language <language>", "hint a language tag for Latin script text")
+    .option("--latin-tag <tag>", "hint a BCP 47 tag for Latin script text")
+    .option("--latin-locale <locale>", "legacy alias of --latin-language")
+    .option("--han-language <language>", "hint a language tag for Han script text")
+    .option("--han-tag <tag>", "hint a BCP 47 tag for Han script text")
     .option("--non-words", "collect emoji, symbols, and punctuation (excludes whitespace)")
     .option(
       "--include-whitespace",
@@ -183,7 +187,11 @@ export async function runCli(argv: string[] = process.argv): Promise<void> {
         format: OutputFormat;
         pretty: boolean;
         section: SectionMode;
+        latinLanguage?: string;
+        latinTag?: string;
         latinLocale?: string;
+        hanLanguage?: string;
+        hanTag?: string;
         nonWords?: boolean;
         includeWhitespace?: boolean;
         misc?: boolean;
@@ -201,7 +209,11 @@ export async function runCli(argv: string[] = process.argv): Promise<void> {
       const enableWhitespace = Boolean(options.includeWhitespace || options.misc);
       const wcOptions = {
         mode: options.mode,
+        latinLanguageHint: options.latinLanguage,
+        latinTagHint: options.latinTag,
         latinLocaleHint: options.latinLocale,
+        hanLanguageHint: options.hanLanguage,
+        hanTagHint: options.hanTag,
         nonWords: enableNonWords,
         includeWhitespace: enableWhitespace,
       };

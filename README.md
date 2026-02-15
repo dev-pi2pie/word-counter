@@ -1,13 +1,20 @@
 # Word Counter
 
-Locale-aware word counting powered by the Web API [`Intl.Segmenter`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/Segmenter). The script automatically detects the primary writing system for each portion of the input, segments the text with the matching locale, and reports word totals per language.
+Locale-aware word counting powered by the Web API [`Intl.Segmenter`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/Segmenter). The script automatically detects the primary writing system for each portion of the input, segments the text with matching BCP 47 locale tags, and reports word totals per locale.
 
 ## How It Works
 
-- The runtime inspects each character's Unicode script to infer its likely locale (e.g., `und-Latn`, `zh-Hans`, `ja`).
-- Adjacent characters that share the same locale are grouped into a chunk.
+- The runtime inspects each character's Unicode script to infer its likely locale tag (e.g., `und-Latn`, `zh-Hani`, `ja`).
+- Adjacent characters that share the same locale tag are grouped into a chunk.
 - Each chunk is counted with `Intl.Segmenter` at `granularity: "word"`, caching segmenters to avoid re-instantiation.
 - Per-locale counts are summed into a overall total and printed to stdout.
+
+## Locale vs Language Code
+
+- Output keeps the field name `locale` for compatibility.
+- In this project, locale values are BCP 47 tags and are often language/script focused (for example: `en`, `und-Latn`, `zh-Hani`) rather than region-specific tags (for example: `en-US`, `zh-TW`).
+- Default detection prefers language/script tags to avoid incorrect region assumptions.
+- You can still provide region-specific locale tags through hint flags when needed.
 
 ## Installation
 
@@ -67,10 +74,18 @@ You can also pipe text:
 echo "こんにちは world مرحبا" | word-counter
 ```
 
-Hint a locale for ambiguous Latin text (ASCII-heavy content):
+Hint a locale tag for ambiguous Latin text (ASCII-heavy content):
 
 ```bash
-word-counter --latin-locale en "Hello world"
+word-counter --latin-language en "Hello world"
+word-counter --latin-tag en "Hello world"
+```
+
+Hint a locale tag for Han text fallback:
+
+```bash
+word-counter --han-language zh-Hant "漢字測試"
+word-counter --han-tag zh-Hans "汉字测试"
 ```
 
 Collect non-word segments (emoji, symbols, punctuation):
@@ -140,7 +155,9 @@ import wordCounter, {
   showSingularOrPluralWord,
 } from "@dev-pi2pie/word-counter";
 
-wordCounter("Hello world", { latinLocaleHint: "en" });
+wordCounter("Hello world", { latinLanguageHint: "en" });
+wordCounter("Hello world", { latinTagHint: "en" });
+wordCounter("漢字測試", { hanTagHint: "zh-Hant" });
 wordCounter("Hi 👋, world!", { nonWords: true });
 wordCounter("Hi 👋, world!", { mode: "char", nonWords: true });
 wordCounter("Hi\tthere\n", { nonWords: true, includeWhitespace: true });
@@ -187,7 +204,9 @@ const {
   showSingularOrPluralWord,
 } = wordCounter;
 
-wordCounter("Hello world", { latinLocaleHint: "en" });
+wordCounter("Hello world", { latinLanguageHint: "en" });
+wordCounter("Hello world", { latinTagHint: "en" });
+wordCounter("漢字測試", { hanTagHint: "zh-Hant" });
 wordCounter("Hi 👋, world!", { nonWords: true });
 wordCounter("Hi 👋, world!", { mode: "char", nonWords: true });
 wordCounter("Hi\tthere\n", { nonWords: true, includeWhitespace: true });
@@ -231,7 +250,7 @@ Sample output (with `nonWords: true` and `includeWhitespace: true`):
 | `wordCounter`         | function | Alias of the default export.                       |
 | `countCharsForLocale` | function | Low-level helper for per-locale char counts.       |
 | `countWordsForLocale` | function | Low-level helper for per-locale counts.            |
-| `segmentTextByLocale` | function | Low-level helper for locale-aware segmentation.    |
+| `segmentTextByLocale` | function | Low-level helper for locale-tag segmentation.      |
 
 #### Markdown Helpers
 
@@ -393,12 +412,19 @@ Example JSON (trimmed):
 > [!Note]
 > Text-default symbols (e.g. ©) count as `symbols` unless explicitly emoji-presented (e.g. ©️ with VS16).
 
-## Locale Detection Notes (Migration)
+## Locale Tag Detection Notes (Migration)
 
-- Ambiguous Latin text now uses `und-Latn` instead of defaulting to `en`.
-- Use `--mode chunk`/`--mode segments` or `--format json` to see the exact locale assigned to each chunk.
+- Ambiguous Latin text uses `und-Latn` unless a Latin hint is provided.
+- Han-script fallback uses `zh-Hani` by default because regex script checks cannot natively distinguish `zh-Hans` vs `zh-Hant`.
+- Use `--mode chunk`/`--mode segments` or `--format json` to see the exact locale tag assigned to each chunk.
 - Regex/script-only detection cannot reliably identify English vs. other Latin-script languages; 100% certainty requires explicit metadata (document language tags, user-provided locale, headers) or a language-ID model.
-- Provide a hint with `--latin-locale <locale>` or `latinLocaleHint` when you know the intended Latin language.
+- Use `--latin-language <tag>` or `--latin-tag <tag>` for ambiguous Latin text.
+- Use `--han-language <tag>` or `--han-tag <tag>` for Han-script fallback.
+- `--latin-locale` remains supported as a legacy alias for now and is planned for future deprecation.
+
+## Breaking Changes Notes
+
+- Planned deprecations and migration notes are tracked in `docs/breaking-changes-notes.md`.
 
 ## Testing
 
@@ -412,7 +438,7 @@ bun test
 
 ## Sample Inputs
 
-Try the following mixed-locale phrases to see how detection behaves:
+Try the following mixed-language phrases to see how detection behaves:
 
 - `"Hello world 你好世界"`
 - `"Bonjour le monde こんにちは 세계"`

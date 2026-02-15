@@ -83,12 +83,53 @@ describe("segmentTextByLocale", () => {
   test("splits Latin and Han scripts into separate locales", () => {
     const chunks = segmentTextByLocale("Hello 世界");
     const locales = chunks.map((chunk) => chunk.locale);
-    expect(locales).toEqual(["und-Latn", "zh-Hans"]);
+    expect(locales).toEqual(["und-Latn", "zh-Hani"]);
   });
 
   test("applies Latin locale hints for ambiguous text", () => {
     const chunks = segmentTextByLocale("Hello world", { latinLocaleHint: "en" });
     expect(chunks[0]?.locale).toBe("en");
+  });
+
+  test("prefers Latin tag hint over other Latin hint aliases", () => {
+    const chunks = segmentTextByLocale("Hello world", {
+      latinLocaleHint: "en",
+      latinLanguageHint: "fr",
+      latinTagHint: "de",
+    });
+    expect(chunks[0]?.locale).toBe("de");
+  });
+
+  test("treats empty Latin tag hint as missing and falls back to Latin language hint", () => {
+    const chunks = segmentTextByLocale("Hello world", {
+      latinLocaleHint: "en",
+      latinLanguageHint: "fr",
+      latinTagHint: "",
+    });
+    expect(chunks[0]?.locale).toBe("fr");
+  });
+
+  test("uses Han tag hint when provided", () => {
+    const chunks = segmentTextByLocale("漢字測試", { hanTagHint: "zh-Hant" });
+    expect(chunks[0]?.locale).toBe("zh-Hant");
+  });
+
+  test("uses Han tag hint for Simplified Chinese when provided", () => {
+    const chunks = segmentTextByLocale("汉字测试", { hanTagHint: "zh-Hans" });
+    expect(chunks[0]?.locale).toBe("zh-Hans");
+  });
+
+  test("treats empty Han tag hint as missing and uses fallback", () => {
+    const chunks = segmentTextByLocale("漢字測試", { hanTagHint: "" });
+    expect(chunks[0]?.locale).toBe("zh-Hani");
+  });
+
+  test("falls back to Han language hint when Han tag hint is empty", () => {
+    const chunks = segmentTextByLocale("漢字測試", {
+      hanTagHint: "",
+      hanLanguageHint: "zh-Hant",
+    });
+    expect(chunks[0]?.locale).toBe("zh-Hant");
   });
 
   test("uses diacritics to hint Latin language buckets", () => {

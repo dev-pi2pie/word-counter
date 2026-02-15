@@ -16,6 +16,7 @@ Deliver `v0.1.0` through phased canary releases with clear priority ordering, ex
 - Parent tracking issue: `#21` (final stabilization and pre-release review)
 - Feature issues:
   - `#17` batch file counting
+  - `#24` language-tag alignment and hint-flag migration
   - `#18` TUI progress bar for batch mode
   - `#19` selective total composition via `--total-of`
 - Cross-cutting quality issue:
@@ -24,10 +25,11 @@ Deliver `v0.1.0` through phased canary releases with clear priority ordering, ex
 ## Priority Order
 
 1. Batch file counting first (`#17`).
-2. TUI progress behavior second (`#18`).
-3. Selective total composition third (`#19`).
-4. Compatibility validation (`#20`) is required in every phase.
-5. Final pre-release review for stable `v0.1.0` (`#21`).
+2. Language-tag alignment and hint-flag aliases second (`#24`).
+3. TUI progress behavior third (`#18`).
+4. Selective total composition fourth (`#19`).
+5. Compatibility validation (`#20`) is required in every phase.
+6. Final pre-release review for stable `v0.1.0` (`#21`).
 
 ## Phased Implementation Plan
 
@@ -49,7 +51,18 @@ Deliver `v0.1.0` through phased canary releases with clear priority ordering, ex
 - [x] Compatibility gate (`#20`): verify `--format raw` and current `--format json` default contracts are unchanged.
 - [x] Add baseline `--debug` gating for skip diagnostics: default run should not print skipped-file details; with `--debug`, print skip diagnostics to `stderr` only.
 
-### Phase 2 - Progress UX and Debug Channel (`v0.1.0-canary.1`)
+### Phase 2 - Language-Tag Alignment and Hint Flags (`v0.1.0-canary.1`, `#24`)
+
+- [x] Use script-level Han fallback tag (`zh-Hani`) instead of forcing `zh-Hans`.
+- [x] Add `--latin-language` and `--latin-tag` as preferred Latin hint flags.
+- [x] Add `--han-language` and `--han-tag` for Han fallback override.
+- [x] Keep `--latin-locale` for compatibility as a legacy alias.
+- [x] Add tests for new hint-flag behavior and precedence.
+- [x] Update README wording from locale-centric to language-tag-centric guidance.
+- [x] Document future deprecation plan in breaking-change notes.
+- [x] Compatibility gate (`#20`): keep existing output field names and default contracts during canary.
+
+### Phase 3 - Progress UX and Debug Channel (`v0.1.0-canary.2`)
 
 - [ ] Add batch TUI progress bar auto-enabled in standard mode (`#18`).
 - [ ] Add `--no-progress` opt-out and ensure single-input runs do not show progress by default.
@@ -60,7 +73,7 @@ Deliver `v0.1.0` through phased canary releases with clear priority ordering, ex
 - [ ] Compatibility gate (`#20`): verify final standard output remains concise and parse-safe for existing use cases.
 - [ ] Compatibility gate (`#20`): verify no output noise is introduced in `raw`/`json` modes.
 
-### Phase 3 - Selective Totals via `--total-of` (`v0.1.0-canary.2`)
+### Phase 4 - Selective Totals via `--total-of` (`v0.1.0-canary.3`)
 
 - [ ] Add `--total-of <parts>` with canonical parts (`words`, `emoji`, `symbols`, `punctuation`, `whitespace`) (`#19`).
 - [ ] Add tolerant token normalization (`symbol` -> `symbols`, `punction` -> `punctuation`).
@@ -71,7 +84,7 @@ Deliver `v0.1.0` through phased canary releases with clear priority ordering, ex
 - [ ] Compatibility gate (`#20`): verify behavior is unchanged when `--total-of` is not provided.
 - [ ] Compatibility gate (`#20`): verify existing consumers can continue using current defaults without migration.
 
-### Phase 4 - Canary Hardening (Deps + README) (`v0.1.0-canary.3`)
+### Phase 5 - Canary Hardening (Deps + README) (`v0.1.0-canary.4`)
 
 - [ ] Upgrade targeted dependencies (`commander`, `tsdown`, `oxfmt`, `oxlint`, `@types/node`) and validate build/test workflows.
 - [ ] Reorganize README with `npx @dev-pi2pie/word-counter` as first-path quick start.
@@ -79,10 +92,10 @@ Deliver `v0.1.0` through phased canary releases with clear priority ordering, ex
 - [ ] Add/refresh examples for new batch/progress/`--total-of` flows.
 - [ ] Compatibility gate (`#20`): verify docs and examples preserve backward-compatible defaults.
 
-### Phase 5 - Stable Release Readiness (`v0.1.0`)
+### Phase 6 - Stable Release Readiness (`v0.1.0`)
 
 - [ ] Run final regression pass across feature and legacy paths (`#21`).
-- [ ] Re-check issue closure and acceptance criteria for `#17`, `#18`, `#19`, and `#20`.
+- [ ] Re-check issue closure and acceptance criteria for `#17`, `#18`, `#19`, `#20`, and `#24`.
 - [ ] Validate release notes and canary-to-stable changelog clarity.
 - [ ] Confirm stable tag/release only after canary feedback is resolved.
 
@@ -96,6 +109,7 @@ Deliver `v0.1.0` through phased canary releases with clear priority ordering, ex
 - `docs/research-2026-02-13-batch-file-counting.md`
 - `docs/research-2026-02-13-cli-progress-indicator.md`
 - `docs/research-2026-02-13-total-combination-mode.md`
+- `docs/research-2026-01-02-language-detection.md`
 - `docs/schemas/default-config.md`
 
 ## Related Plans
