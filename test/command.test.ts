@@ -82,6 +82,20 @@ describe("batch path resolution", () => {
 
     expect(resolved.files.map((file) => basename(file))).toEqual(["a.md"]);
   });
+
+  test("deduplicates overlapping directory and file path inputs", async () => {
+    const root = await makeTempFixture("batch-overlap");
+    const explicitPath = join(root, "a.md");
+    await writeFile(explicitPath, "alpha");
+    await writeFile(join(root, "b.txt"), "beta");
+
+    const resolved = await resolveBatchFilePaths([root, explicitPath, root], {
+      pathMode: "auto",
+      recursive: true,
+    });
+
+    expect(resolved.files.map((file) => basename(file))).toEqual(["a.md", "b.txt"]);
+  });
 });
 
 describe("batch aggregation", () => {
@@ -203,6 +217,24 @@ describe("CLI batch output", () => {
     ]);
     const debugParsed = JSON.parse(debugOutput.stdout[0] ?? "{}");
     expect(Array.isArray(debugParsed.skipped)).toBeTrue();
+  });
+
+  test("does not double count overlapping path inputs", async () => {
+    const root = await makeTempFixture("cli-overlap");
+    const explicitPath = join(root, "a.txt");
+    await writeFile(explicitPath, "alpha beta");
+    await writeFile(join(root, "b.txt"), "gamma");
+
+    const output = await captureCli([
+      "--path",
+      root,
+      "--path",
+      explicitPath,
+      "--format",
+      "raw",
+    ]);
+
+    expect(output.stdout).toEqual(["3"]);
   });
 });
 

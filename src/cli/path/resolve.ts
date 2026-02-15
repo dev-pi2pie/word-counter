@@ -61,7 +61,7 @@ export async function resolveBatchFilePaths(
   options: ResolveBatchFilePathOptions,
 ): Promise<{ files: string[]; skipped: BatchSkip[] }> {
   const skipped: BatchSkip[] = [];
-  const resolvedFiles: string[] = [];
+  const resolvedFiles = new Set<string>();
   const extensionFilter =
     options.extensionFilter ?? buildDirectoryExtensionFilter(undefined, undefined);
 
@@ -79,7 +79,9 @@ export async function resolveBatchFilePaths(
 
     if (metadata.isDirectory() && options.pathMode === "auto") {
       const files = await expandDirectory(targetPath, options.recursive, extensionFilter, skipped);
-      resolvedFiles.push(...files);
+      for (const file of files) {
+        resolvedFiles.add(file);
+      }
       continue;
     }
 
@@ -88,10 +90,10 @@ export async function resolveBatchFilePaths(
       continue;
     }
 
-    resolvedFiles.push(targetPath);
+    resolvedFiles.add(targetPath);
   }
 
-  resolvedFiles.sort((left, right) => left.localeCompare(right));
+  const files = [...resolvedFiles].sort((left, right) => left.localeCompare(right));
 
-  return { files: resolvedFiles, skipped };
+  return { files, skipped };
 }
