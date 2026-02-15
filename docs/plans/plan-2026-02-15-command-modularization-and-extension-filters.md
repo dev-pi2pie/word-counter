@@ -1,7 +1,8 @@
 ---
 title: "command modularization and extension filter flags"
 created-date: 2026-02-15
-status: draft
+modified-date: 2026-02-15
+status: completed
 agent: Codex
 ---
 
@@ -113,3 +114,11 @@ Reduce `src/command.ts` complexity by separating batch/path/output concerns into
 ## Related Plans
 
 - `docs/plans/plan-2026-02-15-v0-1-0-canary-phased-delivery.md`
+
+## Implementation Outcome
+
+- `src/command.ts` was reduced to a CLI orchestration layer.
+- Path filtering, path resolution, file loading, aggregation, and rendering were separated into `src/cli/*` modules.
+- `--include-ext` and `--exclude-ext` were implemented with normalization and exclusion-precedence behavior.
+- Extension filters are applied to directory-expanded files, while direct file paths remain explicitly countable.
+- Tests were added for include-only, exclude-only, overlap precedence, normalization, empty effective include set, and direct-file behavior.
