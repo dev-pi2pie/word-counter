@@ -3,6 +3,11 @@ import type { SectionMode, SectionedResult } from "../../markdown";
 import wordCounter, { type NonWordCollection, type WordCounterResult } from "../../wc";
 import { createNonWordCollection, mergeNonWordCollections } from "../../wc/non-words";
 import type { BatchFileInput, BatchFileResult, BatchSummary } from "../types";
+import type { BatchProgressSnapshot } from "../progress/reporter";
+
+type BuildBatchSummaryOptions = {
+  onFileCounted?: (snapshot: BatchProgressSnapshot) => void;
+};
 
 function mergeWordCounterResult(
   left: WordCounterResult,
@@ -228,18 +233,26 @@ export async function buildBatchSummary(
   inputs: BatchFileInput[],
   section: SectionMode,
   wcOptions: Parameters<typeof wordCounter>[1],
+  options: BuildBatchSummaryOptions = {},
 ): Promise<BatchSummary> {
-  const files: BatchFileResult[] = inputs.map((input) => {
+  const files: BatchFileResult[] = [];
+
+  for (const input of inputs) {
     const result =
       section === "all"
         ? wordCounter(input.content, wcOptions)
         : countSections(input.content, section, wcOptions);
 
-    return {
+    files.push({
       path: input.path,
       result,
-    };
-  });
+    });
+
+    options.onFileCounted?.({
+      completed: files.length,
+      total: inputs.length,
+    });
+  }
 
   if (files.length === 0) {
     return {
