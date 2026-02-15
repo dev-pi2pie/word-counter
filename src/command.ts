@@ -164,6 +164,7 @@ export async function runCli(argv: string[] = process.argv, runtime: RunCliOptio
     .option("--merged", "show merged aggregate output (default)")
     .option("--per-file", "show per-file output plus merged summary")
     .option("--no-progress", "disable batch progress indicator")
+    .option("--keep-progress", "keep final batch progress line visible in standard mode")
     .option("--no-recursive", "disable recursive directory traversal")
     .option("--quiet-skips", "hide skip diagnostics (applies when --debug is enabled)")
     .option(
@@ -202,6 +203,7 @@ export async function runCli(argv: string[] = process.argv, runtime: RunCliOptio
         pathMode: PathMode;
         recursive: boolean;
         progress: boolean;
+        keepProgress?: boolean;
         quietSkips?: boolean;
         debug?: boolean;
         includeExt?: string[];
@@ -282,7 +284,7 @@ export async function runCli(argv: string[] = process.argv, runtime: RunCliOptio
         progressReporter: createBatchProgressReporter({
           enabled: options.format === "standard" && options.progress,
           stream: runtime.stderr ?? (process.stderr as unknown as ProgressOutputStream),
-          clearOnFinish: !Boolean(options.debug),
+          clearOnFinish: !Boolean(options.debug || options.keepProgress),
         }),
       });
 

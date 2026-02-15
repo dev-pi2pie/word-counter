@@ -70,6 +70,7 @@ Deliver `v0.1.0` through phased canary releases with clear priority ordering, ex
 - [x] Ensure `raw` and `json` outputs stay clean (no progress artifacts).
 - [x] Extend `--debug` beyond skip diagnostics: add structured diagnostics for batch resolution/progress lifecycle (still `stderr` only, no `stdout` pollution).
 - [x] Add tests for progress mode behavior (`auto`, `--no-progress`) and `stderr`/`stdout` separation.
+- [x] Add `--keep-progress` opt-in to keep the final progress line visible in standard batch mode.
 - [x] Compatibility gate (`#20`): verify final standard output remains concise and parse-safe for existing use cases.
 - [x] Compatibility gate (`#20`): verify no output noise is introduced in `raw`/`json` modes.
 

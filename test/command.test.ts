@@ -288,6 +288,32 @@ describe("CLI progress output", () => {
     expect(progress.writes).toEqual([]);
   });
 
+  test("keeps final progress line visible with --keep-progress", async () => {
+    const root = await makeTempFixture("cli-progress-keep-visible");
+    await writeFile(join(root, "a.txt"), "alpha beta");
+    await writeFile(join(root, "b.txt"), "gamma delta");
+    const progress = createCapturedStream(true);
+
+    await captureCli(["--path", root, "--keep-progress"], { stderr: progress.stream });
+
+    expect(progress.writes.some((chunk) => chunk.includes("Counting files ["))).toBeTrue();
+    expect(progress.writes.some((chunk) => /\r +\r/.test(chunk))).toBeFalse();
+    expect(progress.writes.some((chunk) => chunk === "\n")).toBeTrue();
+  });
+
+  test("keeps --no-progress precedence over --keep-progress", async () => {
+    const root = await makeTempFixture("cli-progress-no-progress-precedence");
+    await writeFile(join(root, "a.txt"), "alpha beta");
+    await writeFile(join(root, "b.txt"), "gamma delta");
+    const progress = createCapturedStream(true);
+
+    await captureCli(["--path", root, "--no-progress", "--keep-progress"], {
+      stderr: progress.stream,
+    });
+
+    expect(progress.writes).toEqual([]);
+  });
+
   test("does not show progress for single-input runs by default", async () => {
     const root = await makeTempFixture("cli-progress-single");
     const singlePath = join(root, "single.txt");

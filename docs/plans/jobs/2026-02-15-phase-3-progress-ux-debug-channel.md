@@ -26,8 +26,10 @@ Implemented Phase 3 from `v0.1.0` canary plan:
 - Updated `src/cli/batch/aggregate.ts` to support progress callbacks while counting files.
 - Updated progress rendering to match the research sketch format (`████...░░`, percentage, `completed/total`, `elapsed mm:ss`).
 - Added non-TTY fallback line updates for progress visibility when carriage-return animation is unavailable.
+- Added `--keep-progress` opt-in to keep final progress line visibility without requiring `--debug`.
 - Updated `src/command.ts` to:
   - expose `--no-progress`
+  - expose `--keep-progress`
   - wire progress and debug modules into batch execution
   - keep output contracts intact
 - Added CLI tests for progress behavior, lifecycle diagnostics, and stream separation.
