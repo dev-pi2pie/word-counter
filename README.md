@@ -87,6 +87,9 @@ Or read from a file:
 word-counter --path ./fixtures/sample.txt
 ```
 
+`--path` accepts any readable text-like file, including empty or whitespace-only files.
+Such files are treated as valid inputs and contribute zero words by default.
+
 ### Batch Counting
 
 Process multiple files by repeating `--path`:

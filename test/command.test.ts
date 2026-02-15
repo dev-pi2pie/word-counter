@@ -387,4 +387,38 @@ describe("CLI compatibility gates", () => {
     expect(parsed.total).toBe(2);
     expect(parsed.scope).toBeUndefined();
   });
+
+  test("treats empty single --path file as valid zero-count input", async () => {
+    const root = await makeTempFixture("cli-single-path-empty");
+    const singlePath = join(root, "empty.txt");
+    await writeFile(singlePath, "");
+
+    const standard = await captureCli(["--path", singlePath]);
+    expect(standard.stdout[0]).toBe("Total words: 0");
+    expect(standard.stderr).toEqual([]);
+
+    const raw = await captureCli(["--path", singlePath, "--format", "raw"]);
+    expect(raw.stdout).toEqual(["0"]);
+    expect(raw.stderr).toEqual([]);
+
+    const json = await captureCli(["--path", singlePath, "--format", "json"]);
+    const parsed = JSON.parse(json.stdout[0] ?? "{}");
+    expect(parsed.total).toBe(0);
+    expect(parsed.scope).toBeUndefined();
+    expect(json.stderr).toEqual([]);
+  });
+
+  test("treats whitespace-only single --path file as valid zero-count input", async () => {
+    const root = await makeTempFixture("cli-single-path-whitespace");
+    const singlePath = join(root, "whitespace.txt");
+    await writeFile(singlePath, " \n\t ");
+
+    const standard = await captureCli(["--path", singlePath]);
+    expect(standard.stdout[0]).toBe("Total words: 0");
+    expect(standard.stderr).toEqual([]);
+
+    const raw = await captureCli(["--path", singlePath, "--format", "raw"]);
+    expect(raw.stdout).toEqual(["0"]);
+    expect(raw.stderr).toEqual([]);
+  });
 });
