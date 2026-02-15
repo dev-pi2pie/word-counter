@@ -8,11 +8,14 @@ import type { BatchProgressSnapshot } from "../progress/reporter";
 
 type BuildBatchSummaryOptions = {
   onFileCounted?: (snapshot: BatchProgressSnapshot) => void;
+  onFinalizeStart?: () => void;
+  preserveCollectorSegments?: boolean;
 };
 
 function mergeWordCounterResult(
   left: WordCounterResult,
   right: WordCounterResult,
+  preserveCollectorSegments: boolean,
 ): WordCounterResult {
   if (left.breakdown.mode !== right.breakdown.mode) {
     throw new Error("Cannot merge different breakdown modes.");
@@ -77,7 +80,9 @@ function mergeWordCounterResult(
         const existing = mergedByLocale.get(item.locale);
         if (existing) {
           existing.words += item.words;
-          appendAll(existing.segments, item.segments);
+          if (preserveCollectorSegments) {
+            appendAll(existing.segments, item.segments);
+          }
           continue;
         }
 
@@ -85,7 +90,7 @@ function mergeWordCounterResult(
         mergedByLocale.set(item.locale, {
           locale: item.locale,
           words: item.words,
-          segments: [...item.segments],
+          segments: preserveCollectorSegments ? [...item.segments] : [],
         });
       }
     };
@@ -128,7 +133,10 @@ function mergeWordCounterResult(
   };
 }
 
-function aggregateWordCounterResults(results: WordCounterResult[]): WordCounterResult {
+function aggregateWordCounterResults(
+  results: WordCounterResult[],
+  preserveCollectorSegments: boolean,
+): WordCounterResult {
   if (results.length === 0) {
     return wordCounter("", { mode: "chunk" });
   }
@@ -144,7 +152,7 @@ function aggregateWordCounterResults(results: WordCounterResult[]): WordCounterR
     if (!current) {
       continue;
     }
-    aggregate = mergeWordCounterResult(aggregate, current);
+    aggregate = mergeWordCounterResult(aggregate, current, preserveCollectorSegments);
   }
 
   return aggregate;
@@ -154,7 +162,10 @@ function buildSectionKey(name: string, source: "frontmatter" | "content"): strin
   return `${source}:${name}`;
 }
 
-function aggregateSectionedResults(results: SectionedResult[]): SectionedResult {
+function aggregateSectionedResults(
+  results: SectionedResult[],
+  preserveCollectorSegments: boolean,
+): SectionedResult {
   if (results.length === 0) {
     return {
       section: "all",
@@ -219,7 +230,7 @@ function aggregateSectionedResults(results: SectionedResult[]): SectionedResult 
     .map((entry) => ({
       name: entry.name,
       source: entry.source,
-      result: aggregateWordCounterResults(entry.items),
+      result: aggregateWordCounterResults(entry.items, preserveCollectorSegments),
     }));
 
   return {
@@ -230,12 +241,29 @@ function aggregateSectionedResults(results: SectionedResult[]): SectionedResult 
   };
 }
 
+function stripCollectorSegmentsFromWordCounterResult(result: WordCounterResult): void {
+  if (result.breakdown.mode !== "collector") {
+    return;
+  }
+
+  for (const item of result.breakdown.items) {
+    item.segments = [];
+  }
+}
+
+function stripCollectorSegmentsFromSectionedResult(result: SectionedResult): void {
+  for (const item of result.items) {
+    stripCollectorSegmentsFromWordCounterResult(item.result);
+  }
+}
+
 export async function buildBatchSummary(
   inputs: BatchFileInput[],
   section: SectionMode,
   wcOptions: Parameters<typeof wordCounter>[1],
   options: BuildBatchSummaryOptions = {},
 ): Promise<BatchSummary> {
+  const preserveCollectorSegments = options.preserveCollectorSegments ?? true;
   const files: BatchFileResult[] = [];
 
   for (const input of inputs) {
@@ -243,6 +271,14 @@ export async function buildBatchSummary(
       section === "all"
         ? wordCounter(input.content, wcOptions)
         : countSections(input.content, section, wcOptions);
+
+    if (!preserveCollectorSegments) {
+      if ("section" in result) {
+        stripCollectorSegmentsFromSectionedResult(result);
+      } else {
+        stripCollectorSegmentsFromWordCounterResult(result);
+      }
+    }
 
     files.push({
       path: input.path,
@@ -254,6 +290,8 @@ export async function buildBatchSummary(
       total: inputs.length,
     });
   }
+
+  options.onFinalizeStart?.();
 
   if (files.length === 0) {
     return {
@@ -273,8 +311,14 @@ export async function buildBatchSummary(
 
   const aggregate =
     section === "all"
-      ? aggregateWordCounterResults(files.map((file) => file.result as WordCounterResult))
-      : aggregateSectionedResults(files.map((file) => file.result as SectionedResult));
+      ? aggregateWordCounterResults(
+          files.map((file) => file.result as WordCounterResult),
+          preserveCollectorSegments,
+        )
+      : aggregateSectionedResults(
+          files.map((file) => file.result as SectionedResult),
+          preserveCollectorSegments,
+        );
 
   return {
     files,

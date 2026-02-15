@@ -390,6 +390,52 @@ word-counter --format raw "Hello world"
 word-counter --format json --pretty "Hello world"
 ```
 
+### Selective Totals (`--total-of`)
+
+Use `--total-of <parts>` to override how the displayed `total` is computed.
+
+Supported parts:
+
+- `words`
+- `emoji`
+- `symbols`
+- `punctuation`
+- `whitespace`
+
+Examples:
+
+```bash
+word-counter --non-words --total-of words "Hi 👋, world!"
+word-counter --total-of punctuation --format raw "Hi, world!"
+word-counter --total-of words,emoji --format json "Hi 👋, world!"
+```
+
+Rules:
+
+- Without `--total-of`, behavior stays unchanged.
+- With `--total-of`, `--format raw` prints the override total only.
+- In standard output, `Total-of (override: ...)` is shown only when override total differs from the base total.
+- If selected parts require non-word data (for example `emoji` or `punctuation`), non-word collection is enabled internally as needed.
+- `--total-of` does not implicitly enable non-word display mode: base `Total ...` labeling and non-word breakdown visibility still follow explicit flags (`--non-words`, `--include-whitespace`, `--misc`).
+- Alias/normalization is tolerant for common variants:
+  - `word` -> `words`
+  - `symbol` -> `symbols`
+  - `punction` -> `punctuation`
+
+JSON output adds `meta.totalOf` and `meta.totalOfOverride` when `--total-of` is provided.
+
+Example JSON (trimmed):
+
+```json
+{
+  "total": 5,
+  "meta": {
+    "totalOf": ["words", "emoji"],
+    "totalOfOverride": 3
+  }
+}
+```
+
 ### Non-Word Collection
 
 Use `--non-words` (or `nonWords: true` in the API) to collect emoji, symbols, and punctuation as separate categories. When enabled, the `total` includes both words and non-words.

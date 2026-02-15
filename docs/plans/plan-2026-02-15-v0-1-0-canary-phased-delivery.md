@@ -85,16 +85,25 @@ Deliver `v0.1.0` through phased canary releases with clear priority ordering, ex
 - [x] Document collector-mode memory characteristics for very large corpora in README.
 - [x] Compatibility gate (`#20`): verify totals and output contracts stay unchanged while eliminating stack-overflow failures.
 
-### Phase 5 - Selective Totals via `--total-of` (`v0.1.0-canary.4`)
+### Phase 5 - Selective Totals + Batch Finalization UX/Performance (`v0.1.0-canary.4`)
 
-- [ ] Add `--total-of <parts>` with canonical parts (`words`, `emoji`, `symbols`, `punctuation`, `whitespace`) (`#19`).
-- [ ] Add tolerant token normalization (`symbol` -> `symbols`, `punction` -> `punctuation`).
-- [ ] Implement standard output rule: show `Total-of (override: ...)` only when override differs from base total.
-- [ ] Implement raw output rule: with `--total-of`, print override total only.
-- [ ] Keep standard output concise (no extra precedence note lines).
-- [ ] Add tests for mixed-flag behavior, override visibility rules, alias normalization, and parity across formats.
-- [ ] Compatibility gate (`#20`): verify behavior is unchanged when `--total-of` is not provided.
-- [ ] Compatibility gate (`#20`): verify existing consumers can continue using current defaults without migration.
+#### Layer 1 - UX and Batch Finalization Performance
+
+- [x] Add a post-count finalization progress stage so users do not see `100%` while aggregate work is still running.
+- [x] Add a transient `Finalizing aggregate...` indicator in standard batch mode (`stderr` only, no `stdout` contract changes).
+- [x] Optimize merged collector aggregation for `standard`/`raw` output paths by avoiding unnecessary segment-list retention and merge copies.
+- [x] Add large-batch performance coverage for collector mode plus debug stage timing diagnostics (`resolve`, `load`, `count`, `finalize`).
+
+#### Layer 2 - Selective Totals via `--total-of`
+
+- [x] Add `--total-of <parts>` with canonical parts (`words`, `emoji`, `symbols`, `punctuation`, `whitespace`) (`#19`).
+- [x] Add tolerant token normalization (`symbol` -> `symbols`, `punction` -> `punctuation`).
+- [x] Implement standard output rule: show `Total-of (override: ...)` only when override differs from base total.
+- [x] Implement raw output rule: with `--total-of`, print override total only.
+- [x] Keep standard output concise (no extra precedence note lines).
+- [x] Add tests for mixed-flag behavior, override visibility rules, alias normalization, and parity across formats.
+- [x] Compatibility gate (`#20`): verify behavior is unchanged when `--total-of` is not provided.
+- [x] Compatibility gate (`#20`): verify existing consumers can continue using current defaults without migration.
 
 ### Phase 6 - Canary Hardening (Deps + README + `#26` Path Resolution) (`v0.1.0-canary.5`)
 

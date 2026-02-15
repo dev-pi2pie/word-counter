@@ -167,6 +167,37 @@ describe("batch aggregation", () => {
     expect(frontmatter?.result.total).toBe(2);
     expect(content?.result.total).toBe(5);
   });
+
+  test("can compact collector segments during batch aggregation", async () => {
+    const summary = await buildBatchSummary(
+      [
+        { path: "/tmp/a.txt", content: "alpha beta" },
+        { path: "/tmp/b.txt", content: "gamma delta" },
+      ],
+      "all",
+      { mode: "collector" },
+      { preserveCollectorSegments: false },
+    );
+
+    if ("section" in summary.aggregate) {
+      throw new Error("Expected non-section aggregate result.");
+    }
+
+    expect(summary.aggregate.breakdown.mode).toBe("collector");
+    if (summary.aggregate.breakdown.mode === "collector") {
+      expect(summary.aggregate.breakdown.items.every((item) => item.segments.length === 0)).toBeTrue();
+    }
+
+    for (const file of summary.files) {
+      if ("section" in file.result) {
+        continue;
+      }
+      if (file.result.breakdown.mode !== "collector") {
+        continue;
+      }
+      expect(file.result.breakdown.items.every((item) => item.segments.length === 0)).toBeTrue();
+    }
+  });
 });
 
 describe("CLI batch output", () => {
@@ -223,6 +254,26 @@ describe("CLI batch output", () => {
 
     expect(output.stdout.some((line) => line.includes("[File]"))).toBeTrue();
     expect(output.stdout.some((line) => line.includes("[Merged] 2 file(s)"))).toBeTrue();
+  });
+
+  test("keeps collector segments in merged json output", async () => {
+    const root = await makeTempFixture("cli-collector-json-segments");
+    await writeFile(join(root, "a.txt"), "alpha beta");
+    await writeFile(join(root, "b.txt"), "gamma delta");
+
+    const output = await captureCli([
+      "--path",
+      root,
+      "--mode",
+      "collector",
+      "--format",
+      "json",
+      "--quiet-skips",
+    ]);
+    const parsed = JSON.parse(output.stdout[0] ?? "{}");
+
+    expect(parsed.breakdown.mode).toBe("collector");
+    expect(parsed.breakdown.items.some((item: { segments?: string[] }) => (item.segments?.length ?? 0) > 0)).toBeTrue();
   });
 
   test("shows skip diagnostics only with --debug", async () => {
@@ -317,6 +368,9 @@ describe("CLI progress output", () => {
       /Counting files \[[█░]{20}\]\s+\d{1,3}%\s+\d+\/\d+\s+elapsed \d{2}:\d{2}\.\d/.test(chunk),
     );
     expect(hasPattern).toBeTrue();
+    expect(
+      progress.writes.some((chunk) => /Finalizing aggregate\.\.\. elapsed \d{2}:\d{2}\.\d/.test(chunk)),
+    ).toBeTrue();
     expect(progress.writes.some((chunk) => /\r +\r/.test(chunk))).toBeTrue();
     expect(output.stdout[0]).toBe("Total words: 4");
   });
@@ -340,6 +394,8 @@ describe("CLI progress output", () => {
 
     await captureCli(["--path", root, "--keep-progress"], { stderr: progress.stream });
 
+    expect(progress.writes.some((chunk) => /\rCounting files \[[█░]{20}\]\s+100%\s+\d+\/\d+\s+elapsed \d{2}:\d{2}\.\d/.test(chunk))).toBeTrue();
+    expect(progress.writes.some((chunk) => /\nFinalizing aggregate\.\.\. elapsed \d{2}:\d{2}\.\d/.test(chunk))).toBeTrue();
     expect(progress.writes.some((chunk) => chunk.includes("Counting files ["))).toBeTrue();
     expect(progress.writes.some((chunk) => /\r +\r/.test(chunk))).toBeFalse();
     expect(progress.writes.some((chunk) => chunk === "\n")).toBeTrue();
@@ -409,6 +465,8 @@ describe("CLI progress output", () => {
 
     await captureCli(["--path", root, "--debug"], { stderr: progress.stream });
 
+    expect(progress.writes.some((chunk) => /\rCounting files \[[█░]{20}\]\s+100%\s+\d+\/\d+\s+elapsed \d{2}:\d{2}\.\d/.test(chunk))).toBeTrue();
+    expect(progress.writes.some((chunk) => /\nFinalizing aggregate\.\.\. elapsed \d{2}:\d{2}\.\d/.test(chunk))).toBeTrue();
     expect(progress.writes.some((chunk) => chunk.includes("Counting files ["))).toBeTrue();
     expect(progress.writes.some((chunk) => /\r +\r/.test(chunk))).toBeFalse();
     expect(progress.writes.some((chunk) => chunk === "\n")).toBeTrue();
@@ -431,15 +489,23 @@ describe("CLI debug diagnostics", () => {
     ]);
     const events = output.stderr
       .filter((line) => line.startsWith("[debug] "))
-      .map((line) => JSON.parse(line.slice(8)) as { event?: string });
+      .map((line) => JSON.parse(line.slice(8)) as { event?: string; stage?: string });
     const eventNames = events
       .map((item) => item.event)
       .filter((event): event is string => typeof event === "string");
+    const stageTimingNames = events
+      .filter((item) => item.event === "batch.stage.timing")
+      .map((item) => item.stage)
+      .filter((stage): stage is string => typeof stage === "string");
 
     expect(eventNames.includes("batch.resolve.start")).toBeTrue();
     expect(eventNames.includes("batch.resolve.complete")).toBeTrue();
     expect(eventNames.includes("batch.progress.start")).toBeTrue();
     expect(eventNames.includes("batch.progress.complete")).toBeTrue();
+    expect(stageTimingNames.includes("resolve")).toBeTrue();
+    expect(stageTimingNames.includes("load")).toBeTrue();
+    expect(stageTimingNames.includes("count")).toBeTrue();
+    expect(stageTimingNames.includes("finalize")).toBeTrue();
     expect(output.stdout).toEqual(["2"]);
   });
 });
@@ -553,6 +619,113 @@ describe("extension filters", () => {
 
     expect(resolved.files).toEqual([]);
     expect(resolved.skipped.some((entry) => entry.path.endsWith("a.md"))).toBeTrue();
+  });
+});
+
+describe("CLI total-of", () => {
+  test("shows override in standard output only when it differs", async () => {
+    const withOverride = await captureCli([
+      "--non-words",
+      "--total-of",
+      "words",
+      "Hi 👋, world!",
+    ]);
+    expect(withOverride.stdout[0]).toBe("Total count: 5");
+    expect(withOverride.stdout.some((line) => line.includes("Total-of (override: words): 2"))).toBeTrue();
+
+    const withoutOverride = await captureCli(["--total-of", "words", "Hello world"]);
+    expect(withoutOverride.stdout[0]).toBe("Total words: 2");
+    expect(withoutOverride.stdout.some((line) => line.includes("Total-of (override:"))).toBeFalse();
+  });
+
+  test("uses override total in raw output when --total-of is provided", async () => {
+    const output = await captureCli([
+      "--format",
+      "raw",
+      "--non-words",
+      "--total-of",
+      "emoji,punction",
+      "Hi 👋, world!",
+    ]);
+    expect(output.stdout).toEqual(["3"]);
+  });
+
+  test("auto-enables non-word collection when --total-of requires it", async () => {
+    const output = await captureCli([
+      "--format",
+      "json",
+      "--total-of",
+      "punctuation",
+      "Hi, world!",
+    ]);
+    const parsed = JSON.parse(output.stdout[0] ?? "{}");
+    expect(parsed.total).toBe(2);
+    expect(parsed.meta?.totalOf).toEqual(["punctuation"]);
+    expect(parsed.meta?.totalOfOverride).toBe(2);
+    expect(parsed.breakdown.items[0]?.nonWords).toBeUndefined();
+  });
+
+  test("keeps base standard output model unchanged without --non-words", async () => {
+    const output = await captureCli([
+      "--total-of",
+      "words,emoji",
+      "Hi 👋, world!",
+    ]);
+
+    expect(output.stdout[0]).toBe("Total words: 2");
+    expect(output.stdout.some((line) => line.includes("Total-of (override: words, emoji): 3"))).toBeTrue();
+    expect(output.stdout.some((line) => line.startsWith("Non-words:"))).toBeFalse();
+  });
+
+  test("keeps char breakdown consistent when --total-of auto-enables non-words", async () => {
+    const output = await captureCli([
+      "--mode",
+      "char",
+      "--total-of",
+      "punctuation",
+      "Hi, world!",
+    ]);
+
+    expect(output.stdout[0]).toBe("Total characters: 7");
+    expect(output.stdout.some((line) => line.includes("Total-of (override: punctuation): 2"))).toBeTrue();
+    expect(output.stdout.some((line) => line === "Locale und-Latn: 7 characters")).toBeTrue();
+  });
+
+  test("keeps char json breakdown normalized when --total-of auto-enables non-words", async () => {
+    const output = await captureCli([
+      "--mode",
+      "char",
+      "--format",
+      "json",
+      "--total-of",
+      "punctuation",
+      "Hi, world!",
+    ]);
+    const parsed = JSON.parse(output.stdout[0] ?? "{}");
+
+    expect(parsed.total).toBe(7);
+    expect(parsed.breakdown.items[0]?.chars).toBe(7);
+    expect(parsed.breakdown.items[0]?.nonWords).toBeUndefined();
+    expect(parsed.meta?.totalOf).toEqual(["punctuation"]);
+    expect(parsed.meta?.totalOfOverride).toBe(2);
+  });
+
+  test("supports --total-of in batch raw mode", async () => {
+    const root = await makeTempFixture("cli-total-of-batch-raw");
+    await writeFile(join(root, "a.txt"), "alpha!");
+    await writeFile(join(root, "b.txt"), "beta?");
+
+    const output = await captureCli([
+      "--path",
+      root,
+      "--format",
+      "raw",
+      "--total-of",
+      "punctuation",
+      "--quiet-skips",
+    ]);
+
+    expect(output.stdout).toEqual(["2"]);
   });
 });
 
