@@ -677,6 +677,39 @@ describe("CLI total-of", () => {
     expect(output.stdout.some((line) => line.startsWith("Non-words:"))).toBeFalse();
   });
 
+  test("keeps char breakdown consistent when --total-of auto-enables non-words", async () => {
+    const output = await captureCli([
+      "--mode",
+      "char",
+      "--total-of",
+      "punctuation",
+      "Hi, world!",
+    ]);
+
+    expect(output.stdout[0]).toBe("Total characters: 7");
+    expect(output.stdout.some((line) => line.includes("Total-of (override: punctuation): 2"))).toBeTrue();
+    expect(output.stdout.some((line) => line === "Locale und-Latn: 7 characters")).toBeTrue();
+  });
+
+  test("keeps char json breakdown normalized when --total-of auto-enables non-words", async () => {
+    const output = await captureCli([
+      "--mode",
+      "char",
+      "--format",
+      "json",
+      "--total-of",
+      "punctuation",
+      "Hi, world!",
+    ]);
+    const parsed = JSON.parse(output.stdout[0] ?? "{}");
+
+    expect(parsed.total).toBe(7);
+    expect(parsed.breakdown.items[0]?.chars).toBe(7);
+    expect(parsed.breakdown.items[0]?.nonWords).toBeUndefined();
+    expect(parsed.meta?.totalOf).toEqual(["punctuation"]);
+    expect(parsed.meta?.totalOfOverride).toBe(2);
+  });
+
   test("supports --total-of in batch raw mode", async () => {
     const root = await makeTempFixture("cli-total-of-batch-raw");
     await writeFile(join(root, "a.txt"), "alpha!");

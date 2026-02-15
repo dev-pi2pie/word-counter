@@ -126,6 +126,19 @@ function normalizeWordCounterResultBase(result: WordCounterResult): WordCounterR
     return result;
   }
 
+  if (result.breakdown.mode === "char") {
+    for (const item of result.breakdown.items) {
+      const nonWordCount =
+        (item.nonWords?.counts.emoji ?? 0) +
+        (item.nonWords?.counts.symbols ?? 0) +
+        (item.nonWords?.counts.punctuation ?? 0) +
+        (item.nonWords?.counts.whitespace ?? 0);
+      item.chars = Math.max(0, item.chars - nonWordCount);
+      delete item.nonWords;
+    }
+    return result;
+  }
+
   for (const item of result.breakdown.items) {
     delete item.nonWords;
   }
