@@ -1,7 +1,12 @@
 export const DEFAULT_LOCALE = "und-Latn";
+export const DEFAULT_HAN_TAG = "zh-Hani";
 
 export interface LocaleDetectOptions {
+  latinLanguageHint?: string;
+  latinTagHint?: string;
   latinLocaleHint?: string;
+  hanLanguageHint?: string;
+  hanTagHint?: string;
 }
 
 const regex = {
@@ -41,6 +46,14 @@ function detectLatinLocale(char: string): string {
   return DEFAULT_LOCALE;
 }
 
+function resolveLatinHint(options: LocaleDetectOptions): string | undefined {
+  return options.latinTagHint ?? options.latinLanguageHint ?? options.latinLocaleHint;
+}
+
+function resolveHanHint(options: LocaleDetectOptions): string | undefined {
+  return options.hanTagHint ?? options.hanLanguageHint;
+}
+
 export function detectLocaleForChar(
   char: string,
   previousLocale?: string | null,
@@ -69,7 +82,7 @@ export function detectLocaleForChar(
     if (previousLocale && previousLocale.startsWith("ja")) {
       return previousLocale;
     }
-    return "zh-Hans";
+    return resolveHanHint(options) ?? DEFAULT_HAN_TAG;
   }
 
   if (regex.latin.test(char)) {
@@ -80,8 +93,9 @@ export function detectLocaleForChar(
     if (previousLocale && isLatinLocale(previousLocale) && previousLocale !== DEFAULT_LOCALE) {
       return previousLocale;
     }
-    if (options.latinLocaleHint) {
-      return options.latinLocaleHint;
+    const latinHint = resolveLatinHint(options);
+    if (latinHint) {
+      return latinHint;
     }
     return DEFAULT_LOCALE;
   }

@@ -1,6 +1,7 @@
 ---
 title: "Emoji + symbol segmentation add-on"
 created-date: 2026-01-16
+modified-date: 2026-02-15
 status: completed
 agent: Codex
 ---
@@ -9,7 +10,7 @@ agent: Codex
 Explore an add-on that collects emoji and symbol segments alongside word counts, aligned with existing `--mode` output styles, while keeping `Intl.Segmenter` as the source of word boundaries.
 
 ## Key Findings
-- Current API surface: `WordCounterOptions` supports `mode?: "chunk" | "segments" | "collector"` and `latinLocaleHint?: string`. The CLI mirrors this with `--mode` and `--latin-locale`.
+- Current API surface: `WordCounterOptions` supports `mode?: "chunk" | "segments" | "collector" | "char"` and language-tag hints (`latinLanguageHint`, `latinTagHint`, legacy `latinLocaleHint`, plus Han hints). The CLI mirrors this with `--mode` and the `--latin-*` / `--han-*` hint flags.
 - `Intl.Segmenter` only marks wordlike segments via `isWordLike`. Emoji, punctuation, and most symbols are not wordlike and are therefore excluded from word counts by design.
 - Mixed-script chunking already groups text by locale; emoji/symbols are currently neutral and ride along in the chunk text but do not appear in segment lists.
 

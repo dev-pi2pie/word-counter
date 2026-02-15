@@ -30,7 +30,13 @@ export function wordCounter(
   const mode: WordCounterMode = resolveMode(options.mode, "chunk");
   const collectNonWords = Boolean(options.nonWords);
   const includeWhitespace = Boolean(options.includeWhitespace);
-  const chunks = segmentTextByLocale(text, { latinLocaleHint: options.latinLocaleHint });
+  const chunks = segmentTextByLocale(text, {
+    latinLanguageHint: options.latinLanguageHint,
+    latinTagHint: options.latinTagHint,
+    latinLocaleHint: options.latinLocaleHint,
+    hanLanguageHint: options.hanLanguageHint,
+    hanTagHint: options.hanTagHint,
+  });
 
   if (mode === "char") {
     const analyzed = chunks.map((chunk) =>

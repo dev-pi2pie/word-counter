@@ -83,12 +83,26 @@ describe("segmentTextByLocale", () => {
   test("splits Latin and Han scripts into separate locales", () => {
     const chunks = segmentTextByLocale("Hello 世界");
     const locales = chunks.map((chunk) => chunk.locale);
-    expect(locales).toEqual(["und-Latn", "zh-Hans"]);
+    expect(locales).toEqual(["und-Latn", "zh-Hani"]);
   });
 
   test("applies Latin locale hints for ambiguous text", () => {
     const chunks = segmentTextByLocale("Hello world", { latinLocaleHint: "en" });
     expect(chunks[0]?.locale).toBe("en");
+  });
+
+  test("prefers Latin tag hint over other Latin hint aliases", () => {
+    const chunks = segmentTextByLocale("Hello world", {
+      latinLocaleHint: "en",
+      latinLanguageHint: "fr",
+      latinTagHint: "de",
+    });
+    expect(chunks[0]?.locale).toBe("de");
+  });
+
+  test("uses Han tag hint when provided", () => {
+    const chunks = segmentTextByLocale("漢字測試", { hanTagHint: "zh-Hant" });
+    expect(chunks[0]?.locale).toBe("zh-Hant");
   });
 
   test("uses diacritics to hint Latin language buckets", () => {

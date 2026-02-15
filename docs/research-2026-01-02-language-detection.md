@@ -1,7 +1,7 @@
 ---
 title: "Language Detection With Unicode Scripts and Regex"
 created-date: 2026-01-02
-modified-date: 2026-01-14
+modified-date: 2026-02-15
 status: in-progress
 agent: Codex
 ---
@@ -13,7 +13,9 @@ Document how far regex-based detection can go for language identification, and w
 - Unicode defines Script and Script_Extensions properties to describe the script association of characters; Script_Extensions provides a set of scripts for characters used with multiple scripts. This data is intended for regex and text processing, not for identifying a specific language. [^1][^2]
 - Unicode blocks are just code point ranges; blocks and scripts do not map 1:1, and scripts are preferred for regex classification. [^1]
 - JavaScript regular expressions support Unicode property escapes like `\p{Script=Latin}` and `\p{Script_Extensions=Latin}` when using the `u` flag. [^3]
+- JavaScript regex supports `Han`/`Hani` script properties, but does not expose `Hans`/`Hant` as regex script properties. Simplified vs Traditional distinction therefore needs hints/heuristics, not script property matching. (Inference from runtime validation.)
 - CLDR provides likely-subtag data used to expand language tags to likely script/region defaults; this is metadata for tags, not a language-identification mechanism. [^4]
+- BCP 47 script subtags include `Hani` (Han), `Hans` (Simplified Han), and `Hant` (Traditional Han), and `Intl` locale APIs consume BCP 47 language tags; therefore `zh-Hani` is a valid script-level tag for neutral Han fallback. [^5][^6][^7]
 
 ## Implications (Regex-Only)
 - Regex can reliably separate scripts (e.g., Han vs. Hangul), but cannot reliably distinguish languages that share the same script (e.g., English vs. French vs. Dutch within Latin). This is a limitation of script data, not of regex syntax. (Inference based on the Script/Script_Extensions design.) [^1]
@@ -27,7 +29,8 @@ Document how far regex-based detection can go for language identification, and w
 
 ## Current Implementation Notes
 - Default Latin locale is `und-Latn` (script-only tag for undetermined Latin).
-- Region-specific tags have been dropped where possible: `ja`, `ko`, `th`, `ru`, `ar`, `hi`, `zh-Hans`.
+- Han-script fallback defaults to `zh-Hani`; explicit Han variant tags (`zh-Hans` / `zh-Hant`) should be supplied through hints when required.
+- Region-specific tags have been dropped where possible: `ja`, `ko`, `th`, `ru`, `ar`, `hi`.
 - Latin diacritic hints are used to label `de`, `es`, `pt`, and `fr` when matching characters appear.
 - Latin hints only affect the locale when a matching diacritic is present; otherwise runs stay in the default Latin bucket.
 
@@ -56,3 +59,6 @@ This research is marked `in-progress` because it is discovery-driven: findings m
 [^2]: https://www.unicode.org/reports/tr18/
 [^3]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Unicode_property_escapes
 [^4]: https://cldr.unicode.org/index/cldr-spec/picking-the-right-language-code
+[^5]: https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry
+[^6]: https://www.rfc-editor.org/rfc/rfc5646
+[^7]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/Locale/Locale

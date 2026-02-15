@@ -55,7 +55,11 @@ export interface NonWordCollection {
 
 export interface WordCounterOptions {
   mode?: WordCounterMode;
+  latinLanguageHint?: string;
+  latinTagHint?: string;
   latinLocaleHint?: string;
+  hanLanguageHint?: string;
+  hanTagHint?: string;
   nonWords?: boolean;
   includeWhitespace?: boolean;
 }
