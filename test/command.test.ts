@@ -8,6 +8,7 @@ import {
   resolveBatchFilePaths,
   runCli,
 } from "../src/command";
+import { buildDirectoryExtensionFilter } from "../src/cli/path/filter";
 
 const tempRoots: string[] = [];
 
@@ -163,6 +164,118 @@ describe("CLI batch output", () => {
       "--quiet-skips",
     ]);
     expect(quiet.stderr.some((line) => line.includes("Skipped"))).toBeFalse();
+  });
+});
+
+describe("extension filters", () => {
+  test("supports include-ext override for directory scanning", async () => {
+    const root = await makeTempFixture("ext-include");
+    await writeFile(join(root, "keep.js"), "js words only");
+    await writeFile(join(root, "skip.md"), "md words");
+
+    const output = await captureCli([
+      "--path",
+      root,
+      "--include-ext",
+      ".js",
+      "--format",
+      "raw",
+      "--quiet-skips",
+    ]);
+
+    expect(output.stdout).toEqual(["3"]);
+  });
+
+  test("supports exclude-ext on top of default includes", async () => {
+    const root = await makeTempFixture("ext-exclude");
+    await writeFile(join(root, "a.md"), "alpha beta");
+    await writeFile(join(root, "b.txt"), "gamma delta");
+
+    const output = await captureCli([
+      "--path",
+      root,
+      "--exclude-ext",
+      ".txt",
+      "--format",
+      "raw",
+      "--quiet-skips",
+    ]);
+
+    expect(output.stdout).toEqual(["2"]);
+  });
+
+  test("applies exclude precedence when include and exclude overlap", async () => {
+    const root = await makeTempFixture("ext-conflict");
+    await writeFile(join(root, "a.md"), "alpha beta");
+    await writeFile(join(root, "b.txt"), "gamma delta");
+
+    const output = await captureCli([
+      "--path",
+      root,
+      "--include-ext",
+      ".md,.txt",
+      "--exclude-ext",
+      ".txt",
+      "--format",
+      "raw",
+      "--quiet-skips",
+    ]);
+
+    expect(output.stdout).toEqual(["2"]);
+  });
+
+  test("normalizes extension tokens (case, dot, spaces, duplicates)", async () => {
+    const root = await makeTempFixture("ext-normalize");
+    await writeFile(join(root, "a.MD"), "alpha beta");
+    await writeFile(join(root, "b.TxT"), "gamma delta");
+
+    const output = await captureCli([
+      "--path",
+      root,
+      "--include-ext",
+      " md, .TXT, .md ",
+      "--exclude-ext",
+      " txt ",
+      "--format",
+      "raw",
+      "--quiet-skips",
+    ]);
+
+    expect(output.stdout).toEqual(["2"]);
+  });
+
+  test("does not apply extension filters to direct file paths", async () => {
+    const root = await makeTempFixture("ext-direct-file");
+    const explicitFile = join(root, "sample.log");
+    await writeFile(explicitFile, "direct file");
+
+    const output = await captureCli([
+      "--path",
+      explicitFile,
+      "--include-ext",
+      ".md",
+      "--exclude-ext",
+      ".md",
+      "--format",
+      "raw",
+      "--quiet-skips",
+    ]);
+
+    expect(output.stdout).toEqual(["2"]);
+  });
+
+  test("supports empty effective include set for directory scanning", async () => {
+    const root = await makeTempFixture("ext-empty");
+    await writeFile(join(root, "a.md"), "alpha beta");
+
+    const resolved = await resolveBatchFilePaths([root], {
+      pathMode: "auto",
+      recursive: true,
+      extensionFilter: buildDirectoryExtensionFilter([".md"], [".md"]),
+    });
+
+    expect(resolved.files).toEqual([]);
+    expect(resolved.skipped.some((entry) => entry.path.endsWith("a.md"))).toBeTrue();
   });
 });
 
