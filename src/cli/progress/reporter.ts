@@ -138,6 +138,11 @@ export function createBatchProgressReporter(
       finalizingStarted = true;
       const line = buildFinalizingLine(startedAtMs);
       if (isTTY) {
+        if (!clearOnFinish) {
+          options.stream.write(`\n${line}`);
+          lastLineLength = line.length;
+          return;
+        }
         writeTTYLine(line);
         return;
       }

@@ -394,6 +394,8 @@ describe("CLI progress output", () => {
 
     await captureCli(["--path", root, "--keep-progress"], { stderr: progress.stream });
 
+    expect(progress.writes.some((chunk) => /\rCounting files \[[█░]{20}\]\s+100%\s+\d+\/\d+\s+elapsed \d{2}:\d{2}\.\d/.test(chunk))).toBeTrue();
+    expect(progress.writes.some((chunk) => /\nFinalizing aggregate\.\.\. elapsed \d{2}:\d{2}\.\d/.test(chunk))).toBeTrue();
     expect(progress.writes.some((chunk) => chunk.includes("Counting files ["))).toBeTrue();
     expect(progress.writes.some((chunk) => /\r +\r/.test(chunk))).toBeFalse();
     expect(progress.writes.some((chunk) => chunk === "\n")).toBeTrue();
@@ -463,6 +465,8 @@ describe("CLI progress output", () => {
 
     await captureCli(["--path", root, "--debug"], { stderr: progress.stream });
 
+    expect(progress.writes.some((chunk) => /\rCounting files \[[█░]{20}\]\s+100%\s+\d+\/\d+\s+elapsed \d{2}:\d{2}\.\d/.test(chunk))).toBeTrue();
+    expect(progress.writes.some((chunk) => /\nFinalizing aggregate\.\.\. elapsed \d{2}:\d{2}\.\d/.test(chunk))).toBeTrue();
     expect(progress.writes.some((chunk) => chunk.includes("Counting files ["))).toBeTrue();
     expect(progress.writes.some((chunk) => /\r +\r/.test(chunk))).toBeFalse();
     expect(progress.writes.some((chunk) => chunk === "\n")).toBeTrue();
