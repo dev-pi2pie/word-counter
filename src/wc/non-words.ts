@@ -1,4 +1,5 @@
 import type { NonWordCollection, WhitespaceCounts } from "./types";
+import { appendAll } from "../utils/append-all";
 
 const emojiRegex = /(?:\p{Extended_Pictographic}|\p{Emoji_Presentation})/u;
 const emojiPresentationRegex = /\p{Emoji_Presentation}/u;
@@ -105,15 +106,15 @@ export function mergeNonWordCollections(
   source: NonWordCollection,
 ): NonWordCollection {
   if (source.counts.emoji > 0) {
-    target.emoji.push(...source.emoji);
+    appendAll(target.emoji, source.emoji);
     target.counts.emoji += source.counts.emoji;
   }
   if (source.counts.symbols > 0) {
-    target.symbols.push(...source.symbols);
+    appendAll(target.symbols, source.symbols);
     target.counts.symbols += source.counts.symbols;
   }
   if (source.counts.punctuation > 0) {
-    target.punctuation.push(...source.punctuation);
+    appendAll(target.punctuation, source.punctuation);
     target.counts.punctuation += source.counts.punctuation;
   }
   if (source.counts.whitespace && source.counts.whitespace > 0 && source.whitespace) {

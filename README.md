@@ -304,6 +304,7 @@ Choose a breakdown style with `--mode` (or `-m`):
 - `chunk` (default) – list each contiguous locale block in order of appearance.
 - `segments` – show the actual wordlike segments used for counting.
 - `collector` – aggregate counts per locale regardless of text position.
+  Keeps per-locale segment lists in memory, so very large corpora can use noticeably more memory than `chunk` mode.
 - `char` – count grapheme clusters (user-perceived characters) per locale.
 
 Aliases are normalized for CLI + API:

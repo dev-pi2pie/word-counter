@@ -1,5 +1,6 @@
 import { countSections } from "../../markdown";
 import type { SectionMode, SectionedResult } from "../../markdown";
+import { appendAll } from "../../utils/append-all";
 import wordCounter, { type NonWordCollection, type WordCounterResult } from "../../wc";
 import { createNonWordCollection, mergeNonWordCollections } from "../../wc/non-words";
 import type { BatchFileInput, BatchFileResult, BatchSummary } from "../types";
@@ -76,7 +77,7 @@ function mergeWordCounterResult(
         const existing = mergedByLocale.get(item.locale);
         if (existing) {
           existing.words += item.words;
-          existing.segments.push(...item.segments);
+          appendAll(existing.segments, item.segments);
           continue;
         }
 

@@ -5,6 +5,7 @@ import {
   classifyNonWordSegment,
   createNonWordCollection,
 } from "./non-words";
+import { appendAll } from "../utils/append-all";
 import type {
   ChunkAnalysis,
   CollectorBreakdown,
@@ -104,7 +105,7 @@ export function aggregateByLocale(
     const existing = map.get(chunk.locale);
     if (existing) {
       existing.words += chunk.words;
-      existing.segments.push(...chunk.segments);
+      appendAll(existing.segments, chunk.segments);
       continue;
     }
 

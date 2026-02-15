@@ -28,9 +28,10 @@ Deliver `v0.1.0` through phased canary releases with clear priority ordering, ex
 1. Batch file counting first (`#17`).
 2. Language-tag alignment and hint-flag aliases second (`#24`).
 3. TUI progress behavior third (`#18`).
-4. Selective total composition fourth (`#19`).
-5. Compatibility validation (`#20`) is required in every phase.
-6. Final pre-release review for stable `v0.1.0` (`#21`).
+4. Large collector-merge reliability hardening fourth (stack-safe large batch aggregation).
+5. Selective total composition fifth (`#19`).
+6. Compatibility validation (`#20`) is required in every phase.
+7. Final pre-release review for stable `v0.1.0` (`#21`).
 
 ## Phased Implementation Plan
 
@@ -75,7 +76,16 @@ Deliver `v0.1.0` through phased canary releases with clear priority ordering, ex
 - [x] Compatibility gate (`#20`): verify final standard output remains concise and parse-safe for existing use cases.
 - [x] Compatibility gate (`#20`): verify no output noise is introduced in `raw`/`json` modes.
 
-### Phase 4 - Selective Totals via `--total-of` (`v0.1.0-canary.3`)
+### Phase 4 - Large Collector Merge Reliability (`v0.1.0-canary.3`)
+
+- [x] Fix stack-overflow risk in large collector merges by replacing spread-based appends with safe iterative append logic.
+- [x] Apply the same safe append strategy to non-word merge and batch accumulation paths that can hit large arrays.
+- [x] Add regression coverage for large collector merge payloads that previously triggered `Maximum call stack size exceeded`.
+- [x] Add regression coverage for large multi-markdown batches (1,091 files) in collector mode with `--non-words`.
+- [x] Document collector-mode memory characteristics for very large corpora in README.
+- [x] Compatibility gate (`#20`): verify totals and output contracts stay unchanged while eliminating stack-overflow failures.
+
+### Phase 5 - Selective Totals via `--total-of` (`v0.1.0-canary.4`)
 
 - [ ] Add `--total-of <parts>` with canonical parts (`words`, `emoji`, `symbols`, `punctuation`, `whitespace`) (`#19`).
 - [ ] Add tolerant token normalization (`symbol` -> `symbols`, `punction` -> `punctuation`).
@@ -86,7 +96,7 @@ Deliver `v0.1.0` through phased canary releases with clear priority ordering, ex
 - [ ] Compatibility gate (`#20`): verify behavior is unchanged when `--total-of` is not provided.
 - [ ] Compatibility gate (`#20`): verify existing consumers can continue using current defaults without migration.
 
-### Phase 5 - Canary Hardening (Deps + README + `#26` Path Resolution) (`v0.1.0-canary.4`)
+### Phase 6 - Canary Hardening (Deps + README + `#26` Path Resolution) (`v0.1.0-canary.5`)
 
 - [ ] Upgrade targeted dependencies (`commander`, `tsdown`, `oxfmt`, `oxlint`, `@types/node`) and validate build/test workflows.
 - [ ] Reorganize README with `npx @dev-pi2pie/word-counter` as first-path quick start.
@@ -100,7 +110,7 @@ Deliver `v0.1.0` through phased canary releases with clear priority ordering, ex
 - [ ] Update README and CLI docs with multi-directory resolution examples and troubleshooting notes (`#26`).
 - [ ] Compatibility gate (`#20`): verify docs and examples preserve backward-compatible defaults.
 
-### Phase 6 - Stable Release Readiness (`v0.1.0`)
+### Phase 7 - Stable Release Readiness (`v0.1.0`)
 
 - [ ] Run final regression pass across feature and legacy paths (`#21`).
 - [ ] Re-check issue closure and acceptance criteria for `#17`, `#18`, `#19`, `#20`, `#24`, and `#26`.
