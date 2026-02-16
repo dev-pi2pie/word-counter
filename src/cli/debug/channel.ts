@@ -1,4 +1,4 @@
-import { closeSync, createWriteStream, existsSync, mkdirSync, openSync } from "node:fs";
+import { closeSync, createWriteStream, existsSync, mkdirSync, openSync, statSync } from "node:fs";
 import { basename, dirname, extname, join, resolve as resolvePath } from "node:path";
 
 type DebugDetails = Record<string, unknown>;
@@ -71,8 +71,16 @@ function withCollisionSuffix(pathValue: string, sequence: number): string {
 function resolveReportPath(report: DebugReportOptions, now: Date, pid: number): string {
   const cwd = report.cwd ?? process.cwd();
   const defaultName = `wc-debug-${formatDebugReportTimestamp(now)}-${pid}.jsonl`;
-  const basePath = report.path ? resolvePath(cwd, report.path) : resolvePath(cwd, defaultName);
+  const explicitPath = typeof report.path === "string";
+  const basePath = explicitPath ? resolvePath(cwd, report.path) : resolvePath(cwd, defaultName);
   mkdirSync(dirname(basePath), { recursive: true });
+
+  if (explicitPath) {
+    if (existsSync(basePath) && statSync(basePath).isDirectory()) {
+      throw new Error(`debug report path must be a file: ${basePath}`);
+    }
+    return basePath;
+  }
 
   let candidate = basePath;
   let sequence = 0;

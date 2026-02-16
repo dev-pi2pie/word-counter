@@ -731,6 +731,43 @@ describe("CLI debug diagnostics", () => {
     ).toThrow("debug report path is not writable");
   });
 
+  test("fails fast when explicit debug report path targets an existing directory", async () => {
+    const root = await makeTempFixture("cli-debug-report-directory");
+    const reportDirectory = join(root, "logs");
+    await mkdir(reportDirectory, { recursive: true });
+
+    expect(() =>
+      createDebugChannel({
+        enabled: true,
+        verbosity: "compact",
+        report: { path: reportDirectory, tee: false, cwd: root },
+      }),
+    ).toThrow("debug report path must be a file");
+  });
+
+  test("keeps explicit debug report path when target file already exists", async () => {
+    const root = await makeTempFixture("cli-debug-report-explicit-existing-file");
+    const reportPath = join(root, "diagnostics.jsonl");
+    await writeFile(reportPath, '{"event":"existing"}\n');
+
+    const debug = createDebugChannel({
+      enabled: true,
+      verbosity: "compact",
+      report: { path: reportPath, tee: false, cwd: root },
+    });
+
+    expect(debug.reportPath).toBe(reportPath);
+    debug.emit("batch.resolve.start", { files: 1 });
+    await debug.close();
+
+    const report = await readFile(reportPath, "utf8");
+    expect(report.includes('{"event":"existing"}')).toBeTrue();
+    expect(report.includes('"event":"batch.resolve.start"')).toBeTrue();
+
+    const entries = await readdir(root);
+    expect(entries.includes("diagnostics-1.jsonl")).toBeFalse();
+  });
+
   test("creates deterministic default debug report name in cwd", async () => {
     const root = await makeTempFixture("cli-debug-report-default-name");
     const previousCwd = process.cwd();

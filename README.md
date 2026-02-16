@@ -165,7 +165,8 @@ Use `--debug-report [path]` to route debug diagnostics to a JSONL report file:
 
 - no path: writes to current working directory with pattern `wc-debug-YYYYMMDD-HHmmss-<pid>.jsonl`
 - path provided: writes to the specified location
-- collision handling: appends `-<n>` suffix to avoid overwriting existing files
+- default-name collision handling: appends `-<n>` suffix to avoid overwriting existing files
+- explicit path validation: existing directories are rejected (explicit paths are treated as file targets)
 
 By default with `--debug-report`, debug lines are file-only (not mirrored to terminal).
 Use `--debug-report-tee` (alias: `--debug-tee`) to mirror to both file and `stderr`.
