@@ -2,25 +2,37 @@
 
 Locale-aware word counting powered by the Web API [`Intl.Segmenter`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/Segmenter). The script automatically detects the primary writing system for each portion of the input, segments the text with matching BCP 47 locale tags, and reports word totals per locale.
 
-## How It Works
+## Quick Start (npx)
 
-- The runtime inspects each character's Unicode script to infer its likely locale tag (e.g., `und-Latn`, `zh-Hani`, `ja`).
-- Adjacent characters that share the same locale tag are grouped into a chunk.
-- Each chunk is counted with `Intl.Segmenter` at `granularity: "word"`, caching segmenters to avoid re-instantiation.
-- Per-locale counts are summed into a overall total and printed to stdout.
+Runtime requirement: Node.js `>=20`.
 
-## Locale vs Language Code
+Run without installing:
 
-- Output keeps the field name `locale` for compatibility.
-- In this project, locale values are BCP 47 tags and are often language/script focused (for example: `en`, `und-Latn`, `zh-Hani`) rather than region-specific tags (for example: `en-US`, `zh-TW`).
-- Default detection prefers language/script tags to avoid incorrect region assumptions.
-- You can still provide region-specific locale tags through hint flags when needed.
+```bash
+npx @dev-pi2pie/word-counter "Hello 世界 안녕"
+```
 
-## Installation
+Pipe stdin:
 
-### For Development
+```bash
+echo "こんにちは world مرحبا" | npx @dev-pi2pie/word-counter
+```
 
-Clone the repository and set up locally:
+File input:
+
+```bash
+npx @dev-pi2pie/word-counter --path ./examples/yaml-basic.md
+```
+
+## Install and Usage Paths
+
+Pick one path based on how often you use it:
+
+1. One-off use: `npx @dev-pi2pie/word-counter ...` (no install, best for quick checks and CI snippets).
+2. Frequent CLI use: `npm install -g @dev-pi2pie/word-counter@latest` then run `word-counter ...`.
+3. Library use in code: `npm install @dev-pi2pie/word-counter` and import from your app/scripts.
+
+For local development in this repository:
 
 ```bash
 git clone https://github.com/dev-pi2pie/word-counter.git
@@ -30,102 +42,76 @@ bun run build
 npm link
 ```
 
-After linking, you can use the `word-counter` command globally:
+Then:
 
 ```bash
 word-counter "Hello 世界 안녕"
 ```
 
-To use the linked package inside another project:
-
-```bash
-npm link @dev-pi2pie/word-counter
-```
-
-To uninstall the global link:
+To remove the global link:
 
 ```bash
 npm unlink --global @dev-pi2pie/word-counter
 ```
 
-### From npm Registry (npmjs.com)
+## CLI Usage
 
-```bash
-npm install -g @dev-pi2pie/word-counter@latest
-```
-
-## Usage
-
-Once installed (via `npm link` or the npm registry), you can use the CLI directly:
+Basic text:
 
 ```bash
 word-counter "Hello 世界 안녕"
 ```
 
-Alternatively, run the built CLI with Node:
-
-```bash
-node dist/esm/bin.mjs "Hello 世界 안녕"
-```
-
-You can also pipe text:
-
-```bash
-echo "こんにちは world مرحبا" | word-counter
-```
-
-Hint a locale tag for ambiguous Latin text (ASCII-heavy content):
+Hint a language tag for ambiguous Latin text:
 
 ```bash
 word-counter --latin-language en "Hello world"
 word-counter --latin-tag en "Hello world"
 ```
 
-Hint a locale tag for Han text fallback:
+Hint a language tag for Han fallback:
 
 ```bash
 word-counter --han-language zh-Hant "漢字測試"
 word-counter --han-tag zh-Hans "汉字测试"
 ```
 
-Collect non-word segments (emoji, symbols, punctuation):
+Collect non-words (emoji/symbols/punctuation):
 
 ```bash
 word-counter --non-words "Hi 👋, world!"
 ```
 
-When enabled, `total` includes words + non-words (emoji, symbols, punctuation).
-
-Or read from a file:
+Override total composition:
 
 ```bash
-word-counter --path ./fixtures/sample.txt
+word-counter --non-words --total-of words "Hi 👋, world!"
+word-counter --total-of punctuation --format raw "Hi, world!"
+word-counter --total-of words,emoji --format json "Hi 👋, world!"
 ```
 
-`--path` accepts any readable text-like file, including empty or whitespace-only files.
-Such files are treated as valid inputs and contribute zero words by default.
+## Batch Counting (`--path`)
 
-### Batch Counting
-
-Process multiple files by repeating `--path`:
+Repeat `--path` for mixed inputs (files and/or directories):
 
 ```bash
-word-counter --path ./docs/a.md --path ./docs/b.txt
+word-counter --path ./docs/a.md --path ./docs --path ./notes.txt
 ```
 
-Pass a directory path to scan files recursively (default):
+Directory scans are recursive by default:
 
 ```bash
 word-counter --path ./examples/test-case-multi-files-support
+word-counter --path ./examples/test-case-multi-files-support --no-recursive
 ```
 
-Show per-file results plus merged summary:
+Show per-file plus merged summary:
 
 ```bash
 word-counter --path ./examples/test-case-multi-files-support --per-file
 ```
 
-Batch progress is auto-enabled for multi-file standard output and is transient:
+Progress behavior in standard batch mode:
 
 ```bash
 word-counter --path ./examples/test-case-multi-files-support
@@ -133,33 +119,83 @@ word-counter --path ./examples/test-case-multi-files-support --no-progress
 word-counter --path ./examples/test-case-multi-files-support --keep-progress
 ```
 
-Progress updates follow this style while running:
+Progress is transient by default, auto-disabled for single-input runs, and suppressed in `--format raw` and `--format json`.
 
-```text
-Counting files [██████░░░░░░░░░░░░]  31%  37/120 elapsed 00:01.2
-Counting files [███████████░░░░░░░]  58%  70/120 elapsed 00:02.8
-Counting files [████████████████████] 100% 120/120 elapsed 00:04.1
-```
+### Stable Path Resolution Contract (`#26`)
 
-Single-input runs do not show progress by default. Progress is also suppressed in `--format raw` and `--format json`.
-Use `--keep-progress` when you want the final progress line to stay visible after completion.
+- Repeated `--path` values are accepted as mixed inputs (file + directory).
+- In `--path-mode auto` (default), directory inputs are expanded to files (recursive unless `--no-recursive`).
+- In `--path-mode manual`, directory inputs are not expanded and are skipped as non-regular files.
+- Extension filters apply only to files discovered from directory expansion.
+- Direct file inputs are always considered regardless of `--include-ext` / `--exclude-ext`.
+- Overlap dedupe is by resolved absolute file path.
+- If the same file is discovered multiple ways (repeated roots, nested roots, explicit file + directory), it is counted once.
+- Final processing order is deterministic: resolved files are sorted by absolute path ascending before load/count.
 
-Restrict directory scanning extensions:
+### Extension Filters
+
+Use include/exclude filters for directory scans:
 
 ```bash
 word-counter --path ./examples/test-case-multi-files-support --include-ext .md,.mdx
 word-counter --path ./examples/test-case-multi-files-support --include-ext .md,.txt --exclude-ext .txt
 ```
 
-Skip diagnostics are debug-gated. By default, skipped-file details are hidden.
-Use `--debug` to print skipped-file diagnostics to `stderr`:
+Direct file path example (filters do not block explicit file inputs):
 
 ```bash
-word-counter --path ./examples/test-case-multi-files-support --debug
+word-counter --path ./examples/test-case-multi-files-support/ignored.js --include-ext .md --exclude-ext .md
 ```
 
-With `--debug`, batch resolution/progress lifecycle diagnostics are emitted as structured `[debug]` entries on `stderr` (stdout remains clean).
-In `--debug` mode, the final progress line is kept visible (not auto-cleared).
+### Debugging Diagnostics (`--debug`)
+
+`--debug` remains the diagnostics gate and now defaults to `compact` event volume:
+
+- lifecycle/stage timing events
+- resolved/skipped summary events
+- dedupe/filter summary counts
+
+Use `--verbose` to include per-file/per-path events:
+
+```bash
+word-counter --path ./examples/test-case-multi-files-support --debug --verbose
+```
+
+Use `--debug-report [path]` to route debug diagnostics to a JSONL report file:
+
+- no path: writes to current working directory with pattern `wc-debug-YYYYMMDD-HHmmss-<pid>.jsonl`
+- path provided: writes to the specified location
+- default-name collision handling: appends `-<n>` suffix to avoid overwriting existing files
+- explicit path validation: existing directories are rejected (explicit paths are treated as file targets)
+
+By default with `--debug-report`, debug lines are file-only (not mirrored to terminal).
+Use `--debug-report-tee` (alias: `--debug-tee`) to mirror to both file and `stderr`.
+Flag dependencies: `--verbose` requires `--debug`; `--debug-report` requires `--debug`; `--debug-report-tee`/`--debug-tee` requires `--debug-report`.
+
+Examples:
+
+```bash
+word-counter --path ./examples/test-case-multi-files-support --debug --debug-report
+word-counter --path ./examples/test-case-multi-files-support --debug --debug-report ./logs/debug.jsonl
+word-counter --path ./examples/test-case-multi-files-support --debug --debug-report ./logs/debug.jsonl --debug-report-tee
+word-counter --path ./examples/test-case-multi-files-support --debug --debug-report ./logs/debug.jsonl --debug-tee
+```
+
+Skip details stay debug-gated and can still be suppressed with `--quiet-skips`.
+
+## How It Works
+
+- The runtime inspects each character's Unicode script to infer its likely locale tag (e.g., `und-Latn`, `zh-Hani`, `ja`).
+- Adjacent characters that share the same locale tag are grouped into a chunk.
+- Each chunk is counted with `Intl.Segmenter` at `granularity: "word"`, caching segmenters to avoid re-instantiation.
+- Per-locale counts are summed into an overall total and printed to stdout.
+
+## Locale vs Language Code
+
+- Output keeps the field name `locale` for compatibility.
+- In this project, locale values are BCP 47 tags and are often language/script focused (for example: `en`, `und-Latn`, `zh-Hani`) rather than region-specific tags (for example: `en-US`, `zh-TW`).
+- Default detection prefers language/script tags to avoid incorrect region assumptions.
+- You can still provide region-specific locale tags through hint flags when needed.
 
 ## Library Usage
 

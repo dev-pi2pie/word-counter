@@ -34,6 +34,7 @@ export async function runBatchCount(options: RunBatchCountOptions): Promise<Batc
     pathMode: options.batchOptions.pathMode,
     recursive: options.batchOptions.recursive,
     extensionFilter: options.extensionFilter,
+    debug: options.debug,
   });
   const resolveElapsedMs = Date.now() - resolveStartedAtMs;
   options.debug.emit("batch.resolve.complete", {

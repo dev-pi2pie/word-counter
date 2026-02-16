@@ -4,10 +4,7 @@ import type { SectionMode, SectionedResult } from "./markdown";
 import { countSections } from "./markdown";
 import { runBatchCount } from "./cli/batch/run";
 import { createDebugChannel } from "./cli/debug/channel";
-import {
-  buildDirectoryExtensionFilter,
-  collectExtensionOption,
-} from "./cli/path/filter";
+import { buildDirectoryExtensionFilter, collectExtensionOption } from "./cli/path/filter";
 import { createBatchProgressReporter, type ProgressOutputStream } from "./cli/progress/reporter";
 import type { BatchOptions, BatchScope, BatchSummary, PathMode } from "./cli/types";
 import {
@@ -26,10 +23,7 @@ import {
   type TotalOfOverride,
   type TotalOfPart,
 } from "./cli/total-of";
-import wordCounter, {
-  type WordCounterMode,
-  type WordCounterResult,
-} from "./wc";
+import wordCounter, { type WordCounterMode, type WordCounterResult } from "./wc";
 import { normalizeMode } from "./wc/mode";
 import pc from "picocolors";
 
@@ -117,6 +111,18 @@ function hasPathInput(pathValues: string[] | undefined): pathValues is string[] 
   return Array.isArray(pathValues) && pathValues.length > 0;
 }
 
+function resolveDebugReportPathOption(rawValue: string | boolean | undefined): string | undefined {
+  if (rawValue === undefined || rawValue === false) {
+    return undefined;
+  }
+
+  if (typeof rawValue === "string") {
+    return rawValue;
+  }
+
+  return undefined;
+}
+
 function normalizeWordCounterResultBase(result: WordCounterResult): WordCounterResult {
   result.total = result.counts?.words ?? result.total;
   delete result.counts;
@@ -177,7 +183,10 @@ type RunCliOptions = {
   stderr?: ProgressOutputStream;
 };
 
-export async function runCli(argv: string[] = process.argv, runtime: RunCliOptions = {}): Promise<void> {
+export async function runCli(
+  argv: string[] = process.argv,
+  runtime: RunCliOptions = {},
+): Promise<void> {
   const program = new Command();
   const parseMode = (value: string): WordCounterMode => {
     const normalized = normalizeMode(value);
@@ -230,6 +239,10 @@ export async function runCli(argv: string[] = process.argv, runtime: RunCliOptio
     )
     .option("--pretty", "pretty print JSON output", false)
     .option("--debug", "enable debug diagnostics on stderr")
+    .option("--verbose", "emit verbose per-file debug diagnostics (requires --debug)")
+    .option("--debug-report [path]", "write debug diagnostics to a report file")
+    .option("--debug-report-tee", "mirror debug diagnostics to both report file and stderr")
+    .option("--debug-tee", "alias of --debug-report-tee")
     .option("--merged", "show merged aggregate output (default)")
     .option("--per-file", "show per-file output plus merged summary")
     .option("--no-progress", "disable batch progress indicator")
@@ -276,78 +289,274 @@ export async function runCli(argv: string[] = process.argv, runtime: RunCliOptio
         keepProgress?: boolean;
         quietSkips?: boolean;
         debug?: boolean;
+        verbose?: boolean;
+        debugReport?: string | boolean;
+        debugReportTee?: boolean;
+        debugTee?: boolean;
         includeExt?: string[];
         excludeExt?: string[];
       },
     ) => {
-      const useSection = options.section !== "all";
-      const totalOfParts = options.totalOf;
-      const requestedNonWords = Boolean(options.nonWords || options.includeWhitespace || options.misc);
-      const collectNonWordsForOverride = requiresNonWordCollection(totalOfParts);
-      const collectWhitespaceForOverride = requiresWhitespaceCollection(totalOfParts);
-      const enableNonWords = Boolean(
-        options.nonWords ||
+      const debugEnabled = Boolean(options.debug);
+      const debugReportPath = resolveDebugReportPathOption(options.debugReport);
+      const debugReportEnabled = options.debugReport !== undefined && options.debugReport !== false;
+
+      if (options.verbose && !debugEnabled) {
+        program.error(pc.red("`--verbose` requires `--debug`."));
+        return;
+      }
+
+      if (debugReportEnabled && !debugEnabled) {
+        program.error(pc.red("`--debug-report` requires `--debug`."));
+        return;
+      }
+
+      const teeEnabled = Boolean(options.debugReportTee || options.debugTee);
+
+      if (teeEnabled && !debugReportEnabled) {
+        program.error(
+          pc.red("`--debug-report-tee` (alias: `--debug-tee`) requires `--debug-report`."),
+        );
+        return;
+      }
+
+      let debug;
+      try {
+        debug = createDebugChannel({
+          enabled: debugEnabled,
+          verbosity: options.verbose ? "verbose" : "compact",
+          report: debugReportEnabled
+            ? {
+                path: debugReportPath,
+                tee: teeEnabled,
+              }
+            : undefined,
+        });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        program.error(pc.red(`Failed to initialize debug diagnostics: ${message}`));
+        return;
+      }
+
+      try {
+        const useSection = options.section !== "all";
+        const totalOfParts = options.totalOf;
+        const requestedNonWords = Boolean(
+          options.nonWords || options.includeWhitespace || options.misc,
+        );
+        const collectNonWordsForOverride = requiresNonWordCollection(totalOfParts);
+        const collectWhitespaceForOverride = requiresWhitespaceCollection(totalOfParts);
+        const enableNonWords = Boolean(
+          options.nonWords ||
           options.includeWhitespace ||
           options.misc ||
           collectNonWordsForOverride,
-      );
-      const enableWhitespace = Boolean(
-        options.includeWhitespace ||
-          options.misc ||
-          collectWhitespaceForOverride,
-      );
-      const shouldNormalizeBaseOutput = !requestedNonWords && enableNonWords;
-      const wcOptions = {
-        mode: options.mode,
-        latinLanguageHint: options.latinLanguage,
-        latinTagHint: options.latinTag,
-        latinLocaleHint: options.latinLocale,
-        hanLanguageHint: options.hanLanguage,
-        hanTagHint: options.hanTag,
-        nonWords: enableNonWords,
-        includeWhitespace: enableWhitespace,
-      };
+        );
+        const enableWhitespace = Boolean(
+          options.includeWhitespace || options.misc || collectWhitespaceForOverride,
+        );
+        const shouldNormalizeBaseOutput = !requestedNonWords && enableNonWords;
+        const wcOptions = {
+          mode: options.mode,
+          latinLanguageHint: options.latinLanguage,
+          latinTagHint: options.latinTag,
+          latinLocaleHint: options.latinLocale,
+          hanLanguageHint: options.hanLanguage,
+          hanTagHint: options.hanTag,
+          nonWords: enableNonWords,
+          includeWhitespace: enableWhitespace,
+        };
 
-      if (!hasPathInput(options.path)) {
-        let input: string;
-        try {
-          input = await resolveInput(textTokens);
-        } catch (error) {
-          const message = error instanceof Error ? error.message : String(error);
-          program.error(`Failed to read input: ${message}`);
+        if (!hasPathInput(options.path)) {
+          let input: string;
+          try {
+            input = await resolveInput(textTokens);
+          } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            program.error(`Failed to read input: ${message}`);
+            return;
+          }
+
+          const trimmed = input.trim();
+          if (!trimmed) {
+            program.error(pc.red("No input provided. Pass text, pipe stdin, or use --path."));
+            return;
+          }
+
+          const result: WordCounterResult | SectionedResult = useSection
+            ? countSections(trimmed, options.section, wcOptions)
+            : wordCounter(trimmed, wcOptions);
+          const totalOfOverride = resolveTotalOfOverride(result, totalOfParts);
+          const displayResult = shouldNormalizeBaseOutput ? normalizeResultBase(result) : result;
+
+          if (options.format === "raw") {
+            console.log(totalOfOverride?.total ?? displayResult.total);
+            return;
+          }
+
+          if (options.format === "json") {
+            const spacing = options.pretty ? 2 : 0;
+            if (!totalOfOverride) {
+              console.log(JSON.stringify(displayResult, null, spacing));
+              return;
+            }
+            console.log(
+              JSON.stringify(
+                {
+                  ...displayResult,
+                  meta: {
+                    totalOf: totalOfOverride.parts,
+                    totalOfOverride: totalOfOverride.total,
+                  },
+                },
+                null,
+                spacing,
+              ),
+            );
+            return;
+          }
+
+          const labels = getTotalLabels(options.mode, requestedNonWords);
+          if (isSectionedResult(displayResult)) {
+            renderStandardSectionedResult(displayResult, labels, totalOfOverride);
+            return;
+          }
+
+          renderStandardResult(displayResult, labels.overall, totalOfOverride);
           return;
         }
 
-        const trimmed = input.trim();
-        if (!trimmed) {
-          program.error(pc.red("No input provided. Pass text, pipe stdin, or use --path."));
+        const batchOptions: BatchOptions = {
+          scope: resolveBatchScope(argv),
+          pathMode: options.pathMode,
+          recursive: options.recursive,
+          quietSkips: Boolean(options.quietSkips),
+        };
+
+        const extensionFilter = buildDirectoryExtensionFilter(
+          options.includeExt,
+          options.excludeExt,
+        );
+        const mirrorDebugToTerminal = debugEnabled && (!debug.reportPath || teeEnabled);
+        const summary = await runBatchCount({
+          pathInputs: options.path,
+          batchOptions,
+          extensionFilter,
+          section: options.section,
+          wcOptions,
+          preserveCollectorSegments: options.format === "json",
+          debug,
+          progressReporter: createBatchProgressReporter({
+            enabled: options.format === "standard" && options.progress,
+            stream: runtime.stderr ?? (process.stderr as unknown as ProgressOutputStream),
+            clearOnFinish: !(mirrorDebugToTerminal || options.keepProgress),
+          }),
+        });
+
+        const showSkipDiagnostics = debugEnabled && !batchOptions.quietSkips;
+        debug.emit("batch.skips.policy", {
+          enabled: showSkipDiagnostics,
+          quietSkips: batchOptions.quietSkips,
+        });
+        if (showSkipDiagnostics) {
+          debug.emit("batch.skips.report", {
+            count: summary.skipped.length,
+          });
+          if (options.verbose) {
+            for (const skip of summary.skipped) {
+              debug.emit(
+                "batch.skips.item",
+                {
+                  path: skip.path,
+                  reason: skip.reason,
+                },
+                { verbosity: "verbose" },
+              );
+            }
+          }
+
+          if (mirrorDebugToTerminal) {
+            reportSkipped(summary.skipped);
+          }
+        }
+
+        if (summary.files.length === 0) {
+          program.error(pc.red("No readable text-like inputs were found from --path."));
           return;
         }
 
-        const result: WordCounterResult | SectionedResult = useSection
-          ? countSections(trimmed, options.section, wcOptions)
-          : wordCounter(trimmed, wcOptions);
-        const totalOfOverride = resolveTotalOfOverride(result, totalOfParts);
-        const displayResult = shouldNormalizeBaseOutput ? normalizeResultBase(result) : result;
+        let aggregateTotalOfOverride: TotalOfOverride | undefined;
+        let totalOfOverridesByResult: WeakMap<object, TotalOfOverride> | undefined;
+        if (totalOfParts && totalOfParts.length > 0) {
+          totalOfOverridesByResult = new WeakMap<object, TotalOfOverride>();
+          const aggregateOverride = resolveTotalOfOverride(summary.aggregate, totalOfParts);
+          if (aggregateOverride) {
+            totalOfOverridesByResult.set(summary.aggregate as object, aggregateOverride);
+            aggregateTotalOfOverride = aggregateOverride;
+          }
+
+          for (const file of summary.files) {
+            const fileOverride = resolveTotalOfOverride(file.result, totalOfParts);
+            if (!fileOverride) {
+              continue;
+            }
+            totalOfOverridesByResult.set(file.result as object, fileOverride);
+          }
+        } else {
+          aggregateTotalOfOverride = resolveTotalOfOverride(summary.aggregate, totalOfParts);
+        }
+
+        if (shouldNormalizeBaseOutput) {
+          normalizeBatchSummaryBase(summary);
+        }
+
+        if (!aggregateTotalOfOverride && totalOfOverridesByResult) {
+          aggregateTotalOfOverride = totalOfOverridesByResult.get(summary.aggregate as object);
+        }
 
         if (options.format === "raw") {
-          console.log(totalOfOverride?.total ?? displayResult.total);
+          console.log(aggregateTotalOfOverride?.total ?? summary.aggregate.total);
           return;
         }
 
         if (options.format === "json") {
           const spacing = options.pretty ? 2 : 0;
-          if (!totalOfOverride) {
-            console.log(JSON.stringify(displayResult, null, spacing));
+
+          if (batchOptions.scope === "per-file") {
+            const skipped = showSkipDiagnostics ? summary.skipped : undefined;
+            const meta =
+              totalOfParts && totalOfParts.length > 0
+                ? {
+                    totalOf: totalOfParts,
+                    aggregateTotalOfOverride:
+                      aggregateTotalOfOverride?.total ?? summary.aggregate.total,
+                  }
+                : undefined;
+            const payload = {
+              scope: "per-file",
+              files: summary.files.map((file) => ({
+                path: file.path,
+                result: file.result,
+              })),
+              ...(skipped ? { skipped } : {}),
+              aggregate: summary.aggregate,
+              ...(meta ? { meta } : {}),
+            };
+            console.log(JSON.stringify(payload, null, spacing));
+            return;
+          }
+
+          if (!aggregateTotalOfOverride) {
+            console.log(JSON.stringify(summary.aggregate, null, spacing));
             return;
           }
           console.log(
             JSON.stringify(
               {
-                ...displayResult,
+                ...summary.aggregate,
                 meta: {
-                  totalOf: totalOfOverride.parts,
-                  totalOfOverride: totalOfOverride.total,
+                  totalOf: aggregateTotalOfOverride.parts,
+                  totalOfOverride: aggregateTotalOfOverride.total,
                 },
               },
               null,
@@ -358,156 +567,27 @@ export async function runCli(argv: string[] = process.argv, runtime: RunCliOptio
         }
 
         const labels = getTotalLabels(options.mode, requestedNonWords);
-        if (isSectionedResult(displayResult)) {
-          renderStandardSectionedResult(displayResult, labels, totalOfOverride);
-          return;
-        }
-
-        renderStandardResult(displayResult, labels.overall, totalOfOverride);
-        return;
-      }
-
-      const batchOptions: BatchOptions = {
-        scope: resolveBatchScope(argv),
-        pathMode: options.pathMode,
-        recursive: options.recursive,
-        quietSkips: Boolean(options.quietSkips),
-      };
-
-      const debug = createDebugChannel(Boolean(options.debug));
-      const extensionFilter = buildDirectoryExtensionFilter(options.includeExt, options.excludeExt);
-      const summary = await runBatchCount({
-        pathInputs: options.path,
-        batchOptions,
-        extensionFilter,
-        section: options.section,
-        wcOptions,
-        preserveCollectorSegments: options.format === "json",
-        debug,
-        progressReporter: createBatchProgressReporter({
-          enabled: options.format === "standard" && options.progress,
-          stream: runtime.stderr ?? (process.stderr as unknown as ProgressOutputStream),
-          clearOnFinish: !Boolean(options.debug || options.keepProgress),
-        }),
-      });
-
-      const showSkipDiagnostics = Boolean(options.debug) && !batchOptions.quietSkips;
-      debug.emit("batch.skips.policy", {
-        enabled: showSkipDiagnostics,
-        quietSkips: batchOptions.quietSkips,
-      });
-      if (showSkipDiagnostics) {
-        debug.emit("batch.skips.report", {
-          count: summary.skipped.length,
-        });
-        reportSkipped(summary.skipped);
-      }
-
-      if (summary.files.length === 0) {
-        program.error(pc.red("No readable text-like inputs were found from --path."));
-        return;
-      }
-
-      let aggregateTotalOfOverride: TotalOfOverride | undefined;
-      let totalOfOverridesByResult: WeakMap<object, TotalOfOverride> | undefined;
-      if (totalOfParts && totalOfParts.length > 0) {
-        totalOfOverridesByResult = new WeakMap<object, TotalOfOverride>();
-        const aggregateOverride = resolveTotalOfOverride(summary.aggregate, totalOfParts);
-        if (aggregateOverride) {
-          totalOfOverridesByResult.set(summary.aggregate as object, aggregateOverride);
-          aggregateTotalOfOverride = aggregateOverride;
-        }
-
-        for (const file of summary.files) {
-          const fileOverride = resolveTotalOfOverride(file.result, totalOfParts);
-          if (!fileOverride) {
-            continue;
-          }
-          totalOfOverridesByResult.set(file.result as object, fileOverride);
-        }
-      } else {
-        aggregateTotalOfOverride = resolveTotalOfOverride(summary.aggregate, totalOfParts);
-      }
-
-      if (shouldNormalizeBaseOutput) {
-        normalizeBatchSummaryBase(summary);
-      }
-
-      if (!aggregateTotalOfOverride && totalOfOverridesByResult) {
-        aggregateTotalOfOverride = totalOfOverridesByResult.get(summary.aggregate as object);
-      }
-
-      if (options.format === "raw") {
-        console.log(aggregateTotalOfOverride?.total ?? summary.aggregate.total);
-        return;
-      }
-
-      if (options.format === "json") {
-        const spacing = options.pretty ? 2 : 0;
+        const totalOfResolver =
+          totalOfParts && totalOfParts.length > 0
+            ? (result: WordCounterResult | SectionedResult) =>
+                totalOfOverridesByResult?.get(result as object) ??
+                resolveTotalOfOverride(result, totalOfParts)
+            : undefined;
 
         if (batchOptions.scope === "per-file") {
-          const skipped = showSkipDiagnostics ? summary.skipped : undefined;
-          const meta =
-            totalOfParts && totalOfParts.length > 0
-              ? {
-                  totalOf: totalOfParts,
-                  aggregateTotalOfOverride:
-                    aggregateTotalOfOverride?.total ?? summary.aggregate.total,
-                }
-              : undefined;
-          const payload = {
-            scope: "per-file",
-            files: summary.files.map((file) => ({
-              path: file.path,
-              result: file.result,
-            })),
-            ...(skipped ? { skipped } : {}),
-            aggregate: summary.aggregate,
-            ...(meta ? { meta } : {}),
-          };
-          console.log(JSON.stringify(payload, null, spacing));
+          renderPerFileStandard(summary, labels, totalOfResolver);
           return;
         }
 
-        if (!aggregateTotalOfOverride) {
-          console.log(JSON.stringify(summary.aggregate, null, spacing));
+        if (isSectionedResult(summary.aggregate)) {
+          renderStandardSectionedResult(summary.aggregate, labels, aggregateTotalOfOverride);
           return;
         }
-        console.log(
-          JSON.stringify(
-            {
-              ...summary.aggregate,
-              meta: {
-                totalOf: aggregateTotalOfOverride.parts,
-                totalOfOverride: aggregateTotalOfOverride.total,
-              },
-            },
-            null,
-            spacing,
-          ),
-        );
-        return;
+
+        renderStandardResult(summary.aggregate, labels.overall, aggregateTotalOfOverride);
+      } finally {
+        await debug.close();
       }
-
-      const labels = getTotalLabels(options.mode, requestedNonWords);
-      const totalOfResolver =
-        totalOfParts && totalOfParts.length > 0
-          ? (result: WordCounterResult | SectionedResult) =>
-              totalOfOverridesByResult?.get(result as object) ??
-              resolveTotalOfOverride(result, totalOfParts)
-          : undefined;
-
-      if (batchOptions.scope === "per-file") {
-        renderPerFileStandard(summary, labels, totalOfResolver);
-        return;
-      }
-
-      if (isSectionedResult(summary.aggregate)) {
-        renderStandardSectionedResult(summary.aggregate, labels, aggregateTotalOfOverride);
-        return;
-      }
-
-      renderStandardResult(summary.aggregate, labels.overall, aggregateTotalOfOverride);
     },
   );
 
