@@ -118,6 +118,46 @@ describe("batch path resolution", () => {
 
     expect(resolved.files.map((file) => basename(file))).toEqual(["a.md", "b.txt"]);
   });
+
+  test("keeps mixed file + directory inputs deterministic via absolute-path sort", async () => {
+    const root = await makeTempFixture("batch-mixed-order");
+    const firstDir = join(root, "first");
+    const secondDir = join(root, "second");
+    const explicitFile = join(root, "z.log");
+
+    await mkdir(firstDir, { recursive: true });
+    await mkdir(secondDir, { recursive: true });
+    await writeFile(join(firstDir, "b.txt"), "from first");
+    await writeFile(join(secondDir, "a.md"), "from second");
+    await writeFile(explicitFile, "explicit file");
+
+    const resolved = await resolveBatchFilePaths([secondDir, explicitFile, firstDir], {
+      pathMode: "auto",
+      recursive: true,
+    });
+
+    const expected = [join(firstDir, "b.txt"), join(secondDir, "a.md"), explicitFile].sort((left, right) =>
+      left.localeCompare(right),
+    );
+
+    expect(resolved.files).toEqual(expected);
+  });
+
+  test("deduplicates files discovered from overlapping directory roots", async () => {
+    const root = await makeTempFixture("batch-overlap-roots");
+    const nested = join(root, "nested");
+    await mkdir(nested, { recursive: true });
+    await writeFile(join(root, "root.md"), "root file");
+    await writeFile(join(nested, "child.md"), "nested file");
+
+    const resolved = await resolveBatchFilePaths([root, nested], {
+      pathMode: "auto",
+      recursive: true,
+    });
+
+    expect(resolved.files.map((file) => basename(file))).toEqual(["child.md", "root.md"]);
+    expect(resolved.files.filter((file) => file.endsWith("child.md")).length).toBe(1);
+  });
 });
 
 describe("batch aggregation", () => {
@@ -508,6 +548,42 @@ describe("CLI debug diagnostics", () => {
     expect(stageTimingNames.includes("finalize")).toBeTrue();
     expect(output.stdout).toEqual(["2"]);
   });
+
+  test("emits path resolution diagnostics for expansion, filtering, and dedupe", async () => {
+    const root = await makeTempFixture("cli-debug-path-resolution");
+    const explicit = join(root, "keep.log");
+    await writeFile(join(root, "note.md"), "alpha beta");
+    await writeFile(explicit, "explicit log");
+
+    const output = await captureCli([
+      "--path",
+      root,
+      "--path",
+      explicit,
+      "--path",
+      explicit,
+      "--include-ext",
+      ".md",
+      "--exclude-ext",
+      ".md",
+      "--format",
+      "raw",
+      "--debug",
+      "--quiet-skips",
+    ]);
+    const events = output.stderr
+      .filter((line) => line.startsWith("[debug] "))
+      .map((line) => JSON.parse(line.slice(8)) as { event?: string });
+    const eventNames = events
+      .map((item) => item.event)
+      .filter((event): event is string => typeof event === "string");
+
+    expect(eventNames.includes("path.resolve.root.expand")).toBeTrue();
+    expect(eventNames.includes("path.resolve.filter.excluded")).toBeTrue();
+    expect(eventNames.includes("path.resolve.dedupe.accept")).toBeTrue();
+    expect(eventNames.includes("path.resolve.dedupe.duplicate")).toBeTrue();
+    expect(output.stdout).toEqual(["2"]);
+  });
 });
 
 describe("extension filters", () => {
@@ -605,6 +681,29 @@ describe("extension filters", () => {
     ]);
 
     expect(output.stdout).toEqual(["2"]);
+  });
+
+  test("applies filters only to directory scans in mixed-input runs", async () => {
+    const root = await makeTempFixture("ext-mixed-input-scan-vs-direct");
+    const explicitFile = join(root, "keep.log");
+    await writeFile(explicitFile, "direct path kept");
+    await writeFile(join(root, "scan.md"), "scan candidate");
+
+    const output = await captureCli([
+      "--path",
+      root,
+      "--path",
+      explicitFile,
+      "--include-ext",
+      ".md",
+      "--exclude-ext",
+      ".md",
+      "--format",
+      "raw",
+      "--quiet-skips",
+    ]);
+
+    expect(output.stdout).toEqual(["3"]);
   });
 
   test("supports empty effective include set for directory scanning", async () => {

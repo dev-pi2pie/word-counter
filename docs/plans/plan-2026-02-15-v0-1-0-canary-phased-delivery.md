@@ -1,7 +1,7 @@
 ---
 title: "v0.1.0 canary phased delivery"
 created-date: 2026-02-15
-modified-date: 2026-02-15
+modified-date: 2026-02-16
 status: active
 agent: Codex
 ---
@@ -108,16 +108,16 @@ Deliver `v0.1.0` through phased canary releases with clear priority ordering, ex
 ### Phase 6 - Canary Hardening (Deps + README + `#26` Path Resolution) (`v0.1.0-canary.5`)
 
 - [x] Upgrade targeted dependencies (`commander`, `tsdown`, `oxfmt`, `oxlint`, `@types/node`) and validate build/test workflows.
-- [ ] Reorganize README with `npx @dev-pi2pie/word-counter` as first-path quick start.
-- [ ] Clarify install/usage decision flow (npx vs global install vs library usage).
-- [ ] Add/refresh examples for new batch/progress/`--total-of` flows.
-- [ ] Define and document a stable mixed-input resolution contract for repeated `--path` (file + directory inputs) (`#26`).
-- [ ] Define overlap dedupe rules when the same file is discovered from multiple input roots and keep behavior deterministic (`#26`).
-- [ ] Clarify and document `--include-ext`/`--exclude-ext` behavior for direct file paths versus directory scans (`#26`).
-- [ ] Add `--debug` diagnostics for path-resolution decisions (root expansion, filtering, dedupe) with `stderr`-only output (`#26`).
-- [ ] Add regression tests for multi-directory + mixed-input ordering, overlap dedupe, and filter semantics (`#26`).
-- [ ] Update README and CLI docs with multi-directory resolution examples and troubleshooting notes (`#26`).
-- [ ] Compatibility gate (`#20`): verify docs and examples preserve backward-compatible defaults.
+- [x] Reorganize README with `npx @dev-pi2pie/word-counter` as first-path quick start.
+- [x] Clarify install/usage decision flow (npx vs global install vs library usage).
+- [x] Add/refresh examples for new batch/progress/`--total-of` flows.
+- [x] Define and document a stable mixed-input resolution contract for repeated `--path` (file + directory inputs) (`#26`).
+- [x] Define overlap dedupe rules when the same file is discovered from multiple input roots and keep behavior deterministic (`#26`).
+- [x] Clarify and document `--include-ext`/`--exclude-ext` behavior for direct file paths versus directory scans (`#26`).
+- [x] Add `--debug` diagnostics for path-resolution decisions (root expansion, filtering, dedupe) with `stderr`-only output (`#26`).
+- [x] Add regression tests for multi-directory + mixed-input ordering, overlap dedupe, and filter semantics (`#26`).
+- [x] Update README and CLI docs with multi-directory resolution examples and troubleshooting notes (`#26`).
+- [x] Compatibility gate (`#20`): verify docs and examples preserve backward-compatible defaults.
 
 ### Phase 7 - Stable Release Readiness (`v0.1.0`)
 

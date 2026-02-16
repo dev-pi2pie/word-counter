@@ -1,7 +1,7 @@
 ---
 title: "Default Config Schema (Draft)"
 created-date: 2026-02-13
-modified-date: 2026-02-15
+modified-date: 2026-02-16
 status: draft
 agent: Codex
 milestone: v0.1.0
@@ -53,10 +53,13 @@ logging:
   - `manual`: do not auto-expand directories; treat input paths literally.
 - `path.recursive`
   - controls directory traversal depth when a directory path is provided.
+- repeated path inputs are allowed as mixed file + directory roots.
+- resolved files are deduplicated by absolute path and processed in deterministic absolute-path ascending order.
 - `path.includeExtensions`
   - allowlist applied to directory scans before content reading.
 - `path.excludeExtensions`
   - denylist applied after include filtering.
+- include/exclude extension filters apply only to files discovered by directory expansion, not direct file-path inputs.
 - `path.detectBinary`
   - when true, extensionless/unknown files are inspected and skipped if binary-like.
 - `reporting.skippedFiles`
@@ -73,7 +76,7 @@ logging:
   - `off`: disable progress output.
 - `logging.level`
   - `info`: default operational logging.
-  - `debug`: verbose runtime diagnostics.
+  - `debug`: verbose runtime diagnostics, including path-resolution decisions (root expansion, filter exclusion, dedupe).
 
 ## CLI and Env Mapping (Draft)
 
@@ -98,6 +101,7 @@ logging:
 ## Notes
 
 - Skip diagnostics are debug-gated in current CLI behavior (`--debug`); `--quiet-skips` suppresses them explicitly.
+- Path-resolution diagnostics are debug-gated and emitted to `stderr` only.
 - `--total-of` is currently available via CLI; config/env persistence is a draft contract target for future config-file phases.
 - `--progress` is optional in `auto` mode because batch runs enable progress by default.
 - Future config-file implementation should reuse these keys directly to avoid migration churn.

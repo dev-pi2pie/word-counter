@@ -36,6 +36,7 @@ export default defineConfig([
     target: "node20",
     hash: false,
     fixedExtension: true,
+    inlineOnly: ["picocolors"],
     banner: "#!/usr/bin/env node\n",
   },
 ]);
