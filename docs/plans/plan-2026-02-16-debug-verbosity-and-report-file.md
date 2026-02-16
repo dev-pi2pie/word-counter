@@ -39,6 +39,7 @@ Reduce debug-noise fatigue in batch runs by adding explicit debug verbosity leve
 - Add `--debug-report-tee`:
   - mirror debug diagnostics to both report file and terminal
   - valid only when `--debug-report` is enabled
+  - short alias: `--debug-tee`
 
 ### Routing Rules
 
@@ -95,6 +96,7 @@ Reduce debug-noise fatigue in batch runs by adding explicit debug verbosity leve
 
 - Implemented `--verbose` debug level selection (`compact` default, `verbose` opt-in).
 - Implemented `--debug-report [path]` with file-first routing and `--debug-report-tee` mirror mode.
+- Added `--debug-tee` as an alias of `--debug-report-tee`.
 - Implemented deterministic default debug report naming:
   - `wc-debug-YYYYMMDD-HHmmss-<pid>.jsonl`
   - collision-safe `-<n>` suffix appending.

@@ -99,7 +99,7 @@ logging:
 - `--debug` -> `logging.level = debug`
 - `--verbose` -> `logging.verbosity = verbose` (requires `--debug`)
 - `--debug-report [path]` -> `reporting.debugReport.enabled = true`, optional `reporting.debugReport.path`
-- `--debug-report-tee` -> `reporting.debugReport.tee = true` (requires `--debug-report`)
+- `--debug-report-tee` / `--debug-tee` -> `reporting.debugReport.tee = true` (requires `--debug-report`)
 - `--quiet-skips` -> `reporting.skippedFiles = false` (override; suppress skip diagnostics even in debug mode)
 - `--total-of <parts>` -> `output.totalOf`
 - `--progress` / `--no-progress` -> `progress.mode` (`on` / `off`; default `auto`)

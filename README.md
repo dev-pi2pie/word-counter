@@ -168,8 +168,8 @@ Use `--debug-report [path]` to route debug diagnostics to a JSONL report file:
 - collision handling: appends `-<n>` suffix to avoid overwriting existing files
 
 By default with `--debug-report`, debug lines are file-only (not mirrored to terminal).
-Use `--debug-report-tee` to mirror to both file and `stderr`.
-Flag dependencies: `--verbose` requires `--debug`; `--debug-report` requires `--debug`; `--debug-report-tee` requires `--debug-report`.
+Use `--debug-report-tee` (alias: `--debug-tee`) to mirror to both file and `stderr`.
+Flag dependencies: `--verbose` requires `--debug`; `--debug-report` requires `--debug`; `--debug-report-tee`/`--debug-tee` requires `--debug-report`.
 
 Examples:
 
@@ -177,6 +177,7 @@ Examples:
 word-counter --path ./examples/test-case-multi-files-support --debug --debug-report
 word-counter --path ./examples/test-case-multi-files-support --debug --debug-report ./logs/debug.jsonl
 word-counter --path ./examples/test-case-multi-files-support --debug --debug-report ./logs/debug.jsonl --debug-report-tee
+word-counter --path ./examples/test-case-multi-files-support --debug --debug-report ./logs/debug.jsonl --debug-tee
 ```
 
 Skip details stay debug-gated and can still be suppressed with `--quiet-skips`.

@@ -242,6 +242,7 @@ export async function runCli(
     .option("--verbose", "emit verbose per-file debug diagnostics (requires --debug)")
     .option("--debug-report [path]", "write debug diagnostics to a report file")
     .option("--debug-report-tee", "mirror debug diagnostics to both report file and stderr")
+    .option("--debug-tee", "alias of --debug-report-tee")
     .option("--merged", "show merged aggregate output (default)")
     .option("--per-file", "show per-file output plus merged summary")
     .option("--no-progress", "disable batch progress indicator")
@@ -291,6 +292,7 @@ export async function runCli(
         verbose?: boolean;
         debugReport?: string | boolean;
         debugReportTee?: boolean;
+        debugTee?: boolean;
         includeExt?: string[];
         excludeExt?: string[];
       },
@@ -309,8 +311,12 @@ export async function runCli(
         return;
       }
 
-      if (options.debugReportTee && !debugReportEnabled) {
-        program.error(pc.red("`--debug-report-tee` requires `--debug-report`."));
+      const teeEnabled = Boolean(options.debugReportTee || options.debugTee);
+
+      if (teeEnabled && !debugReportEnabled) {
+        program.error(
+          pc.red("`--debug-report-tee` (alias: `--debug-tee`) requires `--debug-report`."),
+        );
         return;
       }
 
@@ -322,7 +328,7 @@ export async function runCli(
           report: debugReportEnabled
             ? {
                 path: debugReportPath,
-                tee: Boolean(options.debugReportTee),
+                tee: teeEnabled,
               }
             : undefined,
         });
@@ -431,8 +437,7 @@ export async function runCli(
           options.includeExt,
           options.excludeExt,
         );
-        const mirrorDebugToTerminal =
-          debugEnabled && (!debug.reportPath || Boolean(options.debugReportTee));
+        const mirrorDebugToTerminal = debugEnabled && (!debug.reportPath || teeEnabled);
         const summary = await runBatchCount({
           pathInputs: options.path,
           batchOptions,

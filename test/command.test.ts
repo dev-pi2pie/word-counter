@@ -693,6 +693,30 @@ describe("CLI debug diagnostics", () => {
     expect(output.stdout).toEqual(["2"]);
   });
 
+  test("supports --debug-tee alias for --debug-report-tee", async () => {
+    const root = await makeTempFixture("cli-debug-tee-alias");
+    const reportPath = join(root, "diagnostics.jsonl");
+    await writeFile(join(root, "a.txt"), "alpha");
+    await writeFile(join(root, "b.txt"), "beta");
+
+    const output = await captureCli([
+      "--path",
+      root,
+      "--format",
+      "raw",
+      "--debug",
+      "--debug-report",
+      reportPath,
+      "--debug-tee",
+      "--quiet-skips",
+    ]);
+
+    expect(listDebugEventNames(output.stderr).length > 0).toBeTrue();
+    const report = await readFile(reportPath, "utf8");
+    expect(report.includes('"event":"batch.resolve.start"')).toBeTrue();
+    expect(output.stdout).toEqual(["2"]);
+  });
+
   test("creates deterministic default debug report name in cwd", async () => {
     const root = await makeTempFixture("cli-debug-report-default-name");
     const previousCwd = process.cwd();
