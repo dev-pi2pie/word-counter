@@ -17,12 +17,20 @@ type ResolveBatchFilePathOptions = {
   debug?: DebugChannel;
 };
 
+type PathResolveDebugStats = {
+  dedupeAccepted: number;
+  dedupeDuplicates: number;
+  filterExcluded: number;
+  directoryIncluded: number;
+};
+
 async function expandDirectory(
   directoryPath: string,
   recursive: boolean,
   filter: DirectoryExtensionFilter,
   skipped: BatchSkip[],
   debug: DebugChannel,
+  stats: PathResolveDebugStats,
 ): Promise<string[]> {
   let entries: Dirent[];
   try {
@@ -51,18 +59,28 @@ async function expandDirectory(
     if (entry.isFile()) {
       if (!shouldIncludeFromDirectory(entryPath, filter)) {
         skipped.push({ path: entryPath, reason: "extension excluded" });
-        debug.emit("path.resolve.filter.excluded", {
-          path: entryPath,
-          reason: "extension excluded",
-        });
+        debug.emit(
+          "path.resolve.filter.excluded",
+          {
+            path: entryPath,
+            reason: "extension excluded",
+          },
+          { verbosity: "verbose" },
+        );
+        stats.filterExcluded += 1;
         continue;
       }
 
       files.push(entryPath);
-      debug.emit("path.resolve.expand.include", {
-        path: entryPath,
-        source: "directory",
-      });
+      stats.directoryIncluded += 1;
+      debug.emit(
+        "path.resolve.expand.include",
+        {
+          path: entryPath,
+          source: "directory",
+        },
+        { verbosity: "verbose" },
+      );
       continue;
     }
 
@@ -70,7 +88,7 @@ async function expandDirectory(
       continue;
     }
 
-    const nestedFiles = await expandDirectory(entryPath, recursive, filter, skipped, debug);
+    const nestedFiles = await expandDirectory(entryPath, recursive, filter, skipped, debug, stats);
     appendAll(files, nestedFiles);
   }
 
@@ -88,13 +106,23 @@ export async function resolveBatchFilePaths(
 ): Promise<{ files: string[]; skipped: BatchSkip[] }> {
   const skipped: BatchSkip[] = [];
   const resolvedFiles = new Set<string>();
+  const stats: PathResolveDebugStats = {
+    dedupeAccepted: 0,
+    dedupeDuplicates: 0,
+    filterExcluded: 0,
+    directoryIncluded: 0,
+  };
   const extensionFilter =
     options.extensionFilter ?? buildDirectoryExtensionFilter(undefined, undefined);
   const debug =
     options.debug ??
     ({
       enabled: false,
+      verbosity: "compact",
       emit() {
+        return;
+      },
+      close: async () => {
         return;
       },
     } satisfies DebugChannel);
@@ -110,20 +138,30 @@ export async function resolveBatchFilePaths(
     details: { source: "direct" | "directory"; input: string },
   ): void => {
     if (resolvedFiles.has(filePath)) {
-      debug.emit("path.resolve.dedupe.duplicate", {
-        path: filePath,
-        source: details.source,
-        input: details.input,
-      });
+      stats.dedupeDuplicates += 1;
+      debug.emit(
+        "path.resolve.dedupe.duplicate",
+        {
+          path: filePath,
+          source: details.source,
+          input: details.input,
+        },
+        { verbosity: "verbose" },
+      );
       return;
     }
 
     resolvedFiles.add(filePath);
-    debug.emit("path.resolve.dedupe.accept", {
-      path: filePath,
-      source: details.source,
-      input: details.input,
-    });
+    stats.dedupeAccepted += 1;
+    debug.emit(
+      "path.resolve.dedupe.accept",
+      {
+        path: filePath,
+        source: details.source,
+        input: details.input,
+      },
+      { verbosity: "verbose" },
+    );
   };
 
   for (const rawPath of pathInputs) {
@@ -157,6 +195,7 @@ export async function resolveBatchFilePaths(
         extensionFilter,
         skipped,
         debug,
+        stats,
       );
       for (const file of files) {
         addResolvedFile(file, { source: "directory", input: targetPath });
@@ -177,6 +216,14 @@ export async function resolveBatchFilePaths(
   }
 
   const files = [...resolvedFiles].sort((left, right) => left.localeCompare(right));
+  debug.emit("path.resolve.filter.summary", {
+    excluded: stats.filterExcluded,
+    included: stats.directoryIncluded,
+  });
+  debug.emit("path.resolve.dedupe.summary", {
+    accepted: stats.dedupeAccepted,
+    duplicates: stats.dedupeDuplicates,
+  });
   debug.emit("path.resolve.complete", {
     files: files.length,
     skipped: skipped.length,

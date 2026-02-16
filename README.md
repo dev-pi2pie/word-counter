@@ -147,19 +147,36 @@ Direct file path example (filters do not block explicit file inputs):
 word-counter --path ./examples/test-case-multi-files-support/ignored.js --include-ext .md --exclude-ext .md
 ```
 
-### Debugging Path Resolution (`--debug`)
+### Debugging Diagnostics (`--debug`)
 
-`--debug` emits structured diagnostics to `stderr` only (never `stdout`), including:
+`--debug` remains the diagnostics gate and now defaults to `compact` event volume:
 
-- root expansion decisions
-- extension-filter exclusions
-- dedupe accept/duplicate decisions
-- stage timing and progress lifecycle events
+- lifecycle/stage timing events
+- resolved/skipped summary events
+- dedupe/filter summary counts
 
-Example:
+Use `--verbose` to include per-file/per-path events:
 
 ```bash
-word-counter --path ./examples/test-case-multi-files-support --path ./examples/test-case-multi-files-support/a.md --debug
+word-counter --path ./examples/test-case-multi-files-support --debug --verbose
+```
+
+Use `--debug-report [path]` to route debug diagnostics to a JSONL report file:
+
+- no path: writes to current working directory with pattern `wc-debug-YYYYMMDD-HHmmss-<pid>.jsonl`
+- path provided: writes to the specified location
+- collision handling: appends `-<n>` suffix to avoid overwriting existing files
+
+By default with `--debug-report`, debug lines are file-only (not mirrored to terminal).
+Use `--debug-report-tee` to mirror to both file and `stderr`.
+Flag dependencies: `--verbose` requires `--debug`; `--debug-report` requires `--debug`; `--debug-report-tee` requires `--debug-report`.
+
+Examples:
+
+```bash
+word-counter --path ./examples/test-case-multi-files-support --debug --debug-report
+word-counter --path ./examples/test-case-multi-files-support --debug --debug-report ./logs/debug.jsonl
+word-counter --path ./examples/test-case-multi-files-support --debug --debug-report ./logs/debug.jsonl --debug-report-tee
 ```
 
 Skip details stay debug-gated and can still be suppressed with `--quiet-skips`.

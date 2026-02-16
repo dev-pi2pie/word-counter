@@ -118,11 +118,11 @@ Deliver `v0.1.0` through phased canary releases with clear priority ordering, ex
 - [x] Add regression tests for multi-directory + mixed-input ordering, overlap dedupe, and filter semantics (`#26`).
 - [x] Update README and CLI docs with multi-directory resolution examples and troubleshooting notes (`#26`).
 - [x] Compatibility gate (`#20`): verify docs and examples preserve backward-compatible defaults.
-- [ ] Follow-up: add debug verbosity modes (`compact` and `verbose`) with short user-facing flags (`--debug` + `--verbose`) so debug output is useful without per-file event flood.
-- [ ] Follow-up: add debug report-file output option (`--debug-report`) with file-first routing plus optional terminal mirror mode (`--debug-report-tee`).
-- [ ] Follow-up: define deterministic debug report naming/location contract (default directory, timestamp/pid suffix, collision handling).
-- [ ] Follow-up: add regression tests for compact/verbose routing and report-file behavior.
-- [ ] Follow-up: document compact/verbose and debug-report usage in README and CLI help text.
+- [x] Follow-up: add debug verbosity modes (`compact` and `verbose`) with short user-facing flags (`--debug` + `--verbose`) so debug output is useful without per-file event flood.
+- [x] Follow-up: add debug report-file output option (`--debug-report`) with file-first routing plus optional terminal mirror mode (`--debug-report-tee`).
+- [x] Follow-up: define deterministic debug report naming/location contract (default directory, timestamp/pid suffix, collision handling).
+- [x] Follow-up: add regression tests for compact/verbose routing and report-file behavior.
+- [x] Follow-up: document compact/verbose and debug-report usage in README and CLI help text.
 
 ### Phase 7 - Stable Release Readiness (`v0.1.0`)
 

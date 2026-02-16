@@ -2,7 +2,7 @@
 title: "debug verbosity and report-file output"
 created-date: 2026-02-16
 modified-date: 2026-02-16
-status: draft
+status: completed
 agent: Codex
 ---
 
@@ -90,6 +90,23 @@ Reduce debug-noise fatigue in batch runs by adding explicit debug verbosity leve
 - Debug report path and naming behavior are deterministic and documented.
 - No central log storage or retention/pruning behavior is introduced in this phase.
 - Existing `stdout` contracts remain unchanged across `standard`, `raw`, and `json`.
+
+## Completion Notes
+
+- Implemented `--verbose` debug level selection (`compact` default, `verbose` opt-in).
+- Implemented `--debug-report [path]` with file-first routing and `--debug-report-tee` mirror mode.
+- Implemented deterministic default debug report naming:
+  - `wc-debug-YYYYMMDD-HHmmss-<pid>.jsonl`
+  - collision-safe `-<n>` suffix appending.
+- Added compact summary debug events for path resolution:
+  - dedupe summary (`accepted`, `duplicates`)
+  - filter summary (`included`, `excluded`)
+- Added regression coverage for:
+  - compact vs verbose event selection
+  - stderr-only vs file-only routing
+  - tee routing
+  - default report naming + collision suffix behavior
+- Updated README and default-config draft docs for the new debug controls.
 
 ## Related Plans
 

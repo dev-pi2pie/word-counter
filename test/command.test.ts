@@ -1,13 +1,9 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, join } from "node:path";
-import {
-  buildBatchSummary,
-  loadBatchInputs,
-  resolveBatchFilePaths,
-  runCli,
-} from "../src/command";
+import { buildBatchSummary, loadBatchInputs, resolveBatchFilePaths, runCli } from "../src/command";
+import { createDebugChannel } from "../src/cli/debug/channel";
 import { buildDirectoryExtensionFilter } from "../src/cli/path/filter";
 import type { ProgressOutputStream } from "../src/cli/progress/reporter";
 
@@ -41,6 +37,7 @@ async function captureCli(
   const stderr: string[] = [];
   const originalLog = console.log;
   const originalError = console.error;
+  const originalStderrWrite = process.stderr.write.bind(process.stderr);
 
   console.log = (...chunks: unknown[]) => {
     stdout.push(chunks.map((chunk) => String(chunk)).join(" "));
@@ -48,12 +45,17 @@ async function captureCli(
   console.error = (...chunks: unknown[]) => {
     stderr.push(chunks.map((chunk) => String(chunk)).join(" "));
   };
+  process.stderr.write = ((chunk: string | Uint8Array): boolean => {
+    stderr.push(typeof chunk === "string" ? chunk : Buffer.from(chunk).toString("utf8"));
+    return true;
+  }) as typeof process.stderr.write;
 
   try {
     await runCli(["node", "word-counter", ...args], options);
   } finally {
     console.log = originalLog;
     console.error = originalError;
+    process.stderr.write = originalStderrWrite as typeof process.stderr.write;
   }
 
   return { stdout, stderr };
@@ -71,6 +73,18 @@ function createCapturedStream(isTTY: boolean): { stream: ProgressOutputStream; w
       },
     },
   };
+}
+
+function parseDebugEvents(stderr: string[]): Array<Record<string, unknown>> {
+  return stderr
+    .filter((line) => line.startsWith("[debug] "))
+    .map((line) => JSON.parse(line.slice(8)) as Record<string, unknown>);
+}
+
+function listDebugEventNames(stderr: string[]): string[] {
+  return parseDebugEvents(stderr)
+    .map((item) => item.event)
+    .filter((event): event is string => typeof event === "string");
 }
 
 describe("batch path resolution", () => {
@@ -136,8 +150,8 @@ describe("batch path resolution", () => {
       recursive: true,
     });
 
-    const expected = [join(firstDir, "b.txt"), join(secondDir, "a.md"), explicitFile].sort((left, right) =>
-      left.localeCompare(right),
+    const expected = [join(firstDir, "b.txt"), join(secondDir, "a.md"), explicitFile].sort(
+      (left, right) => left.localeCompare(right),
     );
 
     expect(resolved.files).toEqual(expected);
@@ -225,7 +239,9 @@ describe("batch aggregation", () => {
 
     expect(summary.aggregate.breakdown.mode).toBe("collector");
     if (summary.aggregate.breakdown.mode === "collector") {
-      expect(summary.aggregate.breakdown.items.every((item) => item.segments.length === 0)).toBeTrue();
+      expect(
+        summary.aggregate.breakdown.items.every((item) => item.segments.length === 0),
+      ).toBeTrue();
     }
 
     for (const file of summary.files) {
@@ -313,7 +329,11 @@ describe("CLI batch output", () => {
     const parsed = JSON.parse(output.stdout[0] ?? "{}");
 
     expect(parsed.breakdown.mode).toBe("collector");
-    expect(parsed.breakdown.items.some((item: { segments?: string[] }) => (item.segments?.length ?? 0) > 0)).toBeTrue();
+    expect(
+      parsed.breakdown.items.some(
+        (item: { segments?: string[] }) => (item.segments?.length ?? 0) > 0,
+      ),
+    ).toBeTrue();
   });
 
   test("shows skip diagnostics only with --debug", async () => {
@@ -354,13 +374,7 @@ describe("CLI batch output", () => {
     await writeFile(join(root, "note.txt"), "plain text");
     await writeFile(join(root, "ignore.js"), "const x = 1;");
 
-    const output = await captureCli([
-      "--path",
-      root,
-      "--per-file",
-      "--format",
-      "json",
-    ]);
+    const output = await captureCli(["--path", root, "--per-file", "--format", "json"]);
     const parsed = JSON.parse(output.stdout[0] ?? "{}");
     expect(parsed.skipped).toBeUndefined();
 
@@ -382,14 +396,7 @@ describe("CLI batch output", () => {
     await writeFile(explicitPath, "alpha beta");
     await writeFile(join(root, "b.txt"), "gamma");
 
-    const output = await captureCli([
-      "--path",
-      root,
-      "--path",
-      explicitPath,
-      "--format",
-      "raw",
-    ]);
+    const output = await captureCli(["--path", root, "--path", explicitPath, "--format", "raw"]);
 
     expect(output.stdout).toEqual(["3"]);
   });
@@ -409,7 +416,9 @@ describe("CLI progress output", () => {
     );
     expect(hasPattern).toBeTrue();
     expect(
-      progress.writes.some((chunk) => /Finalizing aggregate\.\.\. elapsed \d{2}:\d{2}\.\d/.test(chunk)),
+      progress.writes.some((chunk) =>
+        /Finalizing aggregate\.\.\. elapsed \d{2}:\d{2}\.\d/.test(chunk),
+      ),
     ).toBeTrue();
     expect(progress.writes.some((chunk) => /\r +\r/.test(chunk))).toBeTrue();
     expect(output.stdout[0]).toBe("Total words: 4");
@@ -434,8 +443,16 @@ describe("CLI progress output", () => {
 
     await captureCli(["--path", root, "--keep-progress"], { stderr: progress.stream });
 
-    expect(progress.writes.some((chunk) => /\rCounting files \[[█░]{20}\]\s+100%\s+\d+\/\d+\s+elapsed \d{2}:\d{2}\.\d/.test(chunk))).toBeTrue();
-    expect(progress.writes.some((chunk) => /\nFinalizing aggregate\.\.\. elapsed \d{2}:\d{2}\.\d/.test(chunk))).toBeTrue();
+    expect(
+      progress.writes.some((chunk) =>
+        /\rCounting files \[[█░]{20}\]\s+100%\s+\d+\/\d+\s+elapsed \d{2}:\d{2}\.\d/.test(chunk),
+      ),
+    ).toBeTrue();
+    expect(
+      progress.writes.some((chunk) =>
+        /\nFinalizing aggregate\.\.\. elapsed \d{2}:\d{2}\.\d/.test(chunk),
+      ),
+    ).toBeTrue();
     expect(progress.writes.some((chunk) => chunk.includes("Counting files ["))).toBeTrue();
     expect(progress.writes.some((chunk) => /\r +\r/.test(chunk))).toBeFalse();
     expect(progress.writes.some((chunk) => chunk === "\n")).toBeTrue();
@@ -472,7 +489,9 @@ describe("CLI progress output", () => {
     const rawProgress = createCapturedStream(true);
     const jsonProgress = createCapturedStream(true);
 
-    const raw = await captureCli(["--path", root, "--format", "raw"], { stderr: rawProgress.stream });
+    const raw = await captureCli(["--path", root, "--format", "raw"], {
+      stderr: rawProgress.stream,
+    });
     const json = await captureCli(["--path", root, "--format", "json"], {
       stderr: jsonProgress.stream,
     });
@@ -505,8 +524,16 @@ describe("CLI progress output", () => {
 
     await captureCli(["--path", root, "--debug"], { stderr: progress.stream });
 
-    expect(progress.writes.some((chunk) => /\rCounting files \[[█░]{20}\]\s+100%\s+\d+\/\d+\s+elapsed \d{2}:\d{2}\.\d/.test(chunk))).toBeTrue();
-    expect(progress.writes.some((chunk) => /\nFinalizing aggregate\.\.\. elapsed \d{2}:\d{2}\.\d/.test(chunk))).toBeTrue();
+    expect(
+      progress.writes.some((chunk) =>
+        /\rCounting files \[[█░]{20}\]\s+100%\s+\d+\/\d+\s+elapsed \d{2}:\d{2}\.\d/.test(chunk),
+      ),
+    ).toBeTrue();
+    expect(
+      progress.writes.some((chunk) =>
+        /\nFinalizing aggregate\.\.\. elapsed \d{2}:\d{2}\.\d/.test(chunk),
+      ),
+    ).toBeTrue();
     expect(progress.writes.some((chunk) => chunk.includes("Counting files ["))).toBeTrue();
     expect(progress.writes.some((chunk) => /\r +\r/.test(chunk))).toBeFalse();
     expect(progress.writes.some((chunk) => chunk === "\n")).toBeTrue();
@@ -527,12 +554,8 @@ describe("CLI debug diagnostics", () => {
       "--debug",
       "--quiet-skips",
     ]);
-    const events = output.stderr
-      .filter((line) => line.startsWith("[debug] "))
-      .map((line) => JSON.parse(line.slice(8)) as { event?: string; stage?: string });
-    const eventNames = events
-      .map((item) => item.event)
-      .filter((event): event is string => typeof event === "string");
+    const events = parseDebugEvents(output.stderr);
+    const eventNames = listDebugEventNames(output.stderr);
     const stageTimingNames = events
       .filter((item) => item.event === "batch.stage.timing")
       .map((item) => item.stage)
@@ -549,7 +572,7 @@ describe("CLI debug diagnostics", () => {
     expect(output.stdout).toEqual(["2"]);
   });
 
-  test("emits path resolution diagnostics for expansion, filtering, and dedupe", async () => {
+  test("emits compact path-resolution summaries by default", async () => {
     const root = await makeTempFixture("cli-debug-path-resolution");
     const explicit = join(root, "keep.log");
     await writeFile(join(root, "note.md"), "alpha beta");
@@ -571,18 +594,154 @@ describe("CLI debug diagnostics", () => {
       "--debug",
       "--quiet-skips",
     ]);
-    const events = output.stderr
-      .filter((line) => line.startsWith("[debug] "))
-      .map((line) => JSON.parse(line.slice(8)) as { event?: string });
-    const eventNames = events
-      .map((item) => item.event)
-      .filter((event): event is string => typeof event === "string");
+    const eventNames = listDebugEventNames(output.stderr);
 
     expect(eventNames.includes("path.resolve.root.expand")).toBeTrue();
+    expect(eventNames.includes("path.resolve.filter.summary")).toBeTrue();
+    expect(eventNames.includes("path.resolve.dedupe.summary")).toBeTrue();
+    expect(eventNames.includes("path.resolve.filter.excluded")).toBeFalse();
+    expect(eventNames.includes("path.resolve.dedupe.accept")).toBeFalse();
+    expect(eventNames.includes("path.resolve.dedupe.duplicate")).toBeFalse();
+    expect(output.stdout).toEqual(["2"]);
+  });
+
+  test("emits per-file path-resolution diagnostics in verbose mode", async () => {
+    const root = await makeTempFixture("cli-debug-path-resolution-verbose");
+    const explicit = join(root, "keep.log");
+    await writeFile(join(root, "note.md"), "alpha beta");
+    await writeFile(explicit, "explicit log");
+
+    const output = await captureCli([
+      "--path",
+      root,
+      "--path",
+      explicit,
+      "--path",
+      explicit,
+      "--include-ext",
+      ".md",
+      "--exclude-ext",
+      ".md",
+      "--format",
+      "raw",
+      "--debug",
+      "--verbose",
+      "--quiet-skips",
+    ]);
+    const eventNames = listDebugEventNames(output.stderr);
+
     expect(eventNames.includes("path.resolve.filter.excluded")).toBeTrue();
     expect(eventNames.includes("path.resolve.dedupe.accept")).toBeTrue();
     expect(eventNames.includes("path.resolve.dedupe.duplicate")).toBeTrue();
     expect(output.stdout).toEqual(["2"]);
+  });
+
+  test("routes debug output to file when --debug-report is enabled", async () => {
+    const root = await makeTempFixture("cli-debug-report-file");
+    const reportPath = join(root, "reports", "diagnostics.jsonl");
+    await writeFile(join(root, "a.txt"), "alpha");
+    await writeFile(join(root, "b.txt"), "beta");
+
+    const output = await captureCli([
+      "--path",
+      root,
+      "--format",
+      "raw",
+      "--debug",
+      "--debug-report",
+      reportPath,
+      "--quiet-skips",
+    ]);
+
+    expect(listDebugEventNames(output.stderr)).toEqual([]);
+    const report = await readFile(reportPath, "utf8");
+    const lines = report
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0);
+    const eventNames = lines
+      .map((line) => JSON.parse(line) as { event?: string })
+      .map((entry) => entry.event)
+      .filter((event): event is string => typeof event === "string");
+
+    expect(eventNames.includes("batch.resolve.start")).toBeTrue();
+    expect(eventNames.includes("batch.progress.complete")).toBeTrue();
+    expect(output.stdout).toEqual(["2"]);
+  });
+
+  test("mirrors debug output to terminal when --debug-report-tee is enabled", async () => {
+    const root = await makeTempFixture("cli-debug-report-tee");
+    const reportPath = join(root, "diagnostics.jsonl");
+    await writeFile(join(root, "a.txt"), "alpha");
+    await writeFile(join(root, "b.txt"), "beta");
+
+    const output = await captureCli([
+      "--path",
+      root,
+      "--format",
+      "raw",
+      "--debug",
+      "--debug-report",
+      reportPath,
+      "--debug-report-tee",
+      "--quiet-skips",
+    ]);
+
+    expect(listDebugEventNames(output.stderr).length > 0).toBeTrue();
+    const report = await readFile(reportPath, "utf8");
+    expect(report.includes('"event":"batch.resolve.start"')).toBeTrue();
+    expect(output.stdout).toEqual(["2"]);
+  });
+
+  test("creates deterministic default debug report name in cwd", async () => {
+    const root = await makeTempFixture("cli-debug-report-default-name");
+    const previousCwd = process.cwd();
+    await writeFile(join(root, "a.txt"), "alpha");
+    await writeFile(join(root, "b.txt"), "beta");
+
+    process.chdir(root);
+    try {
+      await captureCli([
+        "--path",
+        root,
+        "--format",
+        "raw",
+        "--debug",
+        "--debug-report",
+        "--quiet-skips",
+      ]);
+    } finally {
+      process.chdir(previousCwd);
+    }
+
+    const entries = await readdir(root);
+    const reports = entries.filter((entry) =>
+      /^wc-debug-\d{8}-\d{6}-\d+(-\d+)?\.jsonl$/.test(entry),
+    );
+    expect(reports.length).toBe(1);
+  });
+
+  test("adds collision suffix for default debug report filenames", async () => {
+    const root = await makeTempFixture("cli-debug-report-collision");
+    const fixedNow = new Date(2026, 1, 16, 12, 34, 56);
+    const baseName = "wc-debug-20260216-123456-4321.jsonl";
+    await writeFile(join(root, baseName), "existing");
+
+    const debug = createDebugChannel({
+      enabled: true,
+      verbosity: "compact",
+      report: { tee: false, cwd: root },
+      now: () => fixedNow,
+      pid: 4321,
+    });
+    const expectedPath = join(root, "wc-debug-20260216-123456-4321-1.jsonl");
+
+    expect(debug.reportPath).toBe(expectedPath);
+    debug.emit("batch.resolve.start", { files: 1 });
+    await debug.close();
+
+    const report = await readFile(expectedPath, "utf8");
+    expect(report.includes('"event":"batch.resolve.start"')).toBeTrue();
   });
 });
 
@@ -723,14 +882,11 @@ describe("extension filters", () => {
 
 describe("CLI total-of", () => {
   test("shows override in standard output only when it differs", async () => {
-    const withOverride = await captureCli([
-      "--non-words",
-      "--total-of",
-      "words",
-      "Hi 👋, world!",
-    ]);
+    const withOverride = await captureCli(["--non-words", "--total-of", "words", "Hi 👋, world!"]);
     expect(withOverride.stdout[0]).toBe("Total count: 5");
-    expect(withOverride.stdout.some((line) => line.includes("Total-of (override: words): 2"))).toBeTrue();
+    expect(
+      withOverride.stdout.some((line) => line.includes("Total-of (override: words): 2")),
+    ).toBeTrue();
 
     const withoutOverride = await captureCli(["--total-of", "words", "Hello world"]);
     expect(withoutOverride.stdout[0]).toBe("Total words: 2");
@@ -765,28 +921,22 @@ describe("CLI total-of", () => {
   });
 
   test("keeps base standard output model unchanged without --non-words", async () => {
-    const output = await captureCli([
-      "--total-of",
-      "words,emoji",
-      "Hi 👋, world!",
-    ]);
+    const output = await captureCli(["--total-of", "words,emoji", "Hi 👋, world!"]);
 
     expect(output.stdout[0]).toBe("Total words: 2");
-    expect(output.stdout.some((line) => line.includes("Total-of (override: words, emoji): 3"))).toBeTrue();
+    expect(
+      output.stdout.some((line) => line.includes("Total-of (override: words, emoji): 3")),
+    ).toBeTrue();
     expect(output.stdout.some((line) => line.startsWith("Non-words:"))).toBeFalse();
   });
 
   test("keeps char breakdown consistent when --total-of auto-enables non-words", async () => {
-    const output = await captureCli([
-      "--mode",
-      "char",
-      "--total-of",
-      "punctuation",
-      "Hi, world!",
-    ]);
+    const output = await captureCli(["--mode", "char", "--total-of", "punctuation", "Hi, world!"]);
 
     expect(output.stdout[0]).toBe("Total characters: 7");
-    expect(output.stdout.some((line) => line.includes("Total-of (override: punctuation): 2"))).toBeTrue();
+    expect(
+      output.stdout.some((line) => line.includes("Total-of (override: punctuation): 2")),
+    ).toBeTrue();
     expect(output.stdout.some((line) => line === "Locale und-Latn: 7 characters")).toBeTrue();
   });
 
