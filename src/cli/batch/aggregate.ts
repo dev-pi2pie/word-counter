@@ -64,6 +64,64 @@ function mergeWordCounterResult(
     };
   }
 
+  if (
+    left.breakdown.mode === "char-collector" &&
+    right.breakdown.mode === "char-collector"
+  ) {
+    const localeOrder: string[] = [];
+    const mergedByLocale = new Map<
+      string,
+      {
+        locale: string;
+        chars: number;
+        nonWords?: NonWordCollection;
+      }
+    >();
+
+    const addItems = (items: typeof left.breakdown.items): void => {
+      for (const item of items) {
+        const existing = mergedByLocale.get(item.locale);
+        if (existing) {
+          existing.chars += item.chars;
+          if (item.nonWords) {
+            if (!existing.nonWords) {
+              existing.nonWords = createNonWordCollection();
+            }
+            mergeNonWordCollections(existing.nonWords, item.nonWords);
+          }
+          continue;
+        }
+
+        localeOrder.push(item.locale);
+        mergedByLocale.set(item.locale, {
+          locale: item.locale,
+          chars: item.chars,
+          nonWords: item.nonWords
+            ? mergeNonWordCollections(createNonWordCollection(), item.nonWords)
+            : undefined,
+        });
+      }
+    };
+
+    addItems(left.breakdown.items);
+    addItems(right.breakdown.items);
+
+    return {
+      total,
+      counts,
+      breakdown: {
+        mode: "char-collector",
+        items: localeOrder.map((locale) => {
+          const value = mergedByLocale.get(locale);
+          if (!value) {
+            throw new Error(`Missing char-collector entry for locale: ${locale}`);
+          }
+          return value;
+        }),
+      },
+    };
+  }
+
   if (left.breakdown.mode === "collector" && right.breakdown.mode === "collector") {
     const localeOrder: string[] = [];
     const mergedByLocale = new Map<

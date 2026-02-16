@@ -2,7 +2,7 @@
 title: "v0.1.0 canary phased delivery"
 created-date: 2026-02-15
 modified-date: 2026-02-16
-status: active
+status: completed
 agent: Codex
 ---
 
@@ -20,6 +20,7 @@ Deliver `v0.1.0` through phased canary releases with clear priority ordering, ex
   - `#18` TUI progress bar for batch mode
   - `#19` selective total composition via `--total-of`
   - `#26` predictable multi-directory path resolution semantics
+  - `#33` `char-collector` mode for locale-aggregated character counting
 - Cross-cutting quality issue:
   - `#20` preserve backward-compatible output defaults
 
@@ -126,10 +127,13 @@ Deliver `v0.1.0` through phased canary releases with clear priority ordering, ex
 
 ### Phase 7 - Stable Release Readiness (`v0.1.0`)
 
-- [ ] Run final regression pass across feature and legacy paths (`#21`).
-- [ ] Re-check issue closure and acceptance criteria for `#17`, `#18`, `#19`, `#20`, `#24`, and `#26`.
-- [ ] Validate release notes and canary-to-stable changelog clarity.
-- [ ] Confirm stable tag/release only after canary feedback is resolved.
+- [x] Implement `char-collector` mode with deterministic composed alias normalization matrix and compatibility coverage (`#33`, parent `#21`).
+- [x] Re-check `src/command.ts` separation boundaries and issue a dedicated sub-plan for an additional compatibility-safe refactor pass (see `docs/plans/plan-2026-02-16-command-ts-separation-pass-2.md`).
+- [x] Execute `docs/plans/plan-2026-02-16-command-ts-separation-pass-2.md` (implement command modularization pass 2 while preserving CLI/export compatibility contracts).
+- [x] Run final regression pass across feature and legacy paths (`#21`) using `bun run test:ci` plus CLI smoke checks on 2026-02-16 UTC.
+- [x] Re-check issue closure and acceptance criteria for `#17`, `#18`, `#19`, `#20`, `#24`, `#26`, and `#33` (see `docs/plans/jobs/2026-02-16-phase-7-regression-and-issue-closure-audit.md`).
+- [x] Validate release notes and canary-to-stable changelog clarity (release-owner task completed).
+- [x] Confirm stable tag/release only after canary feedback is resolved (release-owner confirmation completed).
 
 ## Scope Notes
 
@@ -148,3 +152,5 @@ Deliver `v0.1.0` through phased canary releases with clear priority ordering, ex
 
 - `docs/plans/plan-2026-02-15-command-modularization-and-extension-filters.md`
 - `docs/plans/plan-2026-02-16-debug-verbosity-and-report-file.md`
+- `docs/plans/plan-2026-02-16-char-collector-mode.md`
+- `docs/plans/plan-2026-02-16-command-ts-separation-pass-2.md`

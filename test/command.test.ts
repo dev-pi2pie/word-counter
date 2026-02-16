@@ -254,6 +254,29 @@ describe("batch aggregation", () => {
       expect(file.result.breakdown.items.every((item) => item.segments.length === 0)).toBeTrue();
     }
   });
+
+  test("aggregates char-collector locale totals across files", async () => {
+    const summary = await buildBatchSummary(
+      [
+        { path: "/tmp/a.txt", content: "Hi 世界" },
+        { path: "/tmp/b.txt", content: "Yo 世界" },
+      ],
+      "all",
+      { mode: "char-collector" },
+    );
+
+    if ("section" in summary.aggregate) {
+      throw new Error("Expected non-section aggregate result.");
+    }
+
+    expect(summary.aggregate.breakdown.mode).toBe("char-collector");
+    if (summary.aggregate.breakdown.mode === "char-collector") {
+      expect(summary.aggregate.breakdown.items).toEqual([
+        { locale: "und-Latn", chars: 4, nonWords: undefined },
+        { locale: "zh-Hani", chars: 4, nonWords: undefined },
+      ]);
+    }
+  });
 });
 
 describe("CLI batch output", () => {
@@ -1034,6 +1057,42 @@ describe("CLI total-of", () => {
     expect(parsed.meta?.totalOfOverride).toBe(2);
   });
 
+  test("keeps char-collector breakdown consistent when --total-of auto-enables non-words", async () => {
+    const output = await captureCli([
+      "--mode",
+      "char-collector",
+      "--total-of",
+      "punctuation",
+      "Hi, world!",
+    ]);
+
+    expect(output.stdout[0]).toBe("Total characters: 7");
+    expect(
+      output.stdout.some((line) => line.includes("Total-of (override: punctuation): 2")),
+    ).toBeTrue();
+    expect(output.stdout.some((line) => line === "Locale und-Latn: 7 characters")).toBeTrue();
+  });
+
+  test("keeps char-collector json breakdown normalized when --total-of auto-enables non-words", async () => {
+    const output = await captureCli([
+      "--mode",
+      "char-collector",
+      "--format",
+      "json",
+      "--total-of",
+      "punctuation",
+      "Hi, world!",
+    ]);
+    const parsed = JSON.parse(output.stdout[0] ?? "{}");
+
+    expect(parsed.total).toBe(7);
+    expect(parsed.breakdown.mode).toBe("char-collector");
+    expect(parsed.breakdown.items[0]?.chars).toBe(7);
+    expect(parsed.breakdown.items[0]?.nonWords).toBeUndefined();
+    expect(parsed.meta?.totalOf).toEqual(["punctuation"]);
+    expect(parsed.meta?.totalOfOverride).toBe(2);
+  });
+
   test("supports --total-of in batch raw mode", async () => {
     const root = await makeTempFixture("cli-total-of-batch-raw");
     await writeFile(join(root, "a.txt"), "alpha!");
@@ -1182,6 +1241,25 @@ describe("CLI compatibility gates", () => {
     const output = await captureCli(["--format", "json", "--han-tag", "zh-Hans", "汉字测试"]);
     const parsed = JSON.parse(output.stdout[0] ?? "{}");
     expect(parsed.breakdown.items[0]?.locale).toBe("zh-Hans");
+  });
+
+  test("accepts char-collector alias matrix forms", async () => {
+    const aliases = [
+      "charcollector",
+      "char-collect",
+      "collector-char",
+      "characters-collector",
+      "colchar",
+      "charcol",
+      "char-col",
+      "char-colle",
+    ];
+
+    for (const alias of aliases) {
+      const output = await captureCli(["--mode", alias, "--format", "json", "Hi"]);
+      const parsed = JSON.parse(output.stdout[0] ?? "{}");
+      expect(parsed.breakdown.mode).toBe("char-collector");
+    }
   });
 
   test("accepts --han-language alias for Han text fallback", async () => {

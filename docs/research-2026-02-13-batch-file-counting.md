@@ -1,8 +1,8 @@
 ---
 title: "Batch file counting mode"
 created-date: 2026-02-13
-modified-date: 2026-02-15
-status: draft
+modified-date: 2026-02-16
+status: completed
 agent: Codex
 milestone: v0.1.0
 ---

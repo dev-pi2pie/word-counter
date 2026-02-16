@@ -1,8 +1,8 @@
 ---
 title: "CLI progress indicator for long-running batch counts"
 created-date: 2026-02-13
-modified-date: 2026-02-13
-status: draft
+modified-date: 2026-02-16
+status: completed
 agent: Codex
 milestone: v0.1.0
 ---

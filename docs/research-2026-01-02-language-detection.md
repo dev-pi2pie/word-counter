@@ -1,8 +1,8 @@
 ---
 title: "Language Detection With Unicode Scripts and Regex"
 created-date: 2026-01-02
-modified-date: 2026-02-15
-status: in-progress
+modified-date: 2026-02-16
+status: completed
 agent: Codex
 ---
 
@@ -49,7 +49,7 @@ const isGreek = /\p{Script=Greek}/u;
 This doc uses footnote-style references (e.g., `[^1]`) with the URLs listed at the end of the file.
 
 ## Status Note
-This research is marked `in-progress` because it is discovery-driven: findings may change as we test real inputs and refine detection heuristics.
+This research is marked `completed` for the `v0.1.0` scope. Future heuristic refinements can be tracked in follow-up research if needed.
 
 ## Related Plans
 - `docs/plans/plan-2026-01-02-wc-refactor-locale-research.md`

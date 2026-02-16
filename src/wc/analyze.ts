@@ -4,9 +4,11 @@ import {
   addWhitespace,
   classifyNonWordSegment,
   createNonWordCollection,
+  mergeNonWordCollections,
 } from "./non-words";
 import { appendAll } from "../utils/append-all";
 import type {
+  CharCollectorBreakdown,
   ChunkAnalysis,
   CollectorBreakdown,
   LocaleChunk,
@@ -14,6 +16,7 @@ import type {
 } from "./types";
 
 type CharAnalysis = LocaleChunk & { chars: number; nonWords?: NonWordCollection };
+type CharChunkAnalysis = CharAnalysis & { wordChars: number; nonWordChars: number };
 
 export function analyzeChunk(
   chunk: LocaleChunk,
@@ -51,7 +54,7 @@ export function analyzeCharChunk(
   chunk: LocaleChunk,
   collectNonWords?: boolean,
   includeWhitespace?: boolean,
-): CharAnalysis & { wordChars: number; nonWordChars: number } {
+): CharChunkAnalysis {
   const segmenter = getSegmenter(chunk.locale);
   const nonWords: NonWordCollection | null = collectNonWords
     ? createNonWordCollection()
@@ -93,6 +96,45 @@ export function analyzeCharChunk(
     nonWordChars,
     nonWords: nonWords ?? undefined,
   };
+}
+
+export function aggregateCharsByLocale(
+  chunks: CharChunkAnalysis[],
+): Array<CharCollectorBreakdown & { wordChars: number; nonWordChars: number }> {
+  const order: string[] = [];
+  const map = new Map<
+    string,
+    CharCollectorBreakdown & { wordChars: number; nonWordChars: number }
+  >();
+
+  for (const chunk of chunks) {
+    const existing = map.get(chunk.locale);
+    if (existing) {
+      existing.chars += chunk.chars;
+      existing.wordChars += chunk.wordChars;
+      existing.nonWordChars += chunk.nonWordChars;
+      if (chunk.nonWords) {
+        if (!existing.nonWords) {
+          existing.nonWords = createNonWordCollection();
+        }
+        mergeNonWordCollections(existing.nonWords, chunk.nonWords);
+      }
+      continue;
+    }
+
+    order.push(chunk.locale);
+    map.set(chunk.locale, {
+      locale: chunk.locale,
+      chars: chunk.chars,
+      wordChars: chunk.wordChars,
+      nonWordChars: chunk.nonWordChars,
+      nonWords: chunk.nonWords
+        ? mergeNonWordCollections(createNonWordCollection(), chunk.nonWords)
+        : undefined,
+    });
+  }
+
+  return order.map((locale) => map.get(locale)!);
 }
 
 export function aggregateByLocale(

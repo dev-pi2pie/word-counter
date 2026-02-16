@@ -20,11 +20,11 @@ export type TotalLabels = {
 };
 
 function getCountUnit(mode: WordCounterMode): CountUnit {
-  return mode === "char" ? "character" : "word";
+  return mode === "char" || mode === "char-collector" ? "character" : "word";
 }
 
 export function getTotalLabels(mode: WordCounterMode, includeNonWords: boolean): TotalLabels {
-  const unit = mode === "char" ? "characters" : "words";
+  const unit = mode === "char" || mode === "char-collector" ? "characters" : "words";
   if (includeNonWords) {
     return { overall: "Total count", section: "total count" };
   }
@@ -118,7 +118,7 @@ export function renderStandardResult(
     return;
   }
 
-  if (result.breakdown.mode === "char") {
+  if (result.breakdown.mode === "char" || result.breakdown.mode === "char-collector") {
     renderCountBreakdown(
       result.breakdown.items.map((item) => ({
         locale: item.locale,
@@ -197,7 +197,7 @@ export function renderStandardSectionedResult(
       continue;
     }
 
-    if (item.result.breakdown.mode === "char") {
+    if (item.result.breakdown.mode === "char" || item.result.breakdown.mode === "char-collector") {
       renderCountBreakdown(
         item.result.breakdown.items.map((chunk) => ({
           locale: chunk.locale,

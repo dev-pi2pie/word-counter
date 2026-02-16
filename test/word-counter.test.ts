@@ -199,6 +199,63 @@ describe("char mode", () => {
   });
 });
 
+describe("char-collector mode", () => {
+  test("aggregates character counts by locale order of first appearance", () => {
+    const result = wordCounter("Hi 世界 hi", {
+      mode: "char-collector",
+    });
+    expect(result.breakdown.mode).toBe("char-collector");
+    expect(result.total).toBe(6);
+    if (result.breakdown.mode === "char-collector") {
+      expect(result.breakdown.items).toEqual([
+        { locale: "und-Latn", chars: 4, nonWords: undefined },
+        { locale: "zh-Hani", chars: 2, nonWords: undefined },
+      ]);
+    }
+  });
+
+  test("aggregates non-word counts per locale when enabled", () => {
+    const result = wordCounter("Hi, 世界!", {
+      mode: "char-collector",
+      nonWords: true,
+    });
+    expect(result.breakdown.mode).toBe("char-collector");
+    expect(result.counts).toEqual({ words: 4, nonWords: 2, total: 6 });
+    if (result.breakdown.mode === "char-collector") {
+      expect(result.breakdown.items[0]?.locale).toBe("und-Latn");
+      expect(result.breakdown.items[0]?.chars).toBe(3);
+      expect(result.breakdown.items[0]?.nonWords?.counts.punctuation).toBe(1);
+      expect(result.breakdown.items[1]?.locale).toBe("zh-Hani");
+      expect(result.breakdown.items[1]?.chars).toBe(3);
+      expect(result.breakdown.items[1]?.nonWords?.counts.punctuation).toBe(1);
+    }
+  });
+
+  test("normalizes alias matrix to char-collector", () => {
+    const aliases = [
+      "char-collector",
+      "charcollector",
+      "char-collect",
+      "collector-char",
+      "characters-collector",
+      "colchar",
+      "charcol",
+      "char-col",
+      "char-colle",
+    ] as const;
+
+    for (const mode of aliases) {
+      const result = wordCounter("Hi", { mode: mode as unknown as "char" });
+      expect(result.breakdown.mode).toBe("char-collector");
+    }
+  });
+
+  test("keeps standalone collector aliases mapped to collector", () => {
+    const result = wordCounter("Hi", { mode: "collect" as unknown as "collector" });
+    expect(result.breakdown.mode).toBe("collector");
+  });
+});
+
 describe("collector mode with non-words", () => {
   test("aggregates non-words into a locale-neutral bucket", () => {
     const result = wordCounter("© 👋!", {

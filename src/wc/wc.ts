@@ -1,10 +1,16 @@
-import { analyzeCharChunk, analyzeChunk, aggregateByLocale } from "./analyze";
+import {
+  analyzeCharChunk,
+  analyzeChunk,
+  aggregateByLocale,
+  aggregateCharsByLocale,
+} from "./analyze";
 import { resolveMode } from "./mode";
 import { segmentTextByLocale } from "./segment";
 import { countCharsForLocale, countWordsForLocale } from "./segmenter";
 import { createNonWordCollection, mergeNonWordCollections } from "./non-words";
 import type {
   CharBreakdown,
+  CharCollectorBreakdown,
   ChunkBreakdown,
   ChunkWithSegments,
   NonWordCollection,
@@ -38,17 +44,11 @@ export function wordCounter(
     hanTagHint: options.hanTagHint,
   });
 
-  if (mode === "char") {
+  if (mode === "char" || mode === "char-collector") {
     const analyzed = chunks.map((chunk) =>
       analyzeCharChunk(chunk, collectNonWords, includeWhitespace),
     );
     const total = analyzed.reduce((sum, chunk) => sum + chunk.chars, 0);
-    const items: CharBreakdown[] = analyzed.map((chunk) => ({
-      locale: chunk.locale,
-      text: chunk.text,
-      chars: chunk.chars,
-      nonWords: chunk.nonWords,
-    }));
     const counts = collectNonWords
       ? {
           words: analyzed.reduce((sum, chunk) => sum + chunk.wordChars, 0),
@@ -56,6 +56,30 @@ export function wordCounter(
           total,
         }
       : undefined;
+
+    if (mode === "char") {
+      const items: CharBreakdown[] = analyzed.map((chunk) => ({
+        locale: chunk.locale,
+        text: chunk.text,
+        chars: chunk.chars,
+        nonWords: chunk.nonWords,
+      }));
+      return {
+        total,
+        counts,
+        breakdown: {
+          mode,
+          items,
+        },
+      };
+    }
+
+    const aggregated = aggregateCharsByLocale(analyzed);
+    const items: CharCollectorBreakdown[] = aggregated.map((chunk) => ({
+      locale: chunk.locale,
+      chars: chunk.chars,
+      nonWords: chunk.nonWords,
+    }));
     return {
       total,
       counts,
