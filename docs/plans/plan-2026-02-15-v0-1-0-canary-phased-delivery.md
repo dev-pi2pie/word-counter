@@ -107,7 +107,7 @@ Deliver `v0.1.0` through phased canary releases with clear priority ordering, ex
 
 ### Phase 6 - Canary Hardening (Deps + README + `#26` Path Resolution) (`v0.1.0-canary.5`)
 
-- [ ] Upgrade targeted dependencies (`commander`, `tsdown`, `oxfmt`, `oxlint`, `@types/node`) and validate build/test workflows.
+- [x] Upgrade targeted dependencies (`commander`, `tsdown`, `oxfmt`, `oxlint`, `@types/node`) and validate build/test workflows.
 - [ ] Reorganize README with `npx @dev-pi2pie/word-counter` as first-path quick start.
 - [ ] Clarify install/usage decision flow (npx vs global install vs library usage).
 - [ ] Add/refresh examples for new batch/progress/`--total-of` flows.

@@ -387,7 +387,7 @@ export async function runCli(argv: string[] = process.argv, runtime: RunCliOptio
         progressReporter: createBatchProgressReporter({
           enabled: options.format === "standard" && options.progress,
           stream: runtime.stderr ?? (process.stderr as unknown as ProgressOutputStream),
-          clearOnFinish: !Boolean(options.debug || options.keepProgress),
+          clearOnFinish: !(options.debug || options.keepProgress),
         }),
       });
 

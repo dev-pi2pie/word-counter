@@ -18,6 +18,8 @@ Locale-aware word counting powered by the Web API [`Intl.Segmenter`](https://dev
 
 ## Installation
 
+Runtime requirement: Node.js `>=20`.
+
 ### For Development
 
 Clone the repository and set up locally:
