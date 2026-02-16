@@ -1,4 +1,4 @@
-import { createWriteStream, existsSync, mkdirSync } from "node:fs";
+import { closeSync, createWriteStream, existsSync, mkdirSync, openSync } from "node:fs";
 import { basename, dirname, extname, join, resolve as resolvePath } from "node:path";
 
 type DebugDetails = Record<string, unknown>;
@@ -94,14 +94,33 @@ function createTerminalSink(): DebugSink {
 }
 
 function createFileSink(pathValue: string): DebugSink {
+  try {
+    const fd = openSync(pathValue, "a");
+    closeSync(fd);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`debug report path is not writable: ${pathValue} (${message})`);
+  }
+
   const stream = createWriteStream(pathValue, { flags: "a", encoding: "utf8" });
+  let streamError: Error | undefined;
+  stream.on("error", (error) => {
+    streamError = error;
+  });
+
   return {
     write(line) {
+      if (streamError || stream.destroyed) {
+        return;
+      }
       stream.write(`${line}\n`);
     },
     close() {
-      return new Promise<void>((resolve, reject) => {
-        stream.on("error", reject);
+      if (streamError || stream.destroyed || stream.writableEnded) {
+        return Promise.resolve();
+      }
+
+      return new Promise<void>((resolve) => {
         stream.end(() => {
           resolve();
         });

@@ -717,6 +717,20 @@ describe("CLI debug diagnostics", () => {
     expect(output.stdout).toEqual(["2"]);
   });
 
+  test("fails fast when debug report path is not writable", async () => {
+    const root = await makeTempFixture("cli-debug-report-unwritable");
+    const overlongName = `${"a".repeat(320)}.jsonl`;
+    const invalidPath = join(root, overlongName);
+
+    expect(() =>
+      createDebugChannel({
+        enabled: true,
+        verbosity: "compact",
+        report: { path: invalidPath, tee: false, cwd: root },
+      }),
+    ).toThrow("debug report path is not writable");
+  });
+
   test("creates deterministic default debug report name in cwd", async () => {
     const root = await makeTempFixture("cli-debug-report-default-name");
     const previousCwd = process.cwd();
