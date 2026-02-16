@@ -2,7 +2,7 @@
 title: "command.ts separation pass 2 boundary plan"
 created-date: 2026-02-16
 modified-date: 2026-02-16
-status: active
+status: completed
 agent: Codex
 ---
 
@@ -48,11 +48,11 @@ This concentration increases maintenance risk and slows targeted changes.
 
 ## Implementation Plan
 
-- [ ] Introduce extracted modules with no behavior changes.
-- [ ] Move option wiring first, then runtime handlers, then normalization helpers.
-- [ ] Keep `src/command.ts` orchestrating only composition and export wiring.
-- [ ] Add/adjust focused unit tests for extracted modules where useful; preserve existing integration tests.
-- [ ] Run full test suite and compare behavior against current contracts.
+- [x] Introduce extracted modules with no behavior changes.
+- [x] Move option wiring first, then runtime handlers, then normalization helpers.
+- [x] Keep `src/command.ts` orchestrating only composition and export wiring.
+- [x] Add/adjust focused unit tests for extracted modules where useful; preserve existing integration tests.
+- [x] Run full test suite and compare behavior against current contracts.
 
 ## Related Plans
 
