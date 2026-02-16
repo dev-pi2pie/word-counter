@@ -2,7 +2,7 @@
 title: "v0.1.0 canary phased delivery"
 created-date: 2026-02-15
 modified-date: 2026-02-16
-status: active
+status: completed
 agent: Codex
 ---
 
@@ -130,10 +130,10 @@ Deliver `v0.1.0` through phased canary releases with clear priority ordering, ex
 - [x] Implement `char-collector` mode with deterministic composed alias normalization matrix and compatibility coverage (`#33`, parent `#21`).
 - [x] Re-check `src/command.ts` separation boundaries and issue a dedicated sub-plan for an additional compatibility-safe refactor pass (see `docs/plans/plan-2026-02-16-command-ts-separation-pass-2.md`).
 - [x] Execute `docs/plans/plan-2026-02-16-command-ts-separation-pass-2.md` (implement command modularization pass 2 while preserving CLI/export compatibility contracts).
-- [ ] Run final regression pass across feature and legacy paths (`#21`).
-- [ ] Re-check issue closure and acceptance criteria for `#17`, `#18`, `#19`, `#20`, `#24`, `#26`, and `#33`.
-- [ ] Validate release notes and canary-to-stable changelog clarity.
-- [ ] Confirm stable tag/release only after canary feedback is resolved.
+- [x] Run final regression pass across feature and legacy paths (`#21`) using `bun run test:ci` plus CLI smoke checks on 2026-02-16 UTC.
+- [x] Re-check issue closure and acceptance criteria for `#17`, `#18`, `#19`, `#20`, `#24`, `#26`, and `#33` (see `docs/plans/jobs/2026-02-16-phase-7-regression-and-issue-closure-audit.md`).
+- [x] Validate release notes and canary-to-stable changelog clarity (release-owner task completed).
+- [x] Confirm stable tag/release only after canary feedback is resolved (release-owner confirmation completed).
 
 ## Scope Notes
 
