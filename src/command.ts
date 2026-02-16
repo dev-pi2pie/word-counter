@@ -29,7 +29,7 @@ import pc from "picocolors";
 
 type OutputFormat = "standard" | "raw" | "json";
 
-const MODE_CHOICES: WordCounterMode[] = ["chunk", "segments", "collector", "char"];
+const MODE_CHOICES: WordCounterMode[] = ["chunk", "segments", "collector", "char", "char-collector"];
 const FORMAT_CHOICES: OutputFormat[] = ["standard", "raw", "json"];
 const SECTION_CHOICES: SectionMode[] = [
   "all",
@@ -132,7 +132,7 @@ function normalizeWordCounterResultBase(result: WordCounterResult): WordCounterR
     return result;
   }
 
-  if (result.breakdown.mode === "char") {
+  if (result.breakdown.mode === "char" || result.breakdown.mode === "char-collector") {
     for (const item of result.breakdown.items) {
       const nonWordCount =
         (item.nonWords?.counts.emoji ?? 0) +

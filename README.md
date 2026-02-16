@@ -218,6 +218,7 @@ wordCounter("Hello world", { latinTagHint: "en" });
 wordCounter("漢字測試", { hanTagHint: "zh-Hant" });
 wordCounter("Hi 👋, world!", { nonWords: true });
 wordCounter("Hi 👋, world!", { mode: "char", nonWords: true });
+wordCounter("飛鳥 bird 貓 cat", { mode: "char-collector" });
 wordCounter("Hi\tthere\n", { nonWords: true, includeWhitespace: true });
 countCharsForLocale("👋", "en");
 ```
@@ -267,6 +268,7 @@ wordCounter("Hello world", { latinTagHint: "en" });
 wordCounter("漢字測試", { hanTagHint: "zh-Hant" });
 wordCounter("Hi 👋, world!", { nonWords: true });
 wordCounter("Hi 👋, world!", { mode: "char", nonWords: true });
+wordCounter("飛鳥 bird 貓 cat", { mode: "char-collector" });
 wordCounter("Hi\tthere\n", { nonWords: true, includeWhitespace: true });
 countCharsForLocale("👋", "en");
 ```
@@ -330,7 +332,7 @@ Sample output (with `nonWords: true` and `includeWhitespace: true`):
 | `WordCounterOptions`   | type | Options for the `wordCounter` function.           |
 | `WordCounterResult`    | type | Returned by `wordCounter`.                        |
 | `WordCounterBreakdown` | type | Breakdown payload in `WordCounterResult`.         |
-| `WordCounterMode`      | type | `"chunk" \| "segments" \| "collector" \| "char"`. |
+| `WordCounterMode`      | type | `"chunk" \| "segments" \| "collector" \| "char" \| "char-collector"`. |
 | `NonWordCollection`    | type | Non-word segments + counts payload.               |
 
 ### Display Modes
@@ -342,6 +344,7 @@ Choose a breakdown style with `--mode` (or `-m`):
 - `collector` – aggregate counts per locale regardless of text position.
   Keeps per-locale segment lists in memory, so very large corpora can use noticeably more memory than `chunk` mode.
 - `char` – count grapheme clusters (user-perceived characters) per locale.
+- `char-collector` – aggregate grapheme-cluster counts per locale (collector-style char mode).
 
 Aliases are normalized for CLI + API:
 
@@ -349,6 +352,7 @@ Aliases are normalized for CLI + API:
 - `segments`, `segment`, `seg`
 - `collector`, `collect`, `colle`
 - `char`, `chars`, `character`, `characters`
+- `char-collector`, `charcollector`, `char-collect`, `collector-char`, `characters-collector`, `colchar`, `charcol`, `char-col`, `char-colle`
 
 Examples:
 
@@ -364,6 +368,9 @@ word-counter -m collector "飛鳥 bird 貓 cat; how do you do?"
 
 # grapheme-aware character count
 word-counter -m char "Hi 👋, world!"
+
+# aggregate grapheme-aware character counts per locale
+word-counter -m char-collector "飛鳥 bird 貓 cat; how do you do?"
 ```
 
 ### Section Modes (Frontmatter)

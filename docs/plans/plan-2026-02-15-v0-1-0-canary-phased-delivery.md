@@ -127,8 +127,9 @@ Deliver `v0.1.0` through phased canary releases with clear priority ordering, ex
 
 ### Phase 7 - Stable Release Readiness (`v0.1.0`)
 
-- [ ] Implement `char-collector` mode with deterministic composed alias normalization matrix and compatibility coverage (`#33`, parent `#21`).
-- [ ] Re-check `src/command.ts` separation boundaries and plan an additional refactor pass to reduce file weight while preserving current function/CLI compatibility contracts.
+- [x] Implement `char-collector` mode with deterministic composed alias normalization matrix and compatibility coverage (`#33`, parent `#21`).
+- [x] Re-check `src/command.ts` separation boundaries and issue a dedicated sub-plan for an additional compatibility-safe refactor pass (see `docs/plans/plan-2026-02-16-command-ts-separation-pass-2.md`).
+- [ ] Execute `docs/plans/plan-2026-02-16-command-ts-separation-pass-2.md` (implement command modularization pass 2 while preserving CLI/export compatibility contracts).
 - [ ] Run final regression pass across feature and legacy paths (`#21`).
 - [ ] Re-check issue closure and acceptance criteria for `#17`, `#18`, `#19`, `#20`, `#24`, `#26`, and `#33`.
 - [ ] Validate release notes and canary-to-stable changelog clarity.
@@ -152,3 +153,4 @@ Deliver `v0.1.0` through phased canary releases with clear priority ordering, ex
 - `docs/plans/plan-2026-02-15-command-modularization-and-extension-filters.md`
 - `docs/plans/plan-2026-02-16-debug-verbosity-and-report-file.md`
 - `docs/plans/plan-2026-02-16-char-collector-mode.md`
+- `docs/plans/plan-2026-02-16-command-ts-separation-pass-2.md`

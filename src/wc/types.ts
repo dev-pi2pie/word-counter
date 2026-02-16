@@ -29,7 +29,13 @@ export interface CharBreakdown extends LocaleChunk {
   nonWords?: NonWordCollection;
 }
 
-export type WordCounterMode = "chunk" | "segments" | "collector" | "char";
+export interface CharCollectorBreakdown {
+  locale: string;
+  chars: number;
+  nonWords?: NonWordCollection;
+}
+
+export type WordCounterMode = "chunk" | "segments" | "collector" | "char" | "char-collector";
 
 export interface NonWordCounts {
   emoji: number;
@@ -74,6 +80,7 @@ export type WordCounterBreakdown =
   | { mode: "chunk"; items: ChunkBreakdown[] }
   | { mode: "segments"; items: ChunkWithSegments[] }
   | { mode: "char"; items: CharBreakdown[] }
+  | { mode: "char-collector"; items: CharCollectorBreakdown[] }
   | {
       mode: "collector";
       items: CollectorBreakdown[];

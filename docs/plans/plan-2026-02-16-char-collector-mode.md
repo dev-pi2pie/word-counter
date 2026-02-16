@@ -1,7 +1,8 @@
 ---
 title: "char-collector mode for locale-aggregated character counting"
 created-date: 2026-02-16
-status: draft
+modified-date: 2026-02-16
+status: completed
 agent: Codex
 ---
 
@@ -39,24 +40,28 @@ Issue linkage:
 
 ## Implementation Plan
 
-- [ ] Extend mode typing and CLI mode choices to include `char-collector`.
-- [ ] Update mode normalization to support deterministic composed alias handling for char-family + collector-family tokens.
-- [ ] Implement locale aggregation for character analyses and return a `char-collector` breakdown shape.
-- [ ] Keep total and non-word accounting parity with existing `char` mode semantics.
-- [ ] Ensure batch merge logic supports `char-collector` without mode mismatch.
-- [ ] Update standard/json/raw output paths for `char-collector` labels and rendering.
-- [ ] Add tests for alias parsing matrix and precedence (standalone vs composed aliases).
-- [ ] Add tests for single-input, section, and batch behavior parity in `char-collector`.
-- [ ] Update README mode table, alias list, and examples.
-- [ ] Add a completion job record under `docs/plans/jobs/` after implementation lands.
+- [x] Extend mode typing and CLI mode choices to include `char-collector`.
+- [x] Update mode normalization to support deterministic composed alias handling for char-family + collector-family tokens.
+- [x] Implement locale aggregation for character analyses and return a `char-collector` breakdown shape.
+- [x] Keep total and non-word accounting parity with existing `char` mode semantics.
+- [x] Ensure batch merge logic supports `char-collector` without mode mismatch.
+- [x] Update standard/json/raw output paths for `char-collector` labels and rendering.
+- [x] Add tests for alias parsing matrix and precedence (standalone vs composed aliases).
+- [x] Add tests for single-input, section, and batch behavior parity in `char-collector`.
+- [x] Update README mode table, alias list, and examples.
+- [x] Add a completion job record under `docs/plans/jobs/` after implementation lands.
 
 ## Compatibility Gates
 
-- [ ] `--mode char` output and behavior remain unchanged.
-- [ ] Existing `collector`/`char` aliases keep current mapping.
-- [ ] `--total-of` behavior remains contract-compatible in standard/raw/json outputs.
+- [x] `--mode char` output and behavior remain unchanged.
+- [x] Existing `collector`/`char` aliases keep current mapping.
+- [x] `--total-of` behavior remains contract-compatible in standard/raw/json outputs.
 
 ## Related Plans
 
 - `docs/plans/plan-2026-02-15-v0-1-0-canary-phased-delivery.md`
 - `docs/plans/plan-2026-01-21-character-count-mode.md`
+
+## Related Research
+
+- `docs/research-2026-02-13-batch-file-counting.md`
