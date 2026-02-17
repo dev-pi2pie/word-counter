@@ -1,6 +1,6 @@
 {
   "name": "@dev-pi2pie/word-counter",
-  "version": "0.1.1-canary.0",
+  "version": "0.1.1-canary.1",
   "keywords": [
     "cli",
     "intl-segmenter",
@@ -38,7 +38,7 @@
     "./package.json": "./package.json"
   },
   "scripts": {
-    "build": "tsdown",
+    "build": "node scripts/generate-embedded-version.mjs && tsdown",
     "type-check": "tsc -p tsconfig.json",
     "test": "bun test",
     "test:ci": "bun run build && bun test",
