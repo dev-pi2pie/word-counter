@@ -44,7 +44,10 @@ export function configureProgramOptions(
         .default("all"),
     )
     .addOption(
-      new Option("--path-mode <mode>", "path resolution mode")
+      new Option(
+        "--path-mode <mode>",
+        "path resolution mode: auto (default) expands directories; manual treats --path values as literal files",
+      )
         .choices(PATH_MODE_CHOICES)
         .default("auto"),
     )
@@ -88,7 +91,16 @@ export function configureProgramOptions(
       collectExtensionOption,
       [],
     )
-    .option("-p, --path <path>", "read input from file or directory", collectPathValue, [])
+    .option(
+      "--regex <pattern>",
+      "regex filter for directory-scanned paths (applies to --path directories only)",
+    )
+    .option(
+      "-p, --path <path>",
+      "read input from file or directory (directories expand in auto mode by default)",
+      collectPathValue,
+      [],
+    )
     .argument("[text...]", "text to count")
     .showHelpAfterError();
 }

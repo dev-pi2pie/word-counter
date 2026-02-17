@@ -5,15 +5,20 @@ import { appendAll } from "../../utils/append-all";
 import type { DebugChannel } from "../debug/channel";
 import type { BatchSkip, PathMode } from "../types";
 import {
+  buildDirectoryRegexFilter,
   buildDirectoryExtensionFilter,
+  type DirectoryRegexFilter,
   type DirectoryExtensionFilter,
   shouldIncludeFromDirectory,
+  shouldIncludeFromDirectoryRegex,
+  toDirectoryRelativePath,
 } from "./filter";
 
 type ResolveBatchFilePathOptions = {
   pathMode: PathMode;
   recursive: boolean;
   extensionFilter?: DirectoryExtensionFilter;
+  directoryRegexPattern?: string;
   debug?: DebugChannel;
 };
 
@@ -21,14 +26,18 @@ type PathResolveDebugStats = {
   dedupeAccepted: number;
   dedupeDuplicates: number;
   filterExcluded: number;
+  regexExcluded: number;
   directoryIncluded: number;
 };
 
 async function expandDirectory(
+  rootPath: string,
   directoryPath: string,
   recursive: boolean,
-  filter: DirectoryExtensionFilter,
+  extensionFilter: DirectoryExtensionFilter,
+  regexFilter: DirectoryRegexFilter,
   skipped: BatchSkip[],
+  recordRegexExcluded: (filePath: string) => boolean,
   debug: DebugChannel,
   stats: PathResolveDebugStats,
 ): Promise<string[]> {
@@ -57,7 +66,7 @@ async function expandDirectory(
     const entryPath = resolvePath(directoryPath, entry.name);
 
     if (entry.isFile()) {
-      if (!shouldIncludeFromDirectory(entryPath, filter)) {
+      if (!shouldIncludeFromDirectory(entryPath, extensionFilter)) {
         skipped.push({ path: entryPath, reason: "extension excluded" });
         debug.emit(
           "path.resolve.filter.excluded",
@@ -68,6 +77,24 @@ async function expandDirectory(
           { verbosity: "verbose" },
         );
         stats.filterExcluded += 1;
+        continue;
+      }
+
+      const relativePath = toDirectoryRelativePath(rootPath, entryPath);
+      if (!shouldIncludeFromDirectoryRegex(relativePath, regexFilter)) {
+        if (recordRegexExcluded(entryPath)) {
+          debug.emit(
+            "path.resolve.regex.excluded",
+            {
+              path: entryPath,
+              relativePath,
+              pattern: regexFilter.sourcePattern,
+              reason: "regex excluded",
+            },
+            { verbosity: "verbose" },
+          );
+          stats.regexExcluded += 1;
+        }
         continue;
       }
 
@@ -88,7 +115,17 @@ async function expandDirectory(
       continue;
     }
 
-    const nestedFiles = await expandDirectory(entryPath, recursive, filter, skipped, debug, stats);
+    const nestedFiles = await expandDirectory(
+      rootPath,
+      entryPath,
+      recursive,
+      extensionFilter,
+      regexFilter,
+      skipped,
+      recordRegexExcluded,
+      debug,
+      stats,
+    );
     appendAll(files, nestedFiles);
   }
 
@@ -105,15 +142,18 @@ export async function resolveBatchFilePaths(
   options: ResolveBatchFilePathOptions,
 ): Promise<{ files: string[]; skipped: BatchSkip[] }> {
   const skipped: BatchSkip[] = [];
+  const regexExcludedPaths = new Set<string>();
   const resolvedFiles = new Set<string>();
   const stats: PathResolveDebugStats = {
     dedupeAccepted: 0,
     dedupeDuplicates: 0,
     filterExcluded: 0,
+    regexExcluded: 0,
     directoryIncluded: 0,
   };
   const extensionFilter =
     options.extensionFilter ?? buildDirectoryExtensionFilter(undefined, undefined);
+  let regexFilter: DirectoryRegexFilter | undefined;
   const debug =
     options.debug ??
     ({
@@ -131,12 +171,15 @@ export async function resolveBatchFilePaths(
     inputs: pathInputs.length,
     pathMode: options.pathMode,
     recursive: options.recursive,
+    hasRegex: Boolean(options.directoryRegexPattern),
   });
 
   const addResolvedFile = (
     filePath: string,
     details: { source: "direct" | "directory"; input: string },
   ): void => {
+    regexExcludedPaths.delete(filePath);
+
     if (resolvedFiles.has(filePath)) {
       stats.dedupeDuplicates += 1;
       debug.emit(
@@ -164,6 +207,22 @@ export async function resolveBatchFilePaths(
     );
   };
 
+  const getRegexFilter = (): DirectoryRegexFilter => {
+    if (!regexFilter) {
+      regexFilter = buildDirectoryRegexFilter(options.directoryRegexPattern);
+    }
+    return regexFilter;
+  };
+
+  const recordRegexExcluded = (filePath: string): boolean => {
+    if (resolvedFiles.has(filePath)) {
+      return false;
+    }
+
+    regexExcludedPaths.add(filePath);
+    return true;
+  };
+
   for (const rawPath of pathInputs) {
     const targetPath = resolvePath(rawPath);
     debug.emit("path.resolve.input", {
@@ -185,15 +244,20 @@ export async function resolveBatchFilePaths(
     }
 
     if (metadata.isDirectory() && options.pathMode === "auto") {
+      const effectiveRegexFilter = getRegexFilter();
       debug.emit("path.resolve.root.expand", {
         root: targetPath,
         recursive: options.recursive,
+        regex: effectiveRegexFilter.sourcePattern ?? null,
       });
       const files = await expandDirectory(
         targetPath,
+        targetPath,
         options.recursive,
         extensionFilter,
+        effectiveRegexFilter,
         skipped,
+        recordRegexExcluded,
         debug,
         stats,
       );
@@ -215,9 +279,15 @@ export async function resolveBatchFilePaths(
     addResolvedFile(targetPath, { source: "direct", input: targetPath });
   }
 
+  for (const path of regexExcludedPaths) {
+    skipped.push({ path, reason: "regex excluded" });
+  }
+
   const files = [...resolvedFiles].sort((left, right) => left.localeCompare(right));
   debug.emit("path.resolve.filter.summary", {
-    excluded: stats.filterExcluded,
+    excluded: stats.filterExcluded + stats.regexExcluded,
+    extensionExcluded: stats.filterExcluded,
+    regexExcluded: stats.regexExcluded,
     included: stats.directoryIncluded,
   });
   debug.emit("path.resolve.dedupe.summary", {

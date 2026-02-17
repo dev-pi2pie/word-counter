@@ -7,6 +7,7 @@ import {
   hasPathInput,
   resolveCountRunOptions,
   resolveDebugReportPathOption,
+  validateSingleRegexOptionUsage,
 } from "./cli/runtime/options";
 import { executeSingleCount } from "./cli/runtime/single";
 import type { CliActionOptions, RunCliOptions } from "./cli/runtime/types";
@@ -55,6 +56,14 @@ export async function runCli(
         program.error(
           pc.red("`--debug-report-tee` (alias: `--debug-tee`) requires `--debug-report`."),
         );
+        return;
+      }
+
+      try {
+        validateSingleRegexOptionUsage(argv);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        program.error(pc.red(message));
         return;
       }
 

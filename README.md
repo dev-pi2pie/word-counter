@@ -121,16 +121,24 @@ word-counter --path ./examples/test-case-multi-files-support --keep-progress
 
 Progress is transient by default, auto-disabled for single-input runs, and suppressed in `--format raw` and `--format json`.
 
-### Stable Path Resolution Contract (`#26`)
+### Stable Path Resolution Contract
 
 - Repeated `--path` values are accepted as mixed inputs (file + directory).
 - In `--path-mode auto` (default), directory inputs are expanded to files (recursive unless `--no-recursive`).
-- In `--path-mode manual`, directory inputs are not expanded and are skipped as non-regular files.
-- Extension filters apply only to files discovered from directory expansion.
-- Direct file inputs are always considered regardless of `--include-ext` / `--exclude-ext`.
+- In `--path-mode manual`, `--path` values are treated as literal file inputs; `--path <dir>` is not supported and is skipped as `not a regular file`.
+- Extension and regex filters apply only to files discovered from directory expansion.
+- Direct file inputs are always considered regardless of `--include-ext` / `--exclude-ext` / `--regex`.
 - Overlap dedupe is by resolved absolute file path.
 - If the same file is discovered multiple ways (repeated roots, nested roots, explicit file + directory), it is counted once.
 - Final processing order is deterministic: resolved files are sorted by absolute path ascending before load/count.
+
+Path mode examples:
+
+```bash
+word-counter --path ./examples/test-case-multi-files-support --path-mode auto
+word-counter --path ./examples/test-case-multi-files-support --path-mode manual
+word-counter --path ./examples/test-case-multi-files-support/a.md --path-mode manual
+```
 
 ### Extension Filters
 
@@ -146,6 +154,28 @@ Direct file path example (filters do not block explicit file inputs):
 ```bash
 word-counter --path ./examples/test-case-multi-files-support/ignored.js --include-ext .md --exclude-ext .md
 ```
+
+### Regex Filter (`--regex`)
+
+Use `--regex` to include only directory-scanned files whose root-relative path matches:
+
+```bash
+word-counter --path ./examples/test-case-multi-files-support --regex '^a\\.md$'
+word-counter --path ./examples/test-case-multi-files-support --regex '^nested/.*\\.md$'
+word-counter --path ./examples/test-case-multi-files-support --path ./examples --regex '\\.md$'
+```
+
+Regex behavior contract:
+
+- `--regex` applies only to files discovered from `--path <dir>` expansion.
+- Matching is against each directory root-relative path.
+- The same regex is applied across all provided directory roots.
+- Direct file inputs are literal and are not blocked by regex filters.
+- In `--path-mode manual`, directories are not expanded, so `--include-ext`, `--exclude-ext`, and `--regex` have no effect.
+- `--regex` is single-use; repeated `--regex` flags fail fast with a misuse error.
+- Empty regex values are treated as no regex restriction.
+
+For additional usage details and troubleshooting, see [`docs/regex-usage-guide.md`](docs/regex-usage-guide.md).
 
 ### Debugging Diagnostics (`--debug`)
 

@@ -6,6 +6,7 @@ import { buildBatchSummary, loadBatchInputs, resolveBatchFilePaths, runCli } fro
 import { createDebugChannel } from "../src/cli/debug/channel";
 import { buildDirectoryExtensionFilter } from "../src/cli/path/filter";
 import type { ProgressOutputStream } from "../src/cli/progress/reporter";
+import { validateSingleRegexOptionUsage } from "../src/cli/runtime/options";
 
 const tempRoots: string[] = [];
 
@@ -659,6 +660,28 @@ describe("CLI debug diagnostics", () => {
     expect(output.stdout).toEqual(["2"]);
   });
 
+  test("emits regex exclusion diagnostics in verbose mode", async () => {
+    const root = await makeTempFixture("cli-debug-regex-verbose");
+    await writeFile(join(root, "keep.md"), "alpha beta");
+    await writeFile(join(root, "skip.md"), "gamma delta");
+
+    const output = await captureCli([
+      "--path",
+      root,
+      "--regex",
+      "^keep\\.md$",
+      "--format",
+      "raw",
+      "--debug",
+      "--verbose",
+      "--quiet-skips",
+    ]);
+    const eventNames = listDebugEventNames(output.stderr);
+
+    expect(eventNames.includes("path.resolve.regex.excluded")).toBeTrue();
+    expect(output.stdout).toEqual(["2"]);
+  });
+
   test("routes debug output to file when --debug-report is enabled", async () => {
     const root = await makeTempFixture("cli-debug-report-file");
     const reportPath = join(root, "reports", "diagnostics.jsonl");
@@ -975,6 +998,143 @@ describe("extension filters", () => {
 
     expect(resolved.files).toEqual([]);
     expect(resolved.skipped.some((entry) => entry.path.endsWith("a.md"))).toBeTrue();
+  });
+});
+
+describe("regex filters", () => {
+  test("filters directory-expanded files by root-relative regex", async () => {
+    const root = await makeTempFixture("regex-dir-scan");
+    await mkdir(join(root, "docs"), { recursive: true });
+    await writeFile(join(root, "docs", "keep.md"), "alpha beta");
+    await writeFile(join(root, "docs", "skip.txt"), "gamma delta");
+    await writeFile(join(root, "misc.md"), "epsilon zeta");
+
+    const output = await captureCli([
+      "--path",
+      root,
+      "--regex",
+      "^docs/.*\\.md$",
+      "--format",
+      "raw",
+      "--quiet-skips",
+    ]);
+
+    expect(output.stdout).toEqual(["2"]);
+  });
+
+  test("applies one regex across multiple roots and dedupes merged matches", async () => {
+    const root = await makeTempFixture("regex-multi-roots");
+    const nestedRoot = join(root, "docs");
+    await mkdir(nestedRoot, { recursive: true });
+    await writeFile(join(nestedRoot, "child.md"), "alpha beta");
+
+    const output = await captureCli([
+      "--path",
+      root,
+      "--path",
+      nestedRoot,
+      "--regex",
+      "^docs/child\\.md$|^child\\.md$",
+      "--format",
+      "raw",
+      "--quiet-skips",
+    ]);
+
+    expect(output.stdout).toEqual(["2"]);
+  });
+
+  test("does not mark regex excluded when file already matched from another root", async () => {
+    const root = await makeTempFixture("regex-overlap-order");
+    const nestedRoot = join(root, "docs");
+    const child = join(nestedRoot, "child.md");
+    await mkdir(nestedRoot, { recursive: true });
+    await writeFile(child, "alpha beta");
+
+    const resolved = await resolveBatchFilePaths([nestedRoot, root], {
+      pathMode: "auto",
+      recursive: true,
+      directoryRegexPattern: "^child\\.md$",
+    });
+
+    expect(resolved.files).toEqual([child]);
+    expect(resolved.skipped.some((entry) => entry.path === child && entry.reason === "regex excluded")).toBeFalse();
+  });
+
+  test("does not apply regex filtering to direct file paths", async () => {
+    const root = await makeTempFixture("regex-direct-file");
+    const explicitFile = join(root, "sample.txt");
+    await writeFile(explicitFile, "direct file");
+
+    const output = await captureCli([
+      "--path",
+      explicitFile,
+      "--regex",
+      "^does-not-match$",
+      "--format",
+      "raw",
+      "--quiet-skips",
+    ]);
+
+    expect(output.stdout).toEqual(["2"]);
+  });
+
+  test("treats empty regex as no restriction for directory scanning", async () => {
+    const root = await makeTempFixture("regex-empty");
+    await writeFile(join(root, "a.md"), "alpha beta");
+    await writeFile(join(root, "b.txt"), "gamma delta");
+
+    const output = await captureCli([
+      "--path",
+      root,
+      "--regex",
+      "",
+      "--format",
+      "raw",
+      "--quiet-skips",
+    ]);
+
+    expect(output.stdout).toEqual(["4"]);
+  });
+
+  test("fails fast for invalid regex when directory scan is used", async () => {
+    const root = await makeTempFixture("regex-invalid");
+    await writeFile(join(root, "a.md"), "alpha beta");
+
+    await expect(
+      resolveBatchFilePaths([root], {
+        pathMode: "auto",
+        recursive: true,
+        directoryRegexPattern: "[",
+      }),
+    ).rejects.toThrow("Invalid --regex pattern:");
+  });
+
+  test("fails fast when --regex is provided more than once", async () => {
+    expect(() =>
+      validateSingleRegexOptionUsage([
+        "node",
+        "word-counter",
+        "--path",
+        "/tmp/a",
+        "--regex",
+        "^a\\.md$",
+        "--regex",
+        "^b\\.md$",
+      ]),
+    ).toThrow("`--regex` can only be provided once.");
+  });
+
+  test("accepts regex values that start with --regex=", () => {
+    expect(() =>
+      validateSingleRegexOptionUsage([
+        "node",
+        "word-counter",
+        "--path",
+        "/tmp/a",
+        "--regex",
+        "--regex=^a\\.md$",
+      ]),
+    ).not.toThrow();
   });
 });
 

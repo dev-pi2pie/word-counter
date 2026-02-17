@@ -24,6 +24,7 @@ export type BatchOptions = {
   pathMode: PathMode;
   recursive: boolean;
   quietSkips: boolean;
+  directoryRegexPattern?: string;
 };
 
 export type BatchSummary = {

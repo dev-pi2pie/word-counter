@@ -1,7 +1,7 @@
 ---
 title: "Default Config Schema (Draft)"
 created-date: 2026-02-13
-modified-date: 2026-02-16
+modified-date: 2026-02-17
 status: draft
 agent: Codex
 milestone: v0.1.0
@@ -55,7 +55,7 @@ logging:
 
 - `path.mode`
   - `auto`: determine file vs directory from filesystem metadata.
-  - `manual`: do not auto-expand directories; treat input paths literally.
+  - `manual`: treat inputs as literal file paths; directory inputs are skipped as `not a regular file`.
 - `path.recursive`
   - controls directory traversal depth when a directory path is provided.
 - repeated path inputs are allowed as mixed file + directory roots.

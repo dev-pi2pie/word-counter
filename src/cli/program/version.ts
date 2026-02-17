@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join, resolve as resolvePath } from "node:path";
 import { fileURLToPath } from "node:url";
 import pc from "picocolors";
+import { EMBEDDED_PACKAGE_VERSION } from "./version-embedded";
 
 function* candidateSearchRoots(): Generator<string> {
   yield dirname(fileURLToPath(import.meta.url));
@@ -41,16 +42,42 @@ function resolveVersionFromPath(start: string, maxLevels: number): string | null
   return null;
 }
 
-function resolvePackageVersion(): string {
-  const maxLevels = 8;
+function normalizeVersion(value: string | null | undefined): string | null {
+  if (typeof value !== "string") {
+    return null;
+  }
 
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  return trimmed;
+}
+
+type ResolvePackageVersionOptions = {
+  embeddedVersion?: string | null;
+  candidateRoots?: string[];
+  maxLevels?: number;
+  resolveFromPath?: (start: string, maxLevels: number) => string | null;
+};
+
+export function resolvePackageVersion(options: ResolvePackageVersionOptions = {}): string {
+  const embeddedVersion = normalizeVersion(options.embeddedVersion ?? EMBEDDED_PACKAGE_VERSION);
+  if (embeddedVersion) {
+    return embeddedVersion;
+  }
+
+  const maxLevels = options.maxLevels ?? 8;
+  const resolveFromPath = options.resolveFromPath ?? resolveVersionFromPath;
+  const roots = options.candidateRoots ?? [...candidateSearchRoots()];
   const seen = new Set<string>();
-  for (const root of candidateSearchRoots()) {
+  for (const root of roots) {
     if (seen.has(root)) {
       continue;
     }
     seen.add(root);
-    const version = resolveVersionFromPath(root, maxLevels);
+    const version = normalizeVersion(resolveFromPath(root, maxLevels));
     if (version) {
       return version;
     }

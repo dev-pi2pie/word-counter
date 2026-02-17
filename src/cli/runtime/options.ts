@@ -9,6 +9,40 @@ export function hasPathInput(pathValues: string[] | undefined): pathValues is st
   return Array.isArray(pathValues) && pathValues.length > 0;
 }
 
+function countLongOptionOccurrences(argv: string[], optionName: string): number {
+  let count = 0;
+  for (let index = 2; index < argv.length; index += 1) {
+    const token = argv[index];
+    if (!token) {
+      continue;
+    }
+    if (token === "--") {
+      break;
+    }
+
+    if (token === optionName) {
+      count += 1;
+      // Consume the next token as this option's value so literal values like
+      // "--regex=foo" are not misread as a second option occurrence.
+      index += 1;
+      continue;
+    }
+
+    if (token.startsWith(`${optionName}=`)) {
+      count += 1;
+      continue;
+    }
+  }
+
+  return count;
+}
+
+export function validateSingleRegexOptionUsage(argv: string[]): void {
+  if (countLongOptionOccurrences(argv, "--regex") > 1) {
+    throw new Error("`--regex` can only be provided once.");
+  }
+}
+
 export function resolveBatchScope(argv: string[]): BatchScope {
   let scope: BatchScope = "merged";
   for (const token of argv) {
