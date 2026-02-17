@@ -1270,6 +1270,110 @@ describe("CLI total-of", () => {
 
     expect(output.stdout).toEqual(["2"]);
   });
+
+  test("adds per-file override metadata in per-file json output", async () => {
+    const root = await makeTempFixture("cli-total-of-per-file-json");
+    await writeFile(join(root, "a.txt"), "alpha!");
+    await writeFile(join(root, "b.txt"), "beta gamma?");
+
+    const output = await captureCli([
+      "--path",
+      root,
+      "--per-file",
+      "--format",
+      "json",
+      "--total-of",
+      "words,punctuation",
+      "--quiet-skips",
+    ]);
+    const parsed = JSON.parse(output.stdout[0] ?? "{}");
+    expect(parsed.scope).toBe("per-file");
+    expect(parsed.meta?.totalOf).toEqual(["words", "punctuation"]);
+    expect(parsed.meta?.aggregateTotalOfOverride).toBe(5);
+
+    const files = (parsed.files ?? []) as Array<{
+      path: string;
+      meta?: { totalOf?: string[]; totalOfOverride?: number };
+    }>;
+    const byName = new Map(files.map((file) => [basename(file.path), file]));
+
+    expect(byName.get("a.txt")?.meta?.totalOf).toEqual(["words", "punctuation"]);
+    expect(byName.get("a.txt")?.meta?.totalOfOverride).toBe(2);
+    expect(byName.get("b.txt")?.meta?.totalOf).toEqual(["words", "punctuation"]);
+    expect(byName.get("b.txt")?.meta?.totalOfOverride).toBe(3);
+  });
+
+  test("adds per-file override metadata for sectioned per-file json output", async () => {
+    const root = await makeTempFixture("cli-total-of-per-file-json-sectioned");
+    await writeFile(join(root, "a.md"), "---\ntitle: alpha beta\n---\ngamma delta");
+    await writeFile(join(root, "b.md"), "---\ntitle: theta iota\n---\nkappa lambda");
+
+    const output = await captureCli([
+      "--path",
+      root,
+      "--per-file",
+      "--format",
+      "json",
+      "--section",
+      "split",
+      "--total-of",
+      "words",
+      "--quiet-skips",
+    ]);
+    const parsed = JSON.parse(output.stdout[0] ?? "{}");
+
+    expect(parsed.scope).toBe("per-file");
+    expect(parsed.aggregate.section).toBe("split");
+    expect(parsed.meta?.totalOf).toEqual(["words"]);
+    expect(parsed.meta?.aggregateTotalOfOverride).toBe(parsed.aggregate.total);
+
+    const files = (parsed.files ?? []) as Array<{
+      result: { section?: string; total: number };
+      meta?: { totalOf?: string[]; totalOfOverride?: number };
+    }>;
+    for (const file of files) {
+      expect(file.result.section).toBe("split");
+      expect(file.meta?.totalOf).toEqual(["words"]);
+      expect(file.meta?.totalOfOverride).toBe(file.result.total);
+    }
+  });
+
+  test("keeps per-file override metadata across all section modes", async () => {
+    const root = await makeTempFixture("cli-total-of-per-file-json-all-sections");
+    await writeFile(
+      join(root, "a.md"),
+      "---\ntitle: alpha beta\ndescription: gamma delta\n---\nepsilon zeta",
+    );
+
+    const sectionModes = ["split", "frontmatter", "content", "per-key", "split-per-key"] as const;
+    for (const section of sectionModes) {
+      const output = await captureCli([
+        "--path",
+        root,
+        "--per-file",
+        "--format",
+        "json",
+        "--section",
+        section,
+        "--total-of",
+        "words",
+        "--quiet-skips",
+      ]);
+      const parsed = JSON.parse(output.stdout[0] ?? "{}");
+      expect(parsed.scope).toBe("per-file");
+      expect(parsed.meta?.totalOf).toEqual(["words"]);
+      expect(parsed.aggregate.section).toBe(section);
+      expect(parsed.meta?.aggregateTotalOfOverride).toBe(parsed.aggregate.total);
+
+      const file = (parsed.files?.[0] ?? {}) as {
+        result?: { section?: string; total?: number };
+        meta?: { totalOf?: string[]; totalOfOverride?: number };
+      };
+      expect(file.result?.section).toBe(section);
+      expect(file.meta?.totalOf).toEqual(["words"]);
+      expect(file.meta?.totalOfOverride).toBe(file.result?.total);
+    }
+  });
 });
 
 describe("CLI compatibility gates", () => {

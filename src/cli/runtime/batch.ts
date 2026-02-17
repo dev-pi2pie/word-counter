@@ -131,6 +131,31 @@ export async function executeBatchCount({
 
     if (batchOptions.scope === "per-file") {
       const skipped = showSkipDiagnostics ? summary.skipped : undefined;
+      const fileEntries = summary.files.map((file) => {
+        const base = {
+          path: file.path,
+          result: file.result,
+        };
+
+        if (!resolved.totalOfParts || resolved.totalOfParts.length === 0) {
+          return base;
+        }
+
+        const fileOverride =
+          totalOfOverridesByResult?.get(file.result as object) ??
+          resolveTotalOfOverride(file.result, resolved.totalOfParts);
+        if (!fileOverride) {
+          return base;
+        }
+
+        return {
+          ...base,
+          meta: {
+            totalOf: fileOverride.parts,
+            totalOfOverride: fileOverride.total,
+          },
+        };
+      });
       const meta =
         resolved.totalOfParts && resolved.totalOfParts.length > 0
           ? {
@@ -140,10 +165,7 @@ export async function executeBatchCount({
           : undefined;
       const payload = {
         scope: "per-file",
-        files: summary.files.map((file) => ({
-          path: file.path,
-          result: file.result,
-        })),
+        files: fileEntries,
         ...(skipped ? { skipped } : {}),
         aggregate: summary.aggregate,
         ...(meta ? { meta } : {}),
