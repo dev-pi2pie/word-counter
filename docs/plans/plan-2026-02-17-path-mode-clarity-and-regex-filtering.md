@@ -2,7 +2,7 @@
 title: "path mode clarity and regex filtering"
 created-date: 2026-02-17
 modified-date: 2026-02-17
-status: active
+status: completed
 agent: Codex
 ---
 
@@ -31,11 +31,11 @@ Resolve the existing docs clarity issue for `--path-mode manual` and the regex-b
 
 ## Implementation Checkpoints
 
-- [ ] Resolve Issue #35 by updating CLI help and README wording/examples.
+- [x] Resolve Issue #35 by updating CLI help and README wording/examples.
 - [x] Resolve Issue #36 by implementing regex filtering semantics and tests.
 - [x] Enforce one `--regex` value and return a clear error when repeated.
-- [ ] Add `docs/regex-usage-guide.md` and update README for regex only after feature behavior is implemented and stabilized.
-- [ ] Verify docs, behavior, and tests are aligned before closing both issues.
+- [x] Add `docs/regex-usage-guide.md` and update README for regex only after feature behavior is implemented and stabilized.
+- [x] Verify docs, behavior, and tests are aligned before closing both issues.
 
 ## Acceptance Criteria
 
