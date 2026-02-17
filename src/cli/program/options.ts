@@ -88,6 +88,10 @@ export function configureProgramOptions(
       collectExtensionOption,
       [],
     )
+    .option(
+      "--regex <pattern>",
+      "regex filter for directory-scanned paths (applies to --path directories only)",
+    )
     .option("-p, --path <path>", "read input from file or directory", collectPathValue, [])
     .argument("[text...]", "text to count")
     .showHelpAfterError();

@@ -1,9 +1,14 @@
-import { extname } from "node:path";
+import { extname, relative, sep } from "node:path";
 
 export type DirectoryExtensionFilter = {
   includeExtensions: Set<string>;
   excludeExtensions: Set<string>;
   effectiveIncludeExtensions: Set<string>;
+};
+
+export type DirectoryRegexFilter = {
+  sourcePattern: string | undefined;
+  regex: RegExp | undefined;
 };
 
 export const DEFAULT_INCLUDE_EXTENSIONS = new Set([
@@ -82,4 +87,40 @@ export function shouldIncludeFromDirectory(
 ): boolean {
   const extension = extname(filePath).toLowerCase();
   return filter.effectiveIncludeExtensions.has(extension);
+}
+
+export function buildDirectoryRegexFilter(pattern: string | undefined): DirectoryRegexFilter {
+  if (pattern === undefined) {
+    return { sourcePattern: undefined, regex: undefined };
+  }
+
+  if (pattern.trim().length === 0) {
+    return { sourcePattern: pattern, regex: undefined };
+  }
+
+  try {
+    return { sourcePattern: pattern, regex: new RegExp(pattern) };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Invalid --regex pattern: ${message}`);
+  }
+}
+
+export function toDirectoryRelativePath(rootPath: string, filePath: string): string {
+  const relativePath = relative(rootPath, filePath);
+  if (sep === "/") {
+    return relativePath;
+  }
+  return relativePath.split(sep).join("/");
+}
+
+export function shouldIncludeFromDirectoryRegex(
+  relativePath: string,
+  filter: DirectoryRegexFilter,
+): boolean {
+  if (!filter.regex) {
+    return true;
+  }
+
+  return filter.regex.test(relativePath);
 }

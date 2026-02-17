@@ -40,6 +40,7 @@ export async function executeBatchCount({
     pathMode: options.pathMode,
     recursive: options.recursive,
     quietSkips: Boolean(options.quietSkips),
+    directoryRegexPattern: options.regex,
   };
 
   const extensionFilter = buildDirectoryExtensionFilter(options.includeExt, options.excludeExt);

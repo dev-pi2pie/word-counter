@@ -33,6 +33,7 @@ export type CliActionOptions = {
   debugTee?: boolean;
   includeExt?: string[];
   excludeExt?: string[];
+  regex?: string;
 };
 
 export type RunCliOptions = {
