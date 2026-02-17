@@ -71,8 +71,9 @@ function withCollisionSuffix(pathValue: string, sequence: number): string {
 function resolveReportPath(report: DebugReportOptions, now: Date, pid: number): string {
   const cwd = report.cwd ?? process.cwd();
   const defaultName = `wc-debug-${formatDebugReportTimestamp(now)}-${pid}.jsonl`;
-  const explicitPath = typeof report.path === "string";
-  const basePath = explicitPath ? resolvePath(cwd, report.path) : resolvePath(cwd, defaultName);
+  const explicitPathValue = typeof report.path === "string" ? report.path : undefined;
+  const explicitPath = explicitPathValue !== undefined;
+  const basePath = resolvePath(cwd, explicitPathValue ?? defaultName);
   mkdirSync(dirname(basePath), { recursive: true });
 
   if (explicitPath) {

@@ -456,6 +456,9 @@ Select how results are printed with `--format`:
 - `raw` – only the total count (single number).
 - `json` – machine-readable output; add `--pretty` for indentation.
 
+JSON contract reference:
+- `docs/schemas/json-output-contract.md`
+
 Examples:
 
 ```bash
@@ -495,7 +498,13 @@ Rules:
   - `symbol` -> `symbols`
   - `punction` -> `punctuation`
 
-JSON output adds `meta.totalOf` and `meta.totalOfOverride` when `--total-of` is provided.
+JSON output adds override metadata when `--total-of` is provided:
+
+- single input and merged batch: `meta.totalOf`, `meta.totalOfOverride`
+- per-file batch (`--per-file`):
+  - top-level: `meta.totalOf`, `meta.aggregateTotalOfOverride`
+  - per entry: `files[i].meta.totalOf`, `files[i].meta.totalOfOverride`
+  - applies to both sectioned and non-sectioned per-file JSON results
 
 Example JSON (trimmed):
 
