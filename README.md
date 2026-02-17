@@ -457,7 +457,7 @@ Select how results are printed with `--format`:
 - `json` – machine-readable output; add `--pretty` for indentation.
 
 JSON contract reference:
-- `docs/schema/json-output-contract.md`
+- `docs/schemas/json-output-contract.md`
 
 Examples:
 

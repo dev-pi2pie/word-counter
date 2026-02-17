@@ -17,6 +17,8 @@ Implement issue #38 by exposing per-file `--total-of` metadata in per-file JSON 
 - Add regression tests for non-section and sectioned (`--section split`) per-file JSON + `--total-of`.
 - Add regression coverage for all section modes (`split`, `frontmatter`, `content`, `per-key`, `split-per-key`) with per-file JSON + `--total-of`.
 - Add dedicated JSON output contract doc and update README references.
+- Add example fixtures for per-file JSON results:
+  - `examples/test-case-per-files-json-result`
 
 ## Validation
 

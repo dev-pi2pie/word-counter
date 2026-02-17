@@ -1,7 +1,8 @@
 ---
 title: "JSON Output Contract"
 created-date: 2026-02-17
-status: draft
+modified-date: 2026-02-17
+status: completed
 agent: Codex
 ---
 
