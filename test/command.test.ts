@@ -1123,6 +1123,19 @@ describe("regex filters", () => {
       ]),
     ).toThrow("`--regex` can only be provided once.");
   });
+
+  test("accepts regex values that start with --regex=", () => {
+    expect(() =>
+      validateSingleRegexOptionUsage([
+        "node",
+        "word-counter",
+        "--path",
+        "/tmp/a",
+        "--regex",
+        "--regex=^a\\.md$",
+      ]),
+    ).not.toThrow();
+  });
 });
 
 describe("CLI total-of", () => {

@@ -14,6 +14,7 @@ Implement Issue #36 regex filtering with the agreed contract for directory scans
 
 - Added `--regex <pattern>` CLI option for batch directory scanning.
 - Enforced single-usage contract for `--regex` and added a clear misuse error when repeated.
+- Fixed the single-usage guard so regex values beginning with `--regex=...` are treated as values, not duplicate flags.
 - Added directory regex filter utilities and root-relative path matching.
 - Applied regex filtering only to directory-expanded files from `--path <dir>`.
 - Preserved explicit file-path behavior (`--path /file.txt` remains literal and not regex-filtered).
@@ -28,6 +29,7 @@ Implement Issue #36 regex filtering with the agreed contract for directory scans
   - empty regex fallback
   - invalid regex failure
   - repeated `--regex` misuse detection
+  - regex value tokens that begin with `--regex=` (no false duplicate error)
 
 ## Validation
 

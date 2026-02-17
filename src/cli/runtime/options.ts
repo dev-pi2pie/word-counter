@@ -20,7 +20,15 @@ function countLongOptionOccurrences(argv: string[], optionName: string): number 
       break;
     }
 
-    if (token === optionName || token.startsWith(`${optionName}=`)) {
+    if (token === optionName) {
+      count += 1;
+      // Consume the next token as this option's value so literal values like
+      // "--regex=foo" are not misread as a second option occurrence.
+      index += 1;
+      continue;
+    }
+
+    if (token.startsWith(`${optionName}=`)) {
       count += 1;
       continue;
     }
