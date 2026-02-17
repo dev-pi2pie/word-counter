@@ -1,6 +1,6 @@
 {
   "name": "@dev-pi2pie/word-counter",
-  "version": "0.1.1-canary.1",
+  "version": "0.1.1",
   "keywords": [
     "cli",
     "intl-segmenter",
