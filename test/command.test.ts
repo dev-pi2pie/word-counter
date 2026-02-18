@@ -274,7 +274,7 @@ describe("batch aggregation", () => {
     if (summary.aggregate.breakdown.mode === "char-collector") {
       expect(summary.aggregate.breakdown.items).toEqual([
         { locale: "und-Latn", chars: 4, nonWords: undefined },
-        { locale: "zh-Hani", chars: 4, nonWords: undefined },
+        { locale: "und-Hani", chars: 4, nonWords: undefined },
       ]);
     }
   });

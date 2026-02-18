@@ -215,7 +215,7 @@ Skip details stay debug-gated and can still be suppressed with `--quiet-skips`.
 
 ## How It Works
 
-- The runtime inspects each character's Unicode script to infer its likely locale tag (e.g., `und-Latn`, `zh-Hani`, `ja`).
+- The runtime inspects each character's Unicode script to infer its likely locale tag (e.g., `und-Latn`, `und-Hani`, `ja`).
 - Adjacent characters that share the same locale tag are grouped into a chunk.
 - Each chunk is counted with `Intl.Segmenter` at `granularity: "word"`, caching segmenters to avoid re-instantiation.
 - Per-locale counts are summed into an overall total and printed to stdout.
@@ -223,7 +223,7 @@ Skip details stay debug-gated and can still be suppressed with `--quiet-skips`.
 ## Locale vs Language Code
 
 - Output keeps the field name `locale` for compatibility.
-- In this project, locale values are BCP 47 tags and are often language/script focused (for example: `en`, `und-Latn`, `zh-Hani`) rather than region-specific tags (for example: `en-US`, `zh-TW`).
+- In this project, locale values are BCP 47 tags and are often language/script focused (for example: `en`, `und-Latn`, `und-Hani`) rather than region-specific tags (for example: `en-US`, `zh-TW`).
 - Default detection prefers language/script tags to avoid incorrect region assumptions.
 - You can still provide region-specific locale tags through hint flags when needed.
 
@@ -563,10 +563,17 @@ Example JSON (trimmed):
 > [!Note]
 > Text-default symbols (e.g. ©) count as `symbols` unless explicitly emoji-presented (e.g. ©️ with VS16).
 
-## Locale Tag Detection Notes (Migration)
+## Locale Tag Detection Notes
 
+- Detection is regex/script based (Unicode script checks), not a statistical language-ID model.
 - Ambiguous Latin text uses `und-Latn` unless a Latin hint is provided.
-- Han-script fallback uses `zh-Hani` by default because regex script checks cannot natively distinguish `zh-Hans` vs `zh-Hant`.
+- Han-script fallback uses `und-Hani` by default because regex script checks cannot natively distinguish `zh-Hans` vs `zh-Hant`.
+- Current built-in Latin diacritic heuristics are intentionally limited:
+  - `de`: `äöüÄÖÜß`
+  - `es`: `ñÑ¿¡`
+  - `pt`: `ãõÃÕ`
+  - `fr`: `œŒæÆ`
+- Latin text with other European diacritics may still remain in `und-Latn` unless a hint is provided.
 - Use `--mode chunk`/`--mode segments` or `--format json` to see the exact locale tag assigned to each chunk.
 - Regex/script-only detection cannot reliably identify English vs. other Latin-script languages; 100% certainty requires explicit metadata (document language tags, user-provided locale, headers) or a language-ID model.
 - Use `--latin-language <tag>` or `--latin-tag <tag>` for ambiguous Latin text.

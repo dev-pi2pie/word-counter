@@ -1,5 +1,5 @@
 export const DEFAULT_LOCALE = "und-Latn";
-export const DEFAULT_HAN_TAG = "zh-Hani";
+export const DEFAULT_HAN_TAG = "und-Hani";
 
 export interface LocaleDetectOptions {
   latinLanguageHint?: string;

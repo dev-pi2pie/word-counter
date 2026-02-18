@@ -1,7 +1,7 @@
 ---
 title: "Breaking Changes Notes"
 created-date: 2026-02-15
-modified-date: 2026-02-15
+modified-date: 2026-02-18
 status: active
 agent: Codex
 ---
@@ -18,7 +18,7 @@ Track possible breaking changes and deprecation plans before stable `v0.1.0`.
 
 ## Language Tag Notes
 
-- Han-script default fallback moved to `zh-Hani` for script-level labeling.
+- Han-script default fallback moved to `und-Hani` for script-level labeling without forcing `zh`.
 - Simplified (`zh-Hans`) vs Traditional (`zh-Hant`) cannot be reliably auto-detected by Unicode script regex alone.
 - Use `--han-language <tag>` or `--han-tag <tag>` when a specific Han variant is required.
 

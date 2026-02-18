@@ -83,7 +83,7 @@ describe("segmentTextByLocale", () => {
   test("splits Latin and Han scripts into separate locales", () => {
     const chunks = segmentTextByLocale("Hello 世界");
     const locales = chunks.map((chunk) => chunk.locale);
-    expect(locales).toEqual(["und-Latn", "zh-Hani"]);
+    expect(locales).toEqual(["und-Latn", "und-Hani"]);
   });
 
   test("applies Latin locale hints for ambiguous text", () => {
@@ -121,7 +121,7 @@ describe("segmentTextByLocale", () => {
 
   test("treats empty Han tag hint as missing and uses fallback", () => {
     const chunks = segmentTextByLocale("漢字測試", { hanTagHint: "" });
-    expect(chunks[0]?.locale).toBe("zh-Hani");
+    expect(chunks[0]?.locale).toBe("und-Hani");
   });
 
   test("falls back to Han language hint when Han tag hint is empty", () => {
@@ -209,7 +209,7 @@ describe("char-collector mode", () => {
     if (result.breakdown.mode === "char-collector") {
       expect(result.breakdown.items).toEqual([
         { locale: "und-Latn", chars: 4, nonWords: undefined },
-        { locale: "zh-Hani", chars: 2, nonWords: undefined },
+        { locale: "und-Hani", chars: 2, nonWords: undefined },
       ]);
     }
   });
@@ -225,7 +225,7 @@ describe("char-collector mode", () => {
       expect(result.breakdown.items[0]?.locale).toBe("und-Latn");
       expect(result.breakdown.items[0]?.chars).toBe(3);
       expect(result.breakdown.items[0]?.nonWords?.counts.punctuation).toBe(1);
-      expect(result.breakdown.items[1]?.locale).toBe("zh-Hani");
+      expect(result.breakdown.items[1]?.locale).toBe("und-Hani");
       expect(result.breakdown.items[1]?.chars).toBe(3);
       expect(result.breakdown.items[1]?.nonWords?.counts.punctuation).toBe(1);
     }
