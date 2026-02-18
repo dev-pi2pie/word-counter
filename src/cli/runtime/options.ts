@@ -1,8 +1,10 @@
+import { readFileSync } from "node:fs";
 import {
   requiresNonWordCollection,
   requiresWhitespaceCollection,
 } from "../total-of";
 import type { BatchScope } from "../types";
+import type { LatinHintRule } from "../../wc";
 import type { CliActionOptions, ResolvedCountRunOptions } from "./types";
 
 export function hasPathInput(pathValues: string[] | undefined): pathValues is string[] {
@@ -71,6 +73,105 @@ export function resolveDebugReportPathOption(rawValue: string | boolean | undefi
   return undefined;
 }
 
+export function parseInlineLatinHintRule(value: string): LatinHintRule {
+  const separatorIndex = value.indexOf("=");
+  if (separatorIndex <= 0) {
+    throw new Error("`--latin-hint` must use `<tag>=<pattern>` format.");
+  }
+
+  const tag = value.slice(0, separatorIndex).trim();
+  const pattern = value.slice(separatorIndex + 1);
+
+  if (!tag) {
+    throw new Error("`--latin-hint` tag must be non-empty.");
+  }
+
+  if (!pattern) {
+    throw new Error("`--latin-hint` pattern must be non-empty.");
+  }
+
+  return { tag, pattern };
+}
+
+function parseLatinHintsFileRule(
+  value: unknown,
+  index: number,
+  sourcePath: string,
+): LatinHintRule {
+  if (typeof value !== "object" || value === null) {
+    throw new Error(
+      `Invalid Latin hint rule at ${sourcePath}#${index}: rule must be an object.`,
+    );
+  }
+
+  const tag = "tag" in value ? value.tag : undefined;
+  const pattern = "pattern" in value ? value.pattern : undefined;
+  const priority = "priority" in value ? value.priority : undefined;
+
+  if (typeof tag !== "string" || tag.trim().length === 0) {
+    throw new Error(
+      `Invalid Latin hint rule at ${sourcePath}#${index}: tag must be a non-empty string.`,
+    );
+  }
+
+  if (typeof pattern !== "string") {
+    throw new Error(
+      `Invalid Latin hint rule at ${sourcePath}#${index}: pattern must be a string.`,
+    );
+  }
+
+  if (priority !== undefined && (typeof priority !== "number" || !Number.isFinite(priority))) {
+    throw new Error(
+      `Invalid Latin hint rule at ${sourcePath}#${index}: priority must be a finite number.`,
+    );
+  }
+
+  return {
+    tag,
+    pattern,
+    ...(priority !== undefined ? { priority } : {}),
+  };
+}
+
+function parseLatinHintsFile(path: string): LatinHintRule[] {
+  let raw: string;
+  try {
+    raw = readFileSync(path, "utf8");
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to read Latin hint file (${path}): ${message}`);
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Invalid JSON in Latin hint file (${path}): ${message}`);
+  }
+
+  if (!Array.isArray(parsed)) {
+    throw new Error(`Latin hint file (${path}) must contain a JSON array.`);
+  }
+
+  return parsed.map((rule, index) => parseLatinHintsFileRule(rule, index, path));
+}
+
+function resolveLatinHintRules(options: CliActionOptions): LatinHintRule[] | undefined {
+  const inlineRules = (options.latinHint ?? []).map((value) => parseInlineLatinHintRule(value));
+  const fileRules =
+    typeof options.latinHintsFile === "string" && options.latinHintsFile.length > 0
+      ? parseLatinHintsFile(options.latinHintsFile)
+      : [];
+
+  const mergedRules = [...inlineRules, ...fileRules];
+  if (mergedRules.length === 0) {
+    return undefined;
+  }
+
+  return mergedRules;
+}
+
 export function resolveCountRunOptions(options: CliActionOptions): ResolvedCountRunOptions {
   const useSection = options.section !== "all";
   const totalOfParts = options.totalOf;
@@ -95,6 +196,8 @@ export function resolveCountRunOptions(options: CliActionOptions): ResolvedCount
       latinLanguageHint: options.latinLanguage,
       latinTagHint: options.latinTag,
       latinLocaleHint: options.latinLocale,
+      latinHintRules: resolveLatinHintRules(options),
+      useDefaultLatinHints: options.defaultLatinHints !== false,
       hanLanguageHint: options.hanLanguage,
       hanTagHint: options.hanTag,
       nonWords: enableNonWords,

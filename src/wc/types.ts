@@ -59,11 +59,19 @@ export interface NonWordCollection {
   counts: NonWordCounts;
 }
 
+export interface LatinHintRule {
+  tag: string;
+  pattern: string | RegExp;
+  priority?: number;
+}
+
 export interface WordCounterOptions {
   mode?: WordCounterMode;
   latinLanguageHint?: string;
   latinTagHint?: string;
   latinLocaleHint?: string;
+  latinHintRules?: LatinHintRule[];
+  useDefaultLatinHints?: boolean;
   hanLanguageHint?: string;
   hanTagHint?: string;
   nonWords?: boolean;

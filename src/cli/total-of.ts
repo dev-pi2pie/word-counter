@@ -1,13 +1,13 @@
 import type { SectionedResult } from "../markdown";
 import type { NonWordCollection, WordCounterResult } from "../wc";
 
-export const TOTAL_OF_PARTS = [
+export const TOTAL_OF_PARTS = Object.freeze([
   "words",
   "emoji",
   "symbols",
   "punctuation",
   "whitespace",
-] as const;
+] as const);
 
 export type TotalOfPart = (typeof TOTAL_OF_PARTS)[number];
 

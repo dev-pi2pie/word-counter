@@ -11,7 +11,7 @@ export type DirectoryRegexFilter = {
   regex: RegExp | undefined;
 };
 
-export const DEFAULT_INCLUDE_EXTENSIONS = new Set([
+export const DEFAULT_INCLUDE_EXTENSIONS = Object.freeze([
   ".md",
   ".markdown",
   ".mdx",
