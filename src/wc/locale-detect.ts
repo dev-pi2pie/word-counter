@@ -225,6 +225,8 @@ export function detectLocaleForChar(
   previousLocale?: string | null,
   options: LocaleDetectOptions = {},
   context: LocaleDetectContext = resolveLocaleDetectContext(options),
+  allowLatinLocaleCarry = true,
+  allowJapaneseHanCarry = true,
 ): string | null {
   if (regex.hiragana.test(char) || regex.katakana.test(char)) {
     return "ja";
@@ -246,7 +248,7 @@ export function detectLocaleForChar(
   }
 
   if (regex.han.test(char)) {
-    if (previousLocale && previousLocale.startsWith("ja")) {
+    if (allowJapaneseHanCarry && previousLocale && previousLocale.startsWith("ja")) {
       return previousLocale;
     }
     return context.hanHint ?? DEFAULT_HAN_TAG;
@@ -257,7 +259,12 @@ export function detectLocaleForChar(
     if (hintedLocale !== DEFAULT_LOCALE) {
       return hintedLocale;
     }
-    if (previousLocale && isLatinLocale(previousLocale, context) && previousLocale !== DEFAULT_LOCALE) {
+    if (
+      allowLatinLocaleCarry &&
+      previousLocale &&
+      isLatinLocale(previousLocale, context) &&
+      previousLocale !== DEFAULT_LOCALE
+    ) {
       return previousLocale;
     }
     if (context.latinHint) {
