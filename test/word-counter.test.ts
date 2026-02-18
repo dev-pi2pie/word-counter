@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import wordCounter, {
+  DEFAULT_LATIN_HINT_RULES,
   countCharsForLocale,
   countWordsForLocale,
   segmentTextByLocale,
@@ -149,6 +150,29 @@ describe("segmentTextByLocale", () => {
       const chunks = segmentTextByLocale(text);
       expect(chunks[0]?.locale).toBe(locale);
     }
+  });
+
+  test("exports immutable default Latin hint rules", () => {
+    expect(() => {
+      (
+        DEFAULT_LATIN_HINT_RULES as unknown as Array<{
+          tag: string;
+          pattern: string | RegExp;
+          priority?: number;
+        }>
+      ).push({ tag: "x", pattern: /[x]/u });
+    }).toThrow();
+
+    const firstRule = DEFAULT_LATIN_HINT_RULES[0];
+    expect(firstRule).toBeDefined();
+    if (!firstRule) {
+      return;
+    }
+
+    expect(() => {
+      (firstRule as { tag: string }).tag = "x-mutated";
+    }).toThrow();
+    expect(segmentTextByLocale("Über")[0]?.locale).toBe("de");
   });
 
   test("accepts custom Latin hint rules from string and RegExp patterns", () => {

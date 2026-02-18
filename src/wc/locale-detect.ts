@@ -125,7 +125,7 @@ function normalizeLatinHintPriority(priority: unknown, label: string): number {
 }
 
 function compileLatinHintRule(
-  rule: LatinHintRule,
+  rule: Readonly<LatinHintRule>,
   order: number,
   label: string,
 ): ResolvedLatinHintRule {
@@ -146,7 +146,7 @@ function compileLatinHintRule(
 function resolveLatinHintRules(options: LocaleDetectOptions): ResolvedLatinHintRule[] {
   const useDefaultLatinHints = options.useDefaultLatinHints !== false;
   const customRules = options.latinHintRules ?? [];
-  const combinedRules: Array<{ rule: LatinHintRule; label: string }> = [];
+  const combinedRules: Array<{ rule: Readonly<LatinHintRule>; label: string }> = [];
 
   for (let index = 0; index < customRules.length; index += 1) {
     const rule = customRules[index];

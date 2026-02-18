@@ -4,9 +4,10 @@ import { tmpdir } from "node:os";
 import { basename, join } from "node:path";
 import { buildBatchSummary, loadBatchInputs, resolveBatchFilePaths, runCli } from "../src/command";
 import { createDebugChannel } from "../src/cli/debug/channel";
-import { buildDirectoryExtensionFilter } from "../src/cli/path/filter";
+import { DEFAULT_INCLUDE_EXTENSIONS, buildDirectoryExtensionFilter } from "../src/cli/path/filter";
 import type { ProgressOutputStream } from "../src/cli/progress/reporter";
 import { parseInlineLatinHintRule, validateSingleRegexOptionUsage } from "../src/cli/runtime/options";
+import { TOTAL_OF_PARTS } from "../src/cli/total-of";
 
 const tempRoots: string[] = [];
 
@@ -867,6 +868,12 @@ describe("CLI debug diagnostics", () => {
 });
 
 describe("extension filters", () => {
+  test("keeps DEFAULT_INCLUDE_EXTENSIONS immutable", () => {
+    expect(() => {
+      (DEFAULT_INCLUDE_EXTENSIONS as unknown as string[]).push(".js");
+    }).toThrow();
+  });
+
   test("supports include-ext override for directory scanning", async () => {
     const root = await makeTempFixture("ext-include");
     await writeFile(join(root, "keep.js"), "js words only");
@@ -1145,6 +1152,12 @@ describe("regex filters", () => {
 });
 
 describe("CLI total-of", () => {
+  test("keeps TOTAL_OF_PARTS immutable", () => {
+    expect(() => {
+      (TOTAL_OF_PARTS as unknown as string[]).push("custom");
+    }).toThrow();
+  });
+
   test("shows override in standard output only when it differs", async () => {
     const withOverride = await captureCli(["--non-words", "--total-of", "words", "Hi 👋, world!"]);
     expect(withOverride.stdout[0]).toBe("Total count: 5");
