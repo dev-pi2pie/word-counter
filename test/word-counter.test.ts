@@ -152,6 +152,88 @@ describe("segmentTextByLocale", () => {
     }
   });
 
+  test("does not relabel prior Latin text when a later Latin hint appears", () => {
+    const chunks = segmentTextByLocale("A lot of things should be done. Überzug and Ranger");
+    expect(chunks.map((chunk) => chunk.locale)).toEqual(["und-Latn", "de"]);
+    expect(chunks[0]?.text).toBe("A lot of things should be done. ");
+    expect(chunks[1]?.text).toBe("Überzug and Ranger");
+  });
+
+  test("keeps hinted Latin words intact after whitespace boundary", () => {
+    const chunks = segmentTextByLocale("el niño");
+    expect(chunks.map((chunk) => chunk.locale)).toEqual(["und-Latn", "es"]);
+    expect(chunks[0]?.text).toBe("el ");
+    expect(chunks[1]?.text).toBe("niño");
+  });
+
+  test("resets carried Latin locale after hard boundaries", () => {
+    const chunks = segmentTextByLocale("Überzug and Ranger.\nAnother paragraph in English.");
+    expect(chunks.map((chunk) => chunk.locale)).toEqual(["de", "und-Latn"]);
+  });
+
+  test("resets carried Latin locale after fullwidth and halfwidth periods", () => {
+    const samples = ["Überzug。Another paragraph", "Überzug｡Another paragraph", "Überzug．Another paragraph"];
+    for (const text of samples) {
+      const chunks = segmentTextByLocale(text);
+      expect(chunks.map((chunk) => chunk.locale)).toEqual(["de", "und-Latn"]);
+    }
+  });
+
+  test("resets carried Latin locale after comma, colon, and semicolon boundaries", () => {
+    const samples = [
+      "Überzug,Another paragraph",
+      "Überzug，Another paragraph",
+      "Überzug、Another paragraph",
+      "Überzug､Another paragraph",
+      "Überzug:Another paragraph",
+      "Überzug：Another paragraph",
+      "Überzug;Another paragraph",
+      "Überzug；Another paragraph",
+    ];
+    for (const text of samples) {
+      const chunks = segmentTextByLocale(text);
+      expect(chunks.map((chunk) => chunk.locale)).toEqual(["de", "und-Latn"]);
+    }
+  });
+
+  test("does not carry ja locale into Han after fullwidth period boundary", () => {
+    const chunks = segmentTextByLocale("こんにちは。漢字");
+    expect(chunks.map((chunk) => chunk.locale)).toEqual(["ja", "und-Hani"]);
+    expect(chunks[0]?.text).toBe("こんにちは。");
+    expect(chunks[1]?.text).toBe("漢字");
+  });
+
+  test("does not carry ja locale into Han after halfwidth period boundary", () => {
+    const chunks = segmentTextByLocale("こんにちは｡漢字");
+    expect(chunks.map((chunk) => chunk.locale)).toEqual(["ja", "und-Hani"]);
+    expect(chunks[0]?.text).toBe("こんにちは｡");
+    expect(chunks[1]?.text).toBe("漢字");
+  });
+
+  test("does not carry ja locale into Han after newline boundary", () => {
+    const chunks = segmentTextByLocale("こんにちは\n漢字");
+    expect(chunks.map((chunk) => chunk.locale)).toEqual(["ja", "und-Hani"]);
+    expect(chunks[0]?.text).toBe("こんにちは\n");
+    expect(chunks[1]?.text).toBe("漢字");
+  });
+
+  test("does not carry ja locale into Han after comma, colon, and semicolon boundaries", () => {
+    const samples = [
+      "こんにちは,漢字",
+      "こんにちは，漢字",
+      "こんにちは、漢字",
+      "こんにちは､漢字",
+      "こんにちは:漢字",
+      "こんにちは：漢字",
+      "こんにちは;漢字",
+      "こんにちは；漢字",
+    ];
+    for (const text of samples) {
+      const chunks = segmentTextByLocale(text);
+      expect(chunks.map((chunk) => chunk.locale)).toEqual(["ja", "und-Hani"]);
+    }
+  });
+
   test("exports immutable default Latin hint rules", () => {
     expect(() => {
       (
