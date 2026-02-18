@@ -195,6 +195,21 @@ describe("segmentTextByLocale", () => {
     expect(caseInsensitive[0]?.locale).toBe("x");
   });
 
+  test("accepts Unicode-set v flag RegExp rules when runtime supports them", () => {
+    let unicodeSetPattern: RegExp;
+    try {
+      unicodeSetPattern = new RegExp("[ä]", "v");
+    } catch {
+      return;
+    }
+
+    const unicodeSetRule = segmentTextByLocale("ä", {
+      latinHintRules: [{ tag: "x-v-flag", pattern: unicodeSetPattern }],
+      useDefaultLatinHints: false,
+    });
+    expect(unicodeSetRule[0]?.locale).toBe("x-v-flag");
+  });
+
   test("uses priority and stable rule order for custom Latin hints", () => {
     const byPriority = segmentTextByLocale("ñ", {
       latinHintRules: [

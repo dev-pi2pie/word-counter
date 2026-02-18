@@ -92,10 +92,13 @@ function compileLatinHintPattern(
   label: string,
 ): RegExp {
   const source = typeof pattern === "string" ? pattern : pattern.source;
+  const hasUnicodeMode =
+    typeof pattern !== "string" &&
+    (pattern.flags.includes("u") || pattern.flags.includes("v"));
   const flags =
     typeof pattern === "string"
       ? "u"
-      : pattern.flags.includes("u")
+      : hasUnicodeMode
         ? pattern.flags
         : `${pattern.flags}u`;
   if (source.length === 0) {
