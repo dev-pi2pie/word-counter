@@ -163,6 +163,14 @@ describe("segmentTextByLocale", () => {
     expect(fromRegexPattern[0]?.locale).toBe("tr");
   });
 
+  test("preserves RegExp flags for custom Latin hint rules", () => {
+    const caseInsensitive = segmentTextByLocale("Ä", {
+      latinHintRules: [{ tag: "x", pattern: /[ä]/iu }],
+      useDefaultLatinHints: false,
+    });
+    expect(caseInsensitive[0]?.locale).toBe("x");
+  });
+
   test("uses priority and stable rule order for custom Latin hints", () => {
     const byPriority = segmentTextByLocale("ñ", {
       latinHintRules: [

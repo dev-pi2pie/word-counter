@@ -92,6 +92,12 @@ function compileLatinHintPattern(
   label: string,
 ): RegExp {
   const source = typeof pattern === "string" ? pattern : pattern.source;
+  const flags =
+    typeof pattern === "string"
+      ? "u"
+      : pattern.flags.includes("u")
+        ? pattern.flags
+        : `${pattern.flags}u`;
   if (source.length === 0) {
     throw new Error(`${label}: pattern must not be empty.`);
   }
@@ -101,7 +107,7 @@ function compileLatinHintPattern(
     );
   }
   try {
-    return new RegExp(source, "u");
+    return new RegExp(source, flags);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     throw new Error(`${label}: invalid Unicode regex pattern (${message}).`);
@@ -203,6 +209,7 @@ export function resolveLocaleDetectContext(
 
 function detectLatinLocale(char: string, context: LocaleDetectContext): string {
   for (const hint of context.latinHintRules) {
+    hint.pattern.lastIndex = 0;
     if (hint.pattern.test(char)) {
       return hint.tag;
     }
