@@ -2,7 +2,7 @@
 title: "Custom Latin Hints v2 for Locale Tag Detection"
 created-date: 2026-02-18
 modified-date: 2026-02-18
-status: completed
+status: draft
 agent: Codex
 ---
 
