@@ -1,15 +1,15 @@
 import type { LatinHintRule } from "./types";
 
 const DEFAULT_LATIN_HINT_RULES_SOURCE = [
-  { tag: "de", pattern: /[äöüÄÖÜß]/u },
-  { tag: "es", pattern: /[ñÑ¿¡]/u },
-  { tag: "pt", pattern: /[ãõÃÕ]/u },
-  { tag: "fr", pattern: /[œŒæÆ]/u },
-  { tag: "pl", pattern: /[ąćęłńśźżĄĆĘŁŃŚŹŻ]/u },
-  { tag: "tr", pattern: /[ıİğĞşŞ]/u },
-  { tag: "ro", pattern: /[ăĂâÂîÎșȘțȚ]/u },
-  { tag: "hu", pattern: /[őŐűŰ]/u },
-  { tag: "is", pattern: /[ðÐþÞ]/u },
+  { tag: "de", pattern: "[äöüÄÖÜß]" },
+  { tag: "es", pattern: "[ñÑ¿¡]" },
+  { tag: "pt", pattern: "[ãõÃÕ]" },
+  { tag: "fr", pattern: "[œŒæÆ]" },
+  { tag: "pl", pattern: "[ąćęłńśźżĄĆĘŁŃŚŹŻ]" },
+  { tag: "tr", pattern: "[ıİğĞşŞ]" },
+  { tag: "ro", pattern: "[ăĂâÂîÎșȘțȚ]" },
+  { tag: "hu", pattern: "[őŐűŰ]" },
+  { tag: "is", pattern: "[ðÐþÞ]" },
 ] satisfies LatinHintRule[];
 
 export const DEFAULT_LATIN_HINT_RULES: ReadonlyArray<Readonly<LatinHintRule>> = Object.freeze(

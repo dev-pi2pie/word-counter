@@ -172,6 +172,13 @@ describe("segmentTextByLocale", () => {
     expect(() => {
       (firstRule as { tag: string }).tag = "x-mutated";
     }).toThrow();
+
+    const germanRule = DEFAULT_LATIN_HINT_RULES.find((rule) => rule.tag === "de");
+    expect(germanRule).toBeDefined();
+    if (!germanRule) {
+      return;
+    }
+    expect(typeof germanRule.pattern).toBe("string");
     expect(segmentTextByLocale("Über")[0]?.locale).toBe("de");
   });
 
