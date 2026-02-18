@@ -22,6 +22,10 @@ function collectPathValue(value: string, previous: string[] = []): string[] {
   return [...previous, value];
 }
 
+function collectLatinHintValue(value: string, previous: string[] = []): string[] {
+  return [...previous, value];
+}
+
 export function configureProgramOptions(
   program: Command,
   parseMode: (value: string) => WordCounterMode,
@@ -54,6 +58,14 @@ export function configureProgramOptions(
     .option("--latin-language <language>", "hint a language tag for Latin script text")
     .option("--latin-tag <tag>", "hint a BCP 47 tag for Latin script text")
     .option("--latin-locale <locale>", "legacy alias of --latin-language")
+    .option(
+      "--latin-hint <tag>=<pattern>",
+      "add a custom Latin hint rule (repeatable)",
+      collectLatinHintValue,
+      [],
+    )
+    .option("--latin-hints-file <path>", "load custom Latin hint rules from a JSON file")
+    .option("--no-default-latin-hints", "disable built-in Latin hint rules")
     .option("--han-language <language>", "hint a language tag for Han script text")
     .option("--han-tag <tag>", "hint a BCP 47 tag for Han script text")
     .option("--non-words", "collect emoji, symbols, and punctuation (excludes whitespace)")

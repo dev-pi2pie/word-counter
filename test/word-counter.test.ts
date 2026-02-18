@@ -138,12 +138,73 @@ describe("segmentTextByLocale", () => {
       ["mañana", "es"],
       ["coração", "pt"],
       ["œuvre", "fr"],
+      ["Zażółć", "pl"],
+      ["Iğdır", "tr"],
+      ["Știință", "ro"],
+      ["Őrült", "hu"],
+      ["Þing", "is"],
     ];
 
     for (const [text, locale] of samples) {
       const chunks = segmentTextByLocale(text);
       expect(chunks[0]?.locale).toBe(locale);
     }
+  });
+
+  test("accepts custom Latin hint rules from string and RegExp patterns", () => {
+    const fromStringPattern = segmentTextByLocale("Zażółć gęślą jaźń", {
+      latinHintRules: [{ tag: "pl", pattern: "[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]" }],
+    });
+    expect(fromStringPattern[0]?.locale).toBe("pl");
+
+    const fromRegexPattern = segmentTextByLocale("İstanbul", {
+      latinHintRules: [{ tag: "tr", pattern: /[İIıi]/u }],
+    });
+    expect(fromRegexPattern[0]?.locale).toBe("tr");
+  });
+
+  test("uses priority and stable rule order for custom Latin hints", () => {
+    const byPriority = segmentTextByLocale("ñ", {
+      latinHintRules: [
+        { tag: "es", pattern: "[ñÑ]", priority: 1 },
+        { tag: "x-priority", pattern: "[ñÑ]", priority: 2 },
+      ],
+    });
+    expect(byPriority[0]?.locale).toBe("x-priority");
+
+    const byDefinitionOrder = segmentTextByLocale("ñ", {
+      latinHintRules: [
+        { tag: "first", pattern: "[ñÑ]" },
+        { tag: "second", pattern: "[ñÑ]" },
+      ],
+    });
+    expect(byDefinitionOrder[0]?.locale).toBe("first");
+  });
+
+  test("keeps Latin fallback chain when custom rules do not match", () => {
+    const chunks = segmentTextByLocale("Hello world", {
+      latinHintRules: [{ tag: "pl", pattern: "[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]" }],
+      latinTagHint: "en",
+    });
+    expect(chunks[0]?.locale).toBe("en");
+  });
+
+  test("supports disabling default Latin hints", () => {
+    const withDefaults = segmentTextByLocale("Über");
+    expect(withDefaults[0]?.locale).toBe("de");
+
+    const withoutDefaults = segmentTextByLocale("Über", {
+      useDefaultLatinHints: false,
+    });
+    expect(withoutDefaults[0]?.locale).toBe("und-Latn");
+  });
+
+  test("fails fast on invalid custom Latin hint patterns", () => {
+    expect(() =>
+      segmentTextByLocale("Hello world", {
+        latinHintRules: [{ tag: "x-invalid", pattern: "[" }],
+      }),
+    ).toThrow("invalid Unicode regex pattern");
   });
 
   test("keeps leading neutral characters with the first script run", () => {

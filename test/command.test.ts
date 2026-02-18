@@ -6,7 +6,7 @@ import { buildBatchSummary, loadBatchInputs, resolveBatchFilePaths, runCli } fro
 import { createDebugChannel } from "../src/cli/debug/channel";
 import { buildDirectoryExtensionFilter } from "../src/cli/path/filter";
 import type { ProgressOutputStream } from "../src/cli/progress/reporter";
-import { validateSingleRegexOptionUsage } from "../src/cli/runtime/options";
+import { parseInlineLatinHintRule, validateSingleRegexOptionUsage } from "../src/cli/runtime/options";
 
 const tempRoots: string[] = [];
 
@@ -1136,6 +1136,12 @@ describe("regex filters", () => {
       ]),
     ).not.toThrow();
   });
+
+  test("fails fast on malformed --latin-hint value format", () => {
+    expect(() => parseInlineLatinHintRule("invalid")).toThrow(
+      "`--latin-hint` must use `<tag>=<pattern>` format.",
+    );
+  });
 });
 
 describe("CLI total-of", () => {
@@ -1493,6 +1499,57 @@ describe("CLI compatibility gates", () => {
     ]);
     const parsed = JSON.parse(output.stdout[0] ?? "{}");
     expect(parsed.breakdown.items[0]?.locale).toBe("fr");
+  });
+
+  test("accepts repeated --latin-hint for custom Latin locale detection", async () => {
+    const output = await captureCli([
+      "--format",
+      "json",
+      "--latin-hint",
+      "pl=[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]",
+      "Zażółć",
+      "gęślą",
+      "jaźń",
+    ]);
+    const parsed = JSON.parse(output.stdout[0] ?? "{}");
+    expect(parsed.breakdown.items[0]?.locale).toBe("pl");
+  });
+
+  test("merges --latin-hints-file with CLI custom hints deterministically", async () => {
+    const root = await makeTempFixture("cli-latin-hints-merge");
+    const rulesPath = join(root, "latin-hints.json");
+    await writeFile(
+      rulesPath,
+      JSON.stringify([{ tag: "ro", pattern: "[șȘ]" }]),
+      "utf8",
+    );
+
+    const output = await captureCli([
+      "--format",
+      "json",
+      "--latin-hints-file",
+      rulesPath,
+      "--latin-hint",
+      "es=[șȘ]",
+      "ș",
+    ]);
+    const parsed = JSON.parse(output.stdout[0] ?? "{}");
+    expect(parsed.breakdown.items[0]?.locale).toBe("es");
+  });
+
+  test("supports --no-default-latin-hints", async () => {
+    const withDefaults = await captureCli(["--format", "json", "Über"]);
+    const withDefaultsParsed = JSON.parse(withDefaults.stdout[0] ?? "{}");
+    expect(withDefaultsParsed.breakdown.items[0]?.locale).toBe("de");
+
+    const withoutDefaults = await captureCli([
+      "--format",
+      "json",
+      "--no-default-latin-hints",
+      "Über",
+    ]);
+    const withoutDefaultsParsed = JSON.parse(withoutDefaults.stdout[0] ?? "{}");
+    expect(withoutDefaultsParsed.breakdown.items[0]?.locale).toBe("und-Latn");
   });
 
   test("accepts --han-tag for Han text fallback", async () => {

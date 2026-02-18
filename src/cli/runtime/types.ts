@@ -14,6 +14,9 @@ export type CliActionOptions = {
   latinLanguage?: string;
   latinTag?: string;
   latinLocale?: string;
+  latinHint?: string[];
+  latinHintsFile?: string;
+  defaultLatinHints: boolean;
   hanLanguage?: string;
   hanTag?: string;
   nonWords?: boolean;

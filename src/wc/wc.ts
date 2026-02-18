@@ -20,6 +20,7 @@ import type {
 } from "./types";
 
 export type {
+  LatinHintRule,
   NonWordCollection,
   WordCounterMode,
   WordCounterOptions,
@@ -28,6 +29,7 @@ export type {
 } from "./types";
 
 export { countCharsForLocale, countWordsForLocale, segmentTextByLocale };
+export { DEFAULT_LATIN_HINT_RULES } from "./latin-hints";
 
 export function wordCounter(
   text: string,
@@ -40,6 +42,8 @@ export function wordCounter(
     latinLanguageHint: options.latinLanguageHint,
     latinTagHint: options.latinTagHint,
     latinLocaleHint: options.latinLocaleHint,
+    latinHintRules: options.latinHintRules,
+    useDefaultLatinHints: options.useDefaultLatinHints,
     hanLanguageHint: options.hanLanguageHint,
     hanTagHint: options.hanTagHint,
   });

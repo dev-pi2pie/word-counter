@@ -1,13 +1,34 @@
+import type { LatinHintRule } from "./types";
+import { DEFAULT_LATIN_HINT_RULES } from "./latin-hints";
+
 export const DEFAULT_LOCALE = "und-Latn";
 export const DEFAULT_HAN_TAG = "und-Hani";
+
+const MAX_LATIN_HINT_PATTERN_LENGTH = 256;
 
 export interface LocaleDetectOptions {
   latinLanguageHint?: string;
   latinTagHint?: string;
   latinLocaleHint?: string;
+  latinHintRules?: LatinHintRule[];
+  useDefaultLatinHints?: boolean;
   hanLanguageHint?: string;
   hanTagHint?: string;
 }
+
+type ResolvedLatinHintRule = {
+  tag: string;
+  pattern: RegExp;
+  priority: number;
+  order: number;
+};
+
+export type LocaleDetectContext = {
+  latinHint?: string;
+  hanHint?: string;
+  latinHintRules: ResolvedLatinHintRule[];
+  latinLocales: Set<string>;
+};
 
 const regex = {
   hiragana: /\p{Script=Hiragana}/u,
@@ -21,29 +42,16 @@ const regex = {
   thai: /\p{Script=Thai}/u,
 };
 
-const latinLocaleHints: Array<{ locale: string; regex: RegExp }> = [
-  { locale: "de", regex: /[äöüÄÖÜß]/ },
-  { locale: "es", regex: /[ñÑ¿¡]/ },
-  { locale: "pt", regex: /[ãõÃÕ]/ },
-  { locale: "fr", regex: /[œŒæÆ]/ },
-];
-
-const latinLocales = new Set<string>([
+const defaultLatinLocales = new Set<string>([
   DEFAULT_LOCALE,
-  ...latinLocaleHints.map((hint) => hint.locale),
+  ...DEFAULT_LATIN_HINT_RULES.map((hint) => hint.tag),
 ]);
 
-export function isLatinLocale(locale: string): boolean {
-  return latinLocales.has(locale);
-}
-
-function detectLatinLocale(char: string): string {
-  for (const hint of latinLocaleHints) {
-    if (hint.regex.test(char)) {
-      return hint.locale;
-    }
+export function isLatinLocale(locale: string, context?: LocaleDetectContext): boolean {
+  if (context) {
+    return context.latinLocales.has(locale);
   }
-  return DEFAULT_LOCALE;
+  return defaultLatinLocales.has(locale);
 }
 
 function resolveLatinHint(options: LocaleDetectOptions): string | undefined {
@@ -79,10 +87,134 @@ function resolveHanHint(options: LocaleDetectOptions): string | undefined {
   return undefined;
 }
 
+function compileLatinHintPattern(
+  pattern: string | RegExp,
+  label: string,
+): RegExp {
+  const source = typeof pattern === "string" ? pattern : pattern.source;
+  if (source.length === 0) {
+    throw new Error(`${label}: pattern must not be empty.`);
+  }
+  if (source.length > MAX_LATIN_HINT_PATTERN_LENGTH) {
+    throw new Error(
+      `${label}: pattern must be at most ${MAX_LATIN_HINT_PATTERN_LENGTH} characters.`,
+    );
+  }
+  try {
+    return new RegExp(source, "u");
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`${label}: invalid Unicode regex pattern (${message}).`);
+  }
+}
+
+function normalizeLatinHintPriority(priority: unknown, label: string): number {
+  if (priority === undefined) {
+    return 0;
+  }
+  if (typeof priority !== "number" || !Number.isFinite(priority)) {
+    throw new Error(`${label}: priority must be a finite number when provided.`);
+  }
+  return priority;
+}
+
+function compileLatinHintRule(
+  rule: LatinHintRule,
+  order: number,
+  label: string,
+): ResolvedLatinHintRule {
+  const tag = typeof rule.tag === "string" ? rule.tag.trim() : "";
+  if (!tag) {
+    throw new Error(`${label}: tag must be a non-empty string.`);
+  }
+  const pattern = compileLatinHintPattern(rule.pattern, label);
+  const priority = normalizeLatinHintPriority(rule.priority, label);
+  return {
+    tag,
+    pattern,
+    priority,
+    order,
+  };
+}
+
+function resolveLatinHintRules(options: LocaleDetectOptions): ResolvedLatinHintRule[] {
+  const useDefaultLatinHints = options.useDefaultLatinHints !== false;
+  const customRules = options.latinHintRules ?? [];
+  const combinedRules: Array<{ rule: LatinHintRule; label: string }> = [];
+
+  for (let index = 0; index < customRules.length; index += 1) {
+    const rule = customRules[index];
+    if (!rule) {
+      continue;
+    }
+    combinedRules.push({
+      rule,
+      label: `Invalid custom Latin hint rule at index ${index}`,
+    });
+  }
+
+  if (useDefaultLatinHints) {
+    for (let index = 0; index < DEFAULT_LATIN_HINT_RULES.length; index += 1) {
+      const rule = DEFAULT_LATIN_HINT_RULES[index];
+      if (!rule) {
+        continue;
+      }
+      combinedRules.push({
+        rule,
+        label: `Invalid default Latin hint rule at index ${index}`,
+      });
+    }
+  }
+
+  const resolvedRules = combinedRules.map((entry, index) =>
+    compileLatinHintRule(entry.rule, index, entry.label),
+  );
+
+  resolvedRules.sort((left, right) => {
+    if (left.priority !== right.priority) {
+      return right.priority - left.priority;
+    }
+    return left.order - right.order;
+  });
+
+  return resolvedRules;
+}
+
+export function resolveLocaleDetectContext(
+  options: LocaleDetectOptions = {},
+): LocaleDetectContext {
+  const latinHint = resolveLatinHint(options);
+  const latinHintRules = resolveLatinHintRules(options);
+  const latinLocales = new Set<string>([DEFAULT_LOCALE]);
+  for (const rule of latinHintRules) {
+    latinLocales.add(rule.tag);
+  }
+  if (latinHint) {
+    latinLocales.add(latinHint);
+  }
+
+  return {
+    latinHint,
+    hanHint: resolveHanHint(options),
+    latinHintRules,
+    latinLocales,
+  };
+}
+
+function detectLatinLocale(char: string, context: LocaleDetectContext): string {
+  for (const hint of context.latinHintRules) {
+    if (hint.pattern.test(char)) {
+      return hint.tag;
+    }
+  }
+  return DEFAULT_LOCALE;
+}
+
 export function detectLocaleForChar(
   char: string,
   previousLocale?: string | null,
-  options: LocaleDetectOptions = {}
+  options: LocaleDetectOptions = {},
+  context: LocaleDetectContext = resolveLocaleDetectContext(options),
 ): string | null {
   if (regex.hiragana.test(char) || regex.katakana.test(char)) {
     return "ja";
@@ -107,20 +239,19 @@ export function detectLocaleForChar(
     if (previousLocale && previousLocale.startsWith("ja")) {
       return previousLocale;
     }
-    return resolveHanHint(options) ?? DEFAULT_HAN_TAG;
+    return context.hanHint ?? DEFAULT_HAN_TAG;
   }
 
   if (regex.latin.test(char)) {
-    const hintedLocale = detectLatinLocale(char);
+    const hintedLocale = detectLatinLocale(char, context);
     if (hintedLocale !== DEFAULT_LOCALE) {
       return hintedLocale;
     }
-    if (previousLocale && isLatinLocale(previousLocale) && previousLocale !== DEFAULT_LOCALE) {
+    if (previousLocale && isLatinLocale(previousLocale, context) && previousLocale !== DEFAULT_LOCALE) {
       return previousLocale;
     }
-    const latinHint = resolveLatinHint(options);
-    if (latinHint) {
-      return latinHint;
+    if (context.latinHint) {
+      return context.latinHint;
     }
     return DEFAULT_LOCALE;
   }

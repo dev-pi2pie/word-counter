@@ -1,7 +1,8 @@
 ---
 title: "Implement custom Latin hints v2"
 created-date: 2026-02-18
-status: active
+modified-date: 2026-02-18
+status: completed
 agent: Codex
 ---
 
@@ -61,12 +62,12 @@ Implement configurable Latin hint rules in API and CLI so users can tune ambiguo
 
 ## Task Items
 
-- [ ] Implement API and locale-detect model changes.
-- [ ] Implement validation and deterministic rule ordering.
-- [ ] Implement CLI flags and JSON loading.
-- [ ] Add library and CLI tests.
-- [ ] Update README docs.
-- [ ] Run validation commands and finalize.
+- [x] Implement API and locale-detect model changes.
+- [x] Implement validation and deterministic rule ordering.
+- [x] Implement CLI flags and JSON loading.
+- [x] Add library and CLI tests.
+- [x] Update README docs.
+- [x] Run validation commands and finalize.
 
 ## Validation
 

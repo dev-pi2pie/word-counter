@@ -2,6 +2,7 @@ import {
   DEFAULT_LOCALE,
   detectLocaleForChar,
   isLatinLocale,
+  resolveLocaleDetectContext,
   type LocaleDetectOptions,
 } from "./locale-detect";
 import type { LocaleChunk } from "./types";
@@ -10,6 +11,7 @@ export function segmentTextByLocale(
   text: string,
   options: LocaleDetectOptions = {}
 ): LocaleChunk[] {
+  const context = resolveLocaleDetectContext(options);
   const chunks: LocaleChunk[] = [];
   // Keep currentLocale as a non-null string to simplify type-narrowing.
   let currentLocale: string = DEFAULT_LOCALE;
@@ -17,7 +19,7 @@ export function segmentTextByLocale(
   let bufferHasScript = false;
 
   for (const char of text) {
-    const detected = detectLocaleForChar(char, currentLocale, options);
+    const detected = detectLocaleForChar(char, currentLocale, options, context);
     const targetLocale = detected ?? currentLocale;
 
     // If buffer is empty, this is the first character for a new chunk.
@@ -36,7 +38,7 @@ export function segmentTextByLocale(
     }
 
     if (targetLocale !== currentLocale && detected !== null) {
-      if (currentLocale === DEFAULT_LOCALE && isLatinLocale(targetLocale)) {
+      if (currentLocale === DEFAULT_LOCALE && isLatinLocale(targetLocale, context)) {
         currentLocale = targetLocale;
         buffer += char;
         bufferHasScript = true;
