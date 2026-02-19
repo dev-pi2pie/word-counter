@@ -30,9 +30,18 @@ export function resolveBatchJobsLimit(env: NodeJS.ProcessEnv = process.env): Bat
   };
 }
 
-export function formatJobsAdvisoryWarning(requestedJobs: number, limits: BatchJobsLimit): string {
+export function clampRequestedJobs(requestedJobs: number, limits: BatchJobsLimit): number {
+  return Math.max(1, Math.min(requestedJobs, limits.suggestedMaxJobs));
+}
+
+export function formatJobsAdvisoryWarning(
+  requestedJobs: number,
+  effectiveJobs: number,
+  limits: BatchJobsLimit,
+): string {
   return [
     `Warning: requested --jobs=${requestedJobs} exceeds suggested host limit (${limits.suggestedMaxJobs}).`,
+    `Running with --jobs=${effectiveJobs} as a safety cap.`,
     `Host limits: cpuLimit=${limits.cpuLimit}, uvThreadpool=${limits.uvThreadpool}, ioLimit=${limits.ioLimit}.`,
   ].join(" ");
 }

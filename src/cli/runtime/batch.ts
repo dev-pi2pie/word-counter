@@ -1,6 +1,10 @@
 import type { SectionedResult } from "../../markdown";
 import { runBatchCount } from "../batch/run";
-import { formatJobsAdvisoryWarning, resolveBatchJobsLimit } from "../batch/jobs/limits";
+import {
+  clampRequestedJobs,
+  formatJobsAdvisoryWarning,
+  resolveBatchJobsLimit,
+} from "../batch/jobs/limits";
 import { resolveBatchJobsStrategy } from "../batch/jobs/strategy";
 import type { DebugChannel } from "../debug/channel";
 import {
@@ -19,6 +23,7 @@ import type { BatchOptions } from "../types";
 import type { WordCounterResult } from "../../wc";
 import { resolveBatchScope } from "./options";
 import type { CliActionOptions, ResolvedCountRunOptions, RunCliOptions } from "./types";
+import pc from "picocolors";
 
 type ExecuteBatchCountOptions = {
   argv: string[];
@@ -46,10 +51,11 @@ export async function executeBatchCount({
   };
 
   const extensionFilter = buildDirectoryExtensionFilter(options.includeExt, options.excludeExt);
-  const jobs = options.jobs;
+  const requestedJobs = options.jobs;
   const jobsLimit = resolveBatchJobsLimit();
-  if (jobs > jobsLimit.suggestedMaxJobs) {
-    console.error(formatJobsAdvisoryWarning(jobs, jobsLimit));
+  const jobs = clampRequestedJobs(requestedJobs, jobsLimit);
+  if (requestedJobs > jobsLimit.suggestedMaxJobs) {
+    console.error(pc.yellow(formatJobsAdvisoryWarning(requestedJobs, jobs, jobsLimit)));
   }
   const jobsStrategy = resolveBatchJobsStrategy(jobs);
 

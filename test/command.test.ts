@@ -8,6 +8,7 @@ import {
   WorkerRouteUnavailableError,
   countBatchInputsWithWorkerJobs,
 } from "../src/cli/batch/jobs/load-count-worker-experimental";
+import { resolveBatchJobsLimit } from "../src/cli/batch/jobs/limits";
 import { DEFAULT_INCLUDE_EXTENSIONS, buildDirectoryExtensionFilter } from "../src/cli/path/filter";
 import type { ProgressOutputStream } from "../src/cli/progress/reporter";
 import {
@@ -782,6 +783,7 @@ describe("CLI batch output", () => {
     const root = await makeTempFixture("cli-jobs-advisory-warning");
     await writeFile(join(root, "a.txt"), "alpha beta");
     await writeFile(join(root, "b.txt"), "gamma delta");
+    const expectedCappedJobs = resolveBatchJobsLimit().suggestedMaxJobs;
 
     const output = await captureCli([
       "--path",
@@ -790,10 +792,15 @@ describe("CLI batch output", () => {
       "99999",
       "--format",
       "raw",
+      "--debug",
       "--quiet-skips",
     ]);
+    const events = parseDebugEvents(output.stderr);
+    const strategy = events.find((item) => item.event === "batch.jobs.strategy");
 
     expect(output.stderr.some((line) => line.includes("Warning: requested --jobs=99999"))).toBeTrue();
+    expect(output.stderr.some((line) => line.includes(`Running with --jobs=${expectedCappedJobs}`))).toBeTrue();
+    expect(strategy?.jobs).toBe(expectedCappedJobs);
     expect(output.stdout).toEqual(["4"]);
   });
 });
