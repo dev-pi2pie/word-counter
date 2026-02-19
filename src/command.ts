@@ -2,11 +2,13 @@ import { Command } from "commander";
 import { createDebugChannel } from "./cli/debug/channel";
 import { configureProgramOptions } from "./cli/program/options";
 import { getFormattedVersionLabel } from "./cli/program/version";
+import { resolveBatchJobsLimit } from "./cli/batch/jobs/limits";
 import { executeBatchCount } from "./cli/runtime/batch";
 import {
   hasPathInput,
   resolveCountRunOptions,
   resolveDebugReportPathOption,
+  validateStandalonePrintJobsLimitUsage,
   validateSingleRegexOptionUsage,
 } from "./cli/runtime/options";
 import { executeSingleCount } from "./cli/runtime/single";
@@ -36,6 +38,19 @@ export async function runCli(
 
   program.action(
     async (textTokens: string[], options: CliActionOptions) => {
+      if (options.printJobsLimit) {
+        try {
+          validateStandalonePrintJobsLimitUsage(argv);
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          program.error(pc.red(message));
+          return;
+        }
+
+        console.log(JSON.stringify(resolveBatchJobsLimit()));
+        return;
+      }
+
       const debugEnabled = Boolean(options.debug);
       const debugReportPath = resolveDebugReportPathOption(options.debugReport);
       const debugReportEnabled = options.debugReport !== undefined && options.debugReport !== false;

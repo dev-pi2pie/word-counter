@@ -6,7 +6,11 @@ import { buildBatchSummary, loadBatchInputs, resolveBatchFilePaths, runCli } fro
 import { createDebugChannel } from "../src/cli/debug/channel";
 import { DEFAULT_INCLUDE_EXTENSIONS, buildDirectoryExtensionFilter } from "../src/cli/path/filter";
 import type { ProgressOutputStream } from "../src/cli/progress/reporter";
-import { parseInlineLatinHintRule, validateSingleRegexOptionUsage } from "../src/cli/runtime/options";
+import {
+  parseInlineLatinHintRule,
+  validateSingleRegexOptionUsage,
+  validateStandalonePrintJobsLimitUsage,
+} from "../src/cli/runtime/options";
 import { TOTAL_OF_PARTS } from "../src/cli/total-of";
 
 const tempRoots: string[] = [];
@@ -424,6 +428,124 @@ describe("CLI batch output", () => {
     const output = await captureCli(["--path", root, "--path", explicitPath, "--format", "raw"]);
 
     expect(output.stdout).toEqual(["3"]);
+  });
+
+  test("supports opt-in --jobs concurrency in stable route", async () => {
+    const root = await makeTempFixture("cli-jobs-stable");
+    await writeFile(join(root, "a.txt"), "alpha beta");
+    await writeFile(join(root, "b.txt"), "gamma delta");
+
+    const output = await captureCli([
+      "--path",
+      root,
+      "--jobs",
+      "2",
+      "--format",
+      "raw",
+      "--quiet-skips",
+    ]);
+
+    expect(output.stdout).toEqual(["4"]);
+  });
+
+  test("keeps totals consistent between stable and experimental jobs routes", async () => {
+    const root = await makeTempFixture("cli-jobs-route-parity");
+    await writeFile(join(root, "z.txt"), "zeta");
+    await writeFile(join(root, "a.txt"), "alpha beta");
+    await writeFile(join(root, "binary.dat"), Buffer.from([0, 1, 2, 3]));
+
+    const stable = await captureCli([
+      "--path",
+      root,
+      "--jobs",
+      "4",
+      "--format",
+      "raw",
+      "--quiet-skips",
+    ]);
+    const experimental = await captureCli([
+      "--path",
+      root,
+      "--jobs",
+      "4",
+      "--experimental-load-count",
+      "--format",
+      "raw",
+      "--quiet-skips",
+    ]);
+
+    expect(experimental.stdout).toEqual(stable.stdout);
+  });
+
+  test("keeps per-file ordering deterministic in experimental jobs route", async () => {
+    const root = await makeTempFixture("cli-jobs-experimental-order");
+    await writeFile(join(root, "z.txt"), "zeta");
+    await writeFile(join(root, "a.txt"), "alpha");
+    await writeFile(join(root, "m.txt"), "mu");
+
+    const output = await captureCli([
+      "--path",
+      root,
+      "--jobs",
+      "3",
+      "--experimental-load-count",
+      "--per-file",
+      "--format",
+      "json",
+      "--quiet-skips",
+    ]);
+    const parsed = JSON.parse(output.stdout[0] ?? "{}");
+    const files = Array.isArray(parsed.files) ? parsed.files : [];
+
+    expect(files.map((item: { path: string }) => basename(item.path))).toEqual([
+      "a.txt",
+      "m.txt",
+      "z.txt",
+    ]);
+  });
+
+  test("emits advisory warning when requested --jobs exceeds suggested limit", async () => {
+    const root = await makeTempFixture("cli-jobs-advisory-warning");
+    await writeFile(join(root, "a.txt"), "alpha beta");
+    await writeFile(join(root, "b.txt"), "gamma delta");
+
+    const output = await captureCli([
+      "--path",
+      root,
+      "--jobs",
+      "99999",
+      "--format",
+      "raw",
+      "--quiet-skips",
+    ]);
+
+    expect(output.stderr.some((line) => line.includes("Warning: requested --jobs=99999"))).toBeTrue();
+    expect(output.stdout).toEqual(["4"]);
+  });
+});
+
+describe("CLI jobs diagnostics", () => {
+  test("prints jobs limit summary as JSON", async () => {
+    const output = await captureCli(["--print-jobs-limit"]);
+    const parsed = JSON.parse(output.stdout[0] ?? "{}");
+
+    expect(typeof parsed.suggestedMaxJobs).toBe("number");
+    expect(typeof parsed.cpuLimit).toBe("number");
+    expect(typeof parsed.uvThreadpool).toBe("number");
+    expect(typeof parsed.ioLimit).toBe("number");
+    expect(parsed.suggestedMaxJobs >= 1).toBeTrue();
+  });
+
+  test("enforces standalone usage for --print-jobs-limit", () => {
+    expect(() =>
+      validateStandalonePrintJobsLimitUsage([
+        "node",
+        "word-counter",
+        "--print-jobs-limit",
+        "--format",
+        "json",
+      ]),
+    ).toThrow("`--print-jobs-limit` must be used alone.");
   });
 });
 

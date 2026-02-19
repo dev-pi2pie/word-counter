@@ -12,6 +12,11 @@ type BuildBatchSummaryOptions = {
   preserveCollectorSegments?: boolean;
 };
 
+type FinalizeBatchSummaryFromFileResultsOptions = {
+  onFinalizeStart?: () => void;
+  preserveCollectorSegments?: boolean;
+};
+
 function mergeWordCounterResult(
   left: WordCounterResult,
   right: WordCounterResult,
@@ -321,7 +326,6 @@ export async function buildBatchSummary(
   wcOptions: Parameters<typeof wordCounter>[1],
   options: BuildBatchSummaryOptions = {},
 ): Promise<BatchSummary> {
-  const preserveCollectorSegments = options.preserveCollectorSegments ?? true;
   const files: BatchFileResult[] = [];
 
   for (const input of inputs) {
@@ -329,14 +333,6 @@ export async function buildBatchSummary(
       section === "all"
         ? wordCounter(input.content, wcOptions)
         : countSections(input.content, section, wcOptions);
-
-    if (!preserveCollectorSegments) {
-      if ("section" in result) {
-        stripCollectorSegmentsFromSectionedResult(result);
-      } else {
-        stripCollectorSegmentsFromWordCounterResult(result);
-      }
-    }
 
     files.push({
       path: input.path,
@@ -349,8 +345,30 @@ export async function buildBatchSummary(
     });
   }
 
-  options.onFinalizeStart?.();
+  return finalizeBatchSummaryFromFileResults(files, section, wcOptions, {
+    onFinalizeStart: options.onFinalizeStart,
+    preserveCollectorSegments: options.preserveCollectorSegments,
+  });
+}
 
+export function finalizeBatchSummaryFromFileResults(
+  files: BatchFileResult[],
+  section: SectionMode,
+  wcOptions: Parameters<typeof wordCounter>[1],
+  options: FinalizeBatchSummaryFromFileResultsOptions = {},
+): BatchSummary {
+  const preserveCollectorSegments = options.preserveCollectorSegments ?? true;
+  if (!preserveCollectorSegments) {
+    for (const file of files) {
+      if ("section" in file.result) {
+        stripCollectorSegmentsFromSectionedResult(file.result);
+        continue;
+      }
+      stripCollectorSegmentsFromWordCounterResult(file.result);
+    }
+  }
+
+  options.onFinalizeStart?.();
   if (files.length === 0) {
     return {
       files,

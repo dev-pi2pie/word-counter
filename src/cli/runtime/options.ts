@@ -45,6 +45,13 @@ export function validateSingleRegexOptionUsage(argv: string[]): void {
   }
 }
 
+export function validateStandalonePrintJobsLimitUsage(argv: string[]): void {
+  const tokens = argv.slice(2).filter((token) => token.length > 0);
+  if (tokens.length !== 1 || tokens[0] !== "--print-jobs-limit") {
+    throw new Error("`--print-jobs-limit` must be used alone.");
+  }
+}
+
 export function resolveBatchScope(argv: string[]): BatchScope {
   let scope: BatchScope = "merged";
   for (const token of argv) {

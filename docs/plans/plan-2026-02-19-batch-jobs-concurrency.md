@@ -26,33 +26,33 @@ Deliver a focused improvement set that improves large-batch runtime via bounded 
 
 ### Phase 1 - Stable Route (`load-only`)
 
-- [ ] Add `--jobs <n>` CLI option with validation (`integer >= 1`, no hard max cap).
-- [ ] Keep default `--jobs=1` for compatibility-safe rollout.
-- [ ] Implement bounded load concurrency with deterministic single-threaded count/aggregate.
-- [ ] Preserve deterministic output via original sorted index before finalize/render.
-- [ ] Keep JSON/standard/raw contracts unchanged.
-- [ ] Ensure progress and debug behavior remain consistent under concurrent completion.
-- [ ] Add tests for deterministic per-file order and total parity across `--jobs` values.
+- [x] Add `--jobs <n>` CLI option with validation (`integer >= 1`, no hard max cap).
+- [x] Keep default `--jobs=1` for compatibility-safe rollout.
+- [x] Implement bounded load concurrency with deterministic single-threaded count/aggregate.
+- [x] Preserve deterministic output via original sorted index before finalize/render.
+- [x] Keep JSON/standard/raw contracts unchanged.
+- [x] Ensure progress and debug behavior remain consistent under concurrent completion.
+- [x] Add tests for deterministic per-file order and total parity across `--jobs` values.
 
 ### Phase 2 - Modular Architecture
 
-- [ ] Add shared executor contract and route selector:
+- [x] Add shared executor contract and route selector:
   - `src/cli/batch/jobs/types.ts`
   - `src/cli/batch/jobs/strategy.ts`
-- [ ] Add stable executor and shared queue/render/limits modules:
+- [x] Add stable executor and shared queue/render/limits modules:
   - `src/cli/batch/jobs/load-only.ts`
   - `src/cli/batch/jobs/queue.ts`
   - `src/cli/batch/jobs/render.ts`
   - `src/cli/batch/jobs/limits.ts`
-- [ ] Keep CLI wiring thin so route logic is not concentrated in one file.
+- [x] Keep CLI wiring thin so route logic is not concentrated in one file.
 
 ### Phase 3 - Experimental Route (`load+count`)
 
-- [ ] Add explicit experimental opt-in flag for `load+count` route.
-- [ ] Implement experimental executor in `src/cli/batch/jobs/load-count-experimental.ts`.
-- [ ] Reuse shared contracts/primitives from Phase 2 (no special-case fork in CLI layer).
-- [ ] Add parity tests vs stable route for deterministic output and totals.
-- [ ] Add safety checks for resource-limit failures (`EMFILE`/`ENFILE`) with clear failure messages.
+- [x] Add explicit experimental opt-in flag for `load+count` route.
+- [x] Implement experimental executor in `src/cli/batch/jobs/load-count-experimental.ts`.
+- [x] Reuse shared contracts/primitives from Phase 2 (no special-case fork in CLI layer).
+- [x] Add parity tests vs stable route for deterministic output and totals.
+- [x] Add safety checks for resource-limit failures (`EMFILE`/`ENFILE`) with clear failure messages.
 
 ### Phase 4 - Diagnostics: `--print-jobs-limit`
 

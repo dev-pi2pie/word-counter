@@ -1,5 +1,7 @@
 import type { SectionedResult } from "../../markdown";
 import { runBatchCount } from "../batch/run";
+import { formatJobsAdvisoryWarning, resolveBatchJobsLimit } from "../batch/jobs/limits";
+import { resolveBatchJobsStrategy } from "../batch/jobs/strategy";
 import type { DebugChannel } from "../debug/channel";
 import {
   getTotalLabels,
@@ -44,6 +46,13 @@ export async function executeBatchCount({
   };
 
   const extensionFilter = buildDirectoryExtensionFilter(options.includeExt, options.excludeExt);
+  const jobs = options.jobs;
+  const jobsLimit = resolveBatchJobsLimit();
+  if (jobs > jobsLimit.suggestedMaxJobs) {
+    console.error(formatJobsAdvisoryWarning(jobs, jobsLimit));
+  }
+  const jobsStrategy = resolveBatchJobsStrategy(options.experimentalLoadCount);
+
   const debugEnabled = Boolean(options.debug);
   const mirrorDebugToTerminal = debugEnabled && (!debug.reportPath || teeEnabled);
   const summary = await runBatchCount({
@@ -59,6 +68,8 @@ export async function executeBatchCount({
       stream: runtime.stderr ?? process.stderr,
       clearOnFinish: !(mirrorDebugToTerminal || options.keepProgress),
     }),
+    jobs,
+    jobsStrategy,
   });
 
   const showSkipDiagnostics = debugEnabled && !batchOptions.quietSkips;
