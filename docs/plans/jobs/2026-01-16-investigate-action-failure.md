@@ -1,6 +1,7 @@
 ---
 title: "Investigate GitHub Actions failure for release/publish"
 created-date: 2026-01-16
+modified-date: 2026-02-19
 status: completed
 agent: codex
 ---
@@ -30,7 +31,7 @@ else
 fi
 shell: /usr/bin/bash -e {0}
 env:
-  NPM_CONFIG_USERCONFIG: /home/runner/work/_temp/.npmrc
+  NPM_CONFIG_USERCONFIG: ${RUNNER_TEMP}/.npmrc
   NODE_AUTH_TOKEN: XXXXX-XXXXX-XXXXX-XXXXX
 ```
 

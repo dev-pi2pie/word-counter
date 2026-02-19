@@ -1,7 +1,7 @@
 ---
 title: "Example huge logs generator/cleaner script"
 created-date: 2026-02-15
-modified-date: 2026-02-15
+modified-date: 2026-02-19
 status: completed
 agent: Codex
 ---
@@ -12,8 +12,8 @@ Added utility scripts for the new example folder `examples/test-case-huge-logs` 
 
 ## Changes
 
-- Added `/Users/nakolus/Projects/github-work/dev-pi2pie/word-counter/examples/manage-huge-logs.mjs` as the main implementation (runnable by `node` or `bun`).
-- Added `/Users/nakolus/Projects/github-work/dev-pi2pie/word-counter/examples/manage-huge-logs.sh` as a thin wrapper that calls the JS script.
+- Added `examples/manage-huge-logs.mjs` as the main implementation (runnable by `node` or `bun`).
+- Added `examples/manage-huge-logs.sh` as a thin wrapper that calls the JS script.
 - Implemented commands:
   - `create <file-count> [words-per-file]`
   - `clean`
