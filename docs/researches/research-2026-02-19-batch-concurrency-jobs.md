@@ -34,9 +34,30 @@ This is stable but leaves performance on the table for large directory scans.
 
 1. Add `--jobs <n>` (batch-only), validated as integer `>= 1`.
 2. Default to `1` (opt-in concurrency for safest rollout).
-3. Use a bounded worker-pool model (no unbounded `Promise.all`).
-4. Preserve output determinism by writing each result into its original sorted index.
-5. Keep skip/error behavior unchanged for this scope.
+3. First release: parallelize load only with bounded prefetching; keep count/aggregate deterministic and single-threaded.
+4. Add an experimental route for `load+count` in workers, gated behind an explicit experiment flag.
+5. Preserve output determinism by writing each result into its original sorted index.
+6. Keep skip/error behavior unchanged for this scope.
+
+## Modular Two-Route Design
+
+Default route (stable):
+- `load-only` concurrency (`--jobs`) with single-threaded count/aggregate.
+
+Experimental route:
+- `load+count` inside workers, enabled only with an explicit experimental option.
+
+Module boundaries (keep files small and composable):
+- `src/cli/batch/jobs/strategy.ts`: route selection and shared contracts.
+- `src/cli/batch/jobs/load-only.ts`: stable executor.
+- `src/cli/batch/jobs/load-count-experimental.ts`: experimental executor.
+- `src/cli/batch/jobs/queue.ts`: bounded queue/backpressure primitive.
+- `src/cli/batch/jobs/types.ts`: task/result/error event types.
+- `src/cli/batch/jobs/limits.ts`: host limit heuristic + warnings.
+- `src/cli/batch/jobs/render.ts`: deterministic finalize/render from index-ordered results.
+
+Guardrail:
+- Both routes must implement the same executor interface so CLI wiring and output contracts stay identical.
 
 ## ASCII Diagram
 
@@ -55,8 +76,29 @@ Current (sequential)
         ...repeat...
 
 
-Proposed (bounded concurrency with stable output order)
--------------------------------------------------------
+Proposed v1 (bounded load concurrency with stable output order)
+---------------------------------------------------------------
+           [resolved files sorted]
+                      |
+                      v
+            [index-based task queue]
+             /         |          \
+            v          v           v
+      loader A     loader B    loader C   ... up to --jobs
+      load only    load only    load only
+            \          |           /
+             v         v          v
+     [loaded buffers written by original index]
+                      |
+                      v
+      [single deterministic count + aggregate pass]
+                      |
+                      v
+         [single deterministic finalize/render]
+
+
+Experimental route (bounded load+count workers, explicit opt-in)
+----------------------------------------------------------------
            [resolved files sorted]
                       |
                       v
@@ -64,10 +106,10 @@ Proposed (bounded concurrency with stable output order)
              /         |          \
             v          v           v
       worker A     worker B    worker C   ... up to --jobs
-      load+count    load+count   load+count
+      load+count   load+count   load+count
             \          |           /
              v         v          v
-       [results written by original index]
+      [counted results written by original index]
                       |
                       v
          [single deterministic finalize/render]
@@ -97,12 +139,16 @@ Suggested acceptance target (for the default local benchmark profile):
 
 ## Practical Limit Heuristic
 
-Recommended `--jobs` upper bound formula:
+Recommended `--jobs` advisory upper bound formula:
 
 - `cpuLimit = os.availableParallelism()`
 - `ioLimit = (UV_THREADPOOL_SIZE || 4) * 2`
-- `hardCap = 32`
-- `suggestedMaxJobs = min(cpuLimit, ioLimit, hardCap)`
+- `suggestedMaxJobs = min(cpuLimit, ioLimit)`
+
+Policy:
+- Do not enforce a hard CLI validation cap.
+- If requested `--jobs` exceeds `suggestedMaxJobs`, emit a warning and continue.
+- If resource-limit failures occur (for example `EMFILE`/`ENFILE`), stop counting and exit with an explicit limit error.
 
 How users can inspect host limits now:
 
@@ -115,7 +161,7 @@ node -p "process.env.UV_THREADPOOL_SIZE || 4"
 One-command summary:
 
 ```bash
-node -e "const os=require('node:os');const cpu=os.availableParallelism();const uv=Number(process.env.UV_THREADPOOL_SIZE||4);const max=Math.min(cpu,uv*2,32);console.log(JSON.stringify({cpu,uvThreadpool:uv,suggestedMaxJobs:max},null,2));"
+node -e "const os=require('node:os');const cpu=os.availableParallelism();const uv=Number(process.env.UV_THREADPOOL_SIZE||4);const max=Math.min(cpu,uv*2);console.log(JSON.stringify({cpu,uvThreadpool:uv,suggestedMaxJobs:max},null,2));"
 ```
 
 ## Proposed UX: `--print-jobs-limit`
@@ -140,8 +186,7 @@ Output contract:
   "suggestedMaxJobs": 8,
   "cpuLimit": 10,
   "uvThreadpool": 4,
-  "ioLimit": 8,
-  "hardCap": 32
+  "ioLimit": 8
 }
 ```
 
@@ -157,22 +202,24 @@ CLI help text:
 - Non-deterministic task completion order:
   - Mitigation: index-stable result slots, render after finalize only.
 - Higher memory pressure at larger `--jobs`:
-  - Mitigation: bounded queue, optional cap, document practical ranges.
+  - Mitigation: bounded queue/backpressure, warning on high requested jobs, document practical ranges.
 - Progress/debug behavior drift:
   - Mitigation: keep event semantics unchanged; only update completion timing.
 
 ## Implications or Recommendations
 
 - Proceed with opt-in concurrency first (`--jobs`, default `1`).
+- Keep v1 implementation conservative: default route is load-only.
+- Keep `load+count` as an explicitly experimental route until benchmark and stability criteria pass.
 - Include benchmark tooling in-repo so performance claims are reproducible.
-- Keep a `doctor`-style environment diagnostics command as a follow-up feature, not part of this core scope.
+- Add `--print-jobs-limit` now as lightweight diagnostics; keep a fuller `doctor` command as follow-up.
 
-## Open Questions
+## Decisions (2026-02-19)
 
-- Should `--jobs` be exposed in this release as opt-in only, or auto-sized later?
-- Do we want a hard max cap in CLI validation (for example `--jobs <= 32`)?
-- Should the first version parallelize only load, or load+count together in workers?
-- Do we want a lightweight diagnostics option (for example `--print-jobs-limit`) before adding a full `doctor` subcommand?
+1. `--jobs` is opt-in for this release (default `1`).
+2. No hard max cap in CLI validation for now; prefer advisory guardrails and fail-fast on real resource-limit errors.
+3. First version should default to load-only parallelism for stability, while a separate `load+count` route exists as explicit experimental mode.
+4. Add `--print-jobs-limit` in this scope as the lightweight diagnostics option.
 
 ## Related Research
 
