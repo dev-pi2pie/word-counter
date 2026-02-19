@@ -32,8 +32,10 @@ jobs:
         uses: actions/checkout@v6
         with:
           # Keep checkout light; branch validation will deepen/unshallow if needed.
+          # For workflow_dispatch, checkout the selected branch so current scripts/workflow code are available.
+          # Tag resolution still comes from inputs.tag in later steps.
           fetch-depth: 1
-          ref: ${{ inputs.tag && format('refs/tags/{0}', inputs.tag) || github.ref }}
+          ref: ${{ github.event_name == 'workflow_dispatch' && github.ref || (inputs.tag && format('refs/tags/{0}', inputs.tag) || github.ref) }}
           show-progress: false
 
       - name: Resolve tag
@@ -165,89 +167,20 @@ jobs:
         shell: bash
         env:
           RELEASE_RANGE: ${{ steps.range.outputs.range }}
+          PREVIOUS_TAG: ${{ steps.range.outputs.previous_tag }}
+          CURRENT_TAG: ${{ steps.tag.outputs.tag }}
+          REPOSITORY: ${{ github.repository }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          # Stable notes are intentionally aggregated from one range pass
-          # to avoid canary-style repeated chunks between stable tags.
+          SCRIPT_PATH="scripts/generate-stable-release-notes.sh"
+          ARGS=(--mode "hybrid" --range "$RELEASE_RANGE" --current-tag "$CURRENT_TAG" --repository "$REPOSITORY")
 
-          mapfile -t COMMITS < <(git log --no-merges --reverse --format='%H%x09%s' "$RELEASE_RANGE")
-
-          if [ "${#COMMITS[@]}" -eq 0 ]; then
-            printf -v NOTES '%s\n' \
-              "## What's Changed" \
-              "" \
-              "- No notable changes in this release." \
-              "" \
-              "### Full Changelog" \
-              "- No commits in selected range."
-          else
-            declare -a GROUP_ORDER=(
-              "New Features"
-              "Bug Fixes"
-              "Performance"
-              "Refactors"
-              "Documentation"
-              "Tests"
-              "Build"
-              "CI"
-              "Chores"
-              "Reverts"
-              "Other Changes"
-            )
-
-            declare -A GROUPED_LINES=()
-            declare -a ALL_CHANGES=()
-
-            for line in "${COMMITS[@]}"; do
-              SHA="${line%%$'\t'*}"
-              SUBJECT="${line#*$'\t'}"
-              GROUP="Other Changes"
-              DISPLAY="$SUBJECT"
-
-              if [[ "$SUBJECT" =~ ^([[:alpha:]]+)(\(([[:alnum:]./_-]+)\))?:[[:space:]]+(.+)$ ]]; then
-                TYPE_LOWER="${BASH_REMATCH[1],,}"
-                SCOPE="${BASH_REMATCH[3]:-}"
-                MESSAGE="${BASH_REMATCH[4]}"
-
-                case "$TYPE_LOWER" in
-                  feat) GROUP="New Features" ;;
-                  fix) GROUP="Bug Fixes" ;;
-                  perf) GROUP="Performance" ;;
-                  refactor) GROUP="Refactors" ;;
-                  docs) GROUP="Documentation" ;;
-                  test) GROUP="Tests" ;;
-                  build) GROUP="Build" ;;
-                  ci) GROUP="CI" ;;
-                  chore) GROUP="Chores" ;;
-                  revert) GROUP="Reverts" ;;
-                esac
-
-                if [ -n "$SCOPE" ]; then
-                  DISPLAY="**$SCOPE:** $MESSAGE"
-                else
-                  DISPLAY="$MESSAGE"
-                fi
-              elif [[ "$SUBJECT" =~ ^Bump[[:space:]] ]]; then
-                GROUP="Chores"
-              fi
-
-              GROUPED_LINES["$GROUP"]+="- $DISPLAY"$'\n'
-              ALL_CHANGES+=("- $SHA $DISPLAY")
-            done
-
-            NOTES="## What's Changed"
-            for GROUP_NAME in "${GROUP_ORDER[@]}"; do
-              BLOCK="${GROUPED_LINES[$GROUP_NAME]-}"
-              if [ -n "$BLOCK" ]; then
-                NOTES+=$'\n\n'"### $GROUP_NAME"$'\n'"$BLOCK"
-              fi
-            done
-
-            NOTES+=$'\n\n'"### Full Changelog"
-            for CHANGE_LINE in "${ALL_CHANGES[@]}"; do
-              NOTES+=$'\n'"$CHANGE_LINE"
-            done
+          if [ -n "${PREVIOUS_TAG:-}" ]; then
+            ARGS+=(--previous-tag "$PREVIOUS_TAG")
           fi
+
+          NOTES="$("$SCRIPT_PATH" "${ARGS[@]}")"
 
           {
             echo "content<<__RELEASE_NOTES__"
