@@ -30,6 +30,7 @@ Make stable release-note generation locally reproducible before CI by extracting
 - Updated `.github/workflows/release.yml` stable notes step to call `scripts/generate-stable-release-notes.sh` instead of embedding the logic inline.
   - Added `GH_TOKEN` env so GitHub login resolution works in CI for contributor attribution.
   - Set stable release default mode to `pr` for contributor-attributed release lines in CI output.
+  - Adjusted `workflow_dispatch` checkout ref to use the selected branch (`github.ref`) so current scripts are available even when generating notes for an older tag via `inputs.tag`.
 - Added `docs/release-notes-local-verification.md` with local verification commands.
 - Added a local mode-diff workflow in docs to compare commit vs PR render outputs.
 - Added a forced fallback login option for local preview when API login resolution is unavailable.
@@ -49,3 +50,4 @@ Make stable release-note generation locally reproducible before CI by extracting
 - Ran `scripts/local-release-verification.sh --mode commit` and `--mode pr` successfully for output comparison.
 - Ran fallback path with `--fallback-login @your-account-name` and confirmed contributor output is forced to the requested login.
 - Ran script against stable range `v0.1.2..v0.1.3` and confirmed expected markdown output structure.
+- Confirmed manual workflow dispatch for an existing older tag no longer depends on that tag containing newly added helper scripts.

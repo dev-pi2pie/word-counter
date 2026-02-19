@@ -32,8 +32,10 @@ jobs:
         uses: actions/checkout@v6
         with:
           # Keep checkout light; branch validation will deepen/unshallow if needed.
+          # For workflow_dispatch, checkout the selected branch so current scripts/workflow code are available.
+          # Tag resolution still comes from inputs.tag in later steps.
           fetch-depth: 1
-          ref: ${{ inputs.tag && format('refs/tags/{0}', inputs.tag) || github.ref }}
+          ref: ${{ github.event_name == 'workflow_dispatch' && github.ref || (inputs.tag && format('refs/tags/{0}', inputs.tag) || github.ref) }}
           show-progress: false
 
       - name: Resolve tag
