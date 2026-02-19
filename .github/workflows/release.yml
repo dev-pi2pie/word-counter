@@ -24,7 +24,7 @@ jobs:
     outputs:
       tag: ${{ steps.tag.outputs.tag }}
       prerelease: ${{ steps.prerelease.outputs.IS_PRERELEASE }}
-      release_notes: ${{ steps.cliff.outputs.content }}
+      release_notes: ${{ steps.notes.outputs.content }}
       previous_tag: ${{ steps.range.outputs.previous_tag }}
       release_range: ${{ steps.range.outputs.range }}
     steps:
@@ -150,8 +150,9 @@ jobs:
           echo "previous_tag=$PREVIOUS_TAG" >> "$GITHUB_OUTPUT"
           echo "range=$RANGE" >> "$GITHUB_OUTPUT"
 
-      - name: Generate release notes
-        id: cliff
+      - name: Generate release notes (pre-release, GitHub default)
+        id: cliff_github
+        if: steps.prerelease.outputs.IS_PRERELEASE == 'true'
         uses: orhun/git-cliff-action@v4
         with:
           config: github
@@ -159,6 +160,36 @@ jobs:
         env:
           GITHUB_REPO: ${{ github.repository }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate release notes (stable, custom cliff)
+        id: cliff_custom
+        if: steps.prerelease.outputs.IS_PRERELEASE != 'true'
+        uses: orhun/git-cliff-action@v4
+        with:
+          config: .cliff.toml
+          args: --strip header ${{ steps.range.outputs.range }}
+        env:
+          GITHUB_REPO: ${{ github.repository }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Select release notes content
+        id: notes
+        env:
+          IS_PRERELEASE: ${{ steps.prerelease.outputs.IS_PRERELEASE }}
+          PREVIEW_NOTES: ${{ steps.cliff_github.outputs.content }}
+          STABLE_NOTES: ${{ steps.cliff_custom.outputs.content }}
+        run: |
+          if [ "$IS_PRERELEASE" = "true" ]; then
+            SELECTED="$PREVIEW_NOTES"
+          else
+            SELECTED="$STABLE_NOTES"
+          fi
+
+          {
+            echo "content<<__RELEASE_NOTES__"
+            printf '%s\n' "$SELECTED"
+            echo "__RELEASE_NOTES__"
+          } >> "$GITHUB_OUTPUT"
 
   release:
     runs-on: ubuntu-latest
