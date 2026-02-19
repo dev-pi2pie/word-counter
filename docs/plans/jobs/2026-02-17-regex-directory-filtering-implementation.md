@@ -42,4 +42,4 @@ Implement Issue #36 regex filtering with the agreed contract for directory scans
 
 ## Related Research
 
-- `docs/research-2026-02-17-filename-regex-matching.md`
+- `docs/researches/research-2026-02-17-filename-regex-matching.md`

@@ -9,7 +9,7 @@ agent: codex
 Implement a `custom + yaml` frontmatter splitter (with multi-format fence detection) that returns frontmatter vs content in a `parseMarkdown`-style API, enabling multiple counting modes (all, two sections, per-key) with clear tests for edge cases.
 
 ## Related Research
-- [Frontmatter vs Content Counting Modes: Parsing Options](../research-2026-01-15-frontmatter-counting-modes.md)
+- `docs/researches/research-2026-01-15-frontmatter-counting-modes.md`
 
 ## Plan
 1. Define the parsing contract and naming:

@@ -26,7 +26,7 @@ Add an explicit opt-in flag to keep the final progress line visible after batch 
 
 ## Related Research
 
-- `docs/research-2026-02-13-cli-progress-indicator.md`
+- `docs/researches/research-2026-02-13-cli-progress-indicator.md`
 
 ## Related Plans
 

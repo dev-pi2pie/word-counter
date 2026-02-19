@@ -41,4 +41,4 @@ Move default Latin hint constants into a dedicated module and expand built-in de
 
 ## Related Research
 
-- `docs/research-2026-02-18-latin-custom-hints-v2.md`
+- `docs/researches/research-2026-02-18-latin-custom-hints-v2.md`

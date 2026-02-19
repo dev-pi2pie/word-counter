@@ -142,10 +142,10 @@ Deliver `v0.1.0` through phased canary releases with clear priority ordering, ex
 
 ## Related Research
 
-- `docs/research-2026-02-13-batch-file-counting.md`
-- `docs/research-2026-02-13-cli-progress-indicator.md`
-- `docs/research-2026-02-13-total-combination-mode.md`
-- `docs/research-2026-01-02-language-detection.md`
+- `docs/researches/research-2026-02-13-batch-file-counting.md`
+- `docs/researches/research-2026-02-13-cli-progress-indicator.md`
+- `docs/researches/research-2026-02-13-total-combination-mode.md`
+- `docs/researches/research-2026-01-02-language-detection.md`
 - `docs/schemas/default-config.md`
 
 ## Related Plans

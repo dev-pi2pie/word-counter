@@ -82,6 +82,6 @@ Implement configurable Latin hint rules in API and CLI so users can tune ambiguo
 
 ## Related Research
 
-- `docs/research-2026-02-18-latin-custom-hints-v2.md`
-- `docs/research-2026-01-02-language-detection.md`
-- `docs/research-2026-01-02-word-counter-options.md`
+- `docs/researches/research-2026-02-18-latin-custom-hints-v2.md`
+- `docs/researches/research-2026-01-02-language-detection.md`
+- `docs/researches/research-2026-01-02-word-counter-options.md`

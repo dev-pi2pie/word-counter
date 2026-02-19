@@ -35,7 +35,7 @@ _Why_: Regex/script-only detection cannot reliably identify Latin-script languag
 3. Adjust segmenter usage to include a fallback locale chain if needed.
 4. Run the full test suite to confirm existing tests behave as expected after the change.
 5. Add/refine tests for ambiguous Latin input ensuring stable segmentation and counts.
-6. Update docs/research note to record the rationale.
+6. Update docs/researches note to record the rationale.
 
 ## References
 - https://www.rfc-editor.org/rfc/rfc5646 — Defines BCP 47 tags, including `und` and `mul`.

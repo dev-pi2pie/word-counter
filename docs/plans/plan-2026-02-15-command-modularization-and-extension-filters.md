@@ -108,7 +108,7 @@ Reduce `src/command.ts` complexity by separating batch/path/output concerns into
 
 ## Related Research
 
-- `docs/research-2026-02-13-batch-file-counting.md`
+- `docs/researches/research-2026-02-13-batch-file-counting.md`
 - `docs/schemas/default-config.md`
 
 ## Related Plans

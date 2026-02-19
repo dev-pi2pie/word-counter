@@ -41,7 +41,7 @@ Implemented Phase 3 from `v0.1.0` canary plan:
 
 ## Related Research
 
-- `docs/research-2026-02-13-cli-progress-indicator.md`
+- `docs/researches/research-2026-02-13-cli-progress-indicator.md`
 
 ## Related Plans
 

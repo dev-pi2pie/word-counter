@@ -29,7 +29,7 @@ agent: Codex
     - regex/script-based routing
     - current built-in Latin diacritic buckets (`de`, `es`, `pt`, `fr`)
     - limitations for other European diacritics
-- `docs/research-2026-01-02-language-detection.md`
+- `docs/researches/research-2026-01-02-language-detection.md`
   - Updated implementation notes to `und-Hani`.
   - Clarified `und-*` script tagging rationale.
 - `docs/breaking-changes-notes.md`
@@ -42,4 +42,4 @@ agent: Codex
 
 ## Related Research
 
-- `docs/research-2026-01-02-language-detection.md`
+- `docs/researches/research-2026-01-02-language-detection.md`

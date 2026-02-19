@@ -64,4 +64,4 @@ Issue linkage:
 
 ## Related Research
 
-- `docs/research-2026-02-13-batch-file-counting.md`
+- `docs/researches/research-2026-02-13-batch-file-counting.md`
