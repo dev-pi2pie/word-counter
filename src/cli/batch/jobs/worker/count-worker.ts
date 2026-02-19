@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import { parentPort, workerData } from "node:worker_threads";
 import { countSections } from "../../../../markdown";
 import wordCounter from "../../../../wc";
+import { compactCollectorSegmentsInCountResult } from "../../aggregate";
 import { isProbablyBinary } from "../../../path/load";
 import type {
   WorkerConfig,
@@ -44,6 +45,10 @@ parentPort.on("message", async (message: WorkerRequestMessage) => {
       config.section === "all"
         ? wordCounter(content, config.wcOptions)
         : countSections(content, config.section, config.wcOptions);
+
+    if (!config.preserveCollectorSegments) {
+      compactCollectorSegmentsInCountResult(result);
+    }
 
     const response: WorkerResponseMessage = {
       type: "result",

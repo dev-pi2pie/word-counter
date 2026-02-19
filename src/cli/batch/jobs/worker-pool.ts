@@ -16,6 +16,7 @@ type CountBatchInputsWithWorkerPoolOptions = {
   jobs: number;
   section: SectionMode;
   wcOptions: Parameters<typeof wordCounter>[1];
+  preserveCollectorSegments: boolean;
   onFileProcessed?: (snapshot: BatchProgressSnapshot) => void;
 };
 
@@ -179,11 +180,13 @@ export async function countBatchInputsWithWorkerPool(
           workerData: {
             section: options.section,
             wcOptions: options.wcOptions,
+            preserveCollectorSegments: options.preserveCollectorSegments,
           },
         });
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
-        throw new WorkerPoolUnavailableError(`Worker pool initialization failed: ${message}`);
+        void fail(new WorkerPoolUnavailableError(`Worker pool initialization failed: ${message}`));
+        return;
       }
 
       workers.push(worker);

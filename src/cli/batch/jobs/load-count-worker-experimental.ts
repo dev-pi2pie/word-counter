@@ -48,6 +48,7 @@ export async function countBatchInputsWithWorkerJobs(
       jobs: options.jobs,
       section: options.section,
       wcOptions: options.wcOptions,
+      preserveCollectorSegments: options.preserveCollectorSegments,
       onFileProcessed: options.onFileProcessed,
     });
   } catch (error) {

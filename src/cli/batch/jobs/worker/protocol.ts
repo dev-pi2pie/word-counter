@@ -5,6 +5,7 @@ import type { BatchSkip } from "../../../types";
 export type WorkerConfig = {
   section: SectionMode;
   wcOptions: WordCounterOptions;
+  preserveCollectorSegments: boolean;
 };
 
 export type WorkerTaskMessage = {

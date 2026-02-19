@@ -25,6 +25,7 @@ export type CountBatchWithJobsOptions = {
   jobs: number;
   section: SectionMode;
   wcOptions: Parameters<typeof wordCounter>[1];
+  preserveCollectorSegments: boolean;
   onFileProcessed?: (snapshot: BatchProgressSnapshot) => void;
 };
 

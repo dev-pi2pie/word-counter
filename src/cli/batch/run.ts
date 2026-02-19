@@ -184,6 +184,7 @@ export async function runBatchCount(options: RunBatchCountOptions): Promise<Batc
           jobs: options.jobs,
           section: options.section,
           wcOptions: options.wcOptions,
+          preserveCollectorSegments: options.preserveCollectorSegments,
           onFileProcessed: (snapshot) => {
             if (progressEnabled) {
               options.progressReporter.advance(snapshot);
@@ -210,6 +211,7 @@ export async function runBatchCount(options: RunBatchCountOptions): Promise<Batc
           jobs: options.jobs,
           section: options.section,
           wcOptions: options.wcOptions,
+          preserveCollectorSegments: options.preserveCollectorSegments,
           onFileProcessed: (snapshot) => {
             if (progressEnabled) {
               options.progressReporter.advance(snapshot);

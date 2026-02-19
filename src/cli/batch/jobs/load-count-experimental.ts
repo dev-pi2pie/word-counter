@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { countSections } from "../../../markdown";
 import wordCounter from "../../../wc";
+import { compactCollectorSegmentsInCountResult } from "../aggregate";
 import { isProbablyBinary } from "../../path/load";
 import { createResourceLimitError, isResourceLimitError, resolveBatchJobsLimit } from "./limits";
 import { runBoundedQueue } from "./queue";
@@ -65,6 +66,10 @@ export async function countBatchInputsWithJobs(
       options.section === "all"
         ? wordCounter(content, options.wcOptions)
         : countSections(content, options.section, options.wcOptions);
+
+    if (!options.preserveCollectorSegments) {
+      compactCollectorSegmentsInCountResult(result);
+    }
 
     completed += 1;
     options.onFileProcessed?.({ completed, total });

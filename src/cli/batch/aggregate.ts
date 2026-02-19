@@ -320,12 +320,24 @@ function stripCollectorSegmentsFromSectionedResult(result: SectionedResult): voi
   }
 }
 
+export function compactCollectorSegmentsInCountResult(
+  result: WordCounterResult | SectionedResult,
+): void {
+  if ("section" in result) {
+    stripCollectorSegmentsFromSectionedResult(result);
+    return;
+  }
+
+  stripCollectorSegmentsFromWordCounterResult(result);
+}
+
 export async function buildBatchSummary(
   inputs: BatchFileInput[],
   section: SectionMode,
   wcOptions: Parameters<typeof wordCounter>[1],
   options: BuildBatchSummaryOptions = {},
 ): Promise<BatchSummary> {
+  const preserveCollectorSegments = options.preserveCollectorSegments ?? true;
   const files: BatchFileResult[] = [];
 
   for (const input of inputs) {
@@ -333,6 +345,10 @@ export async function buildBatchSummary(
       section === "all"
         ? wordCounter(input.content, wcOptions)
         : countSections(input.content, section, wcOptions);
+
+    if (!preserveCollectorSegments) {
+      compactCollectorSegmentsInCountResult(result);
+    }
 
     files.push({
       path: input.path,
@@ -360,11 +376,7 @@ export function finalizeBatchSummaryFromFileResults(
   const preserveCollectorSegments = options.preserveCollectorSegments ?? true;
   if (!preserveCollectorSegments) {
     for (const file of files) {
-      if ("section" in file.result) {
-        stripCollectorSegmentsFromSectionedResult(file.result);
-        continue;
-      }
-      stripCollectorSegmentsFromWordCounterResult(file.result);
+      compactCollectorSegmentsInCountResult(file.result);
     }
   }
 
