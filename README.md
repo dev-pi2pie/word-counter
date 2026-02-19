@@ -154,6 +154,12 @@ Quick policy:
 - `--jobs > 1` enables concurrent `load+count`.
 - if requested `--jobs` exceeds host `suggestedMaxJobs` (from `--print-jobs-limit`), the CLI warns and runs with the suggested limit as a safety cap.
 
+Inspect host jobs diagnostics:
+
+```bash
+word-counter --print-jobs-limit
+```
+
 For full policy details, JSON parity expectations (`--misc`, `--total-of whitespace,words`), and benchmark standards, see [`docs/batch-jobs-usage-guide.md`](docs/batch-jobs-usage-guide.md).
 
 ### Stable Path Resolution Contract

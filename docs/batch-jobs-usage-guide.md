@@ -1,6 +1,7 @@
 ---
 title: "Batch Jobs Usage Guide"
 created-date: 2026-02-19
+modified-date: 2026-02-19
 status: completed
 agent: Codex
 ---
@@ -16,6 +17,7 @@ Document the current `--jobs` behavior, parity expectations, and a reproducible 
 - `--jobs` is the only concurrency control flag for batch mode.
 - No `--jobs` and `--jobs 1` are equivalent baseline behavior.
 - `--jobs > 1` uses worker `load+count` by default.
+- If requested `--jobs` exceeds host `suggestedMaxJobs`, the CLI warns and runs with `suggestedMaxJobs` as a safety cap.
 - If workers are unavailable on the host/runtime, execution falls back internally to async `load+count` while preserving deterministic output ordering.
 
 ## Usage
@@ -31,6 +33,12 @@ Concurrent route:
 
 ```bash
 word-counter --path ./examples/test-case-multi-files-support --format json --jobs 4
+```
+
+Host jobs diagnostics:
+
+```bash
+word-counter --print-jobs-limit
 ```
 
 ## JSON Parity Expectations

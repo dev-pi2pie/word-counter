@@ -91,20 +91,28 @@ Deliver a focused improvement set that improves large-batch runtime via bounded 
 
 ### Phase 6 - Diagnostics: `--print-jobs-limit`
 
-- [ ] Add standalone `--print-jobs-limit` flag.
-- [ ] Enforce standalone-only usage (reject with non-zero when combined with other runtime flags or inputs).
-- [ ] Output a single JSON object to `stdout` with:
+- [x] Add standalone `--print-jobs-limit` flag.
+- [x] Enforce standalone-only usage (reject with non-zero when combined with other runtime flags or inputs).
+- [x] Output a single JSON object to `stdout` with:
   - `suggestedMaxJobs`
   - `cpuLimit`
   - `uvThreadpool`
   - `ioLimit`
-- [ ] Implement heuristic:
+- [x] Implement heuristic:
   - `cpuLimit = os.availableParallelism()`
   - `ioLimit = (UV_THREADPOOL_SIZE || 4) * 2`
   - `suggestedMaxJobs = min(cpuLimit, ioLimit)`
-- [ ] Warn when requested `--jobs` is higher than `suggestedMaxJobs` (advisory, not hard reject).
-- [ ] Add tests for standalone success and conflict failure.
-- [ ] Add CLI help text and README usage example.
+- [x] Warn when requested `--jobs` is higher than `suggestedMaxJobs` and apply a safety cap to effective jobs (no hard reject).
+- [x] Add tests for standalone success and conflict failure.
+- [x] Add CLI help text and README usage example.
+- [x] Add guardrail helper to clamp requested jobs to host suggested limit.
+- [x] Keep over-limit warning styling consistent with skip diagnostics (yellow terminal warning).
+
+Phase 6 related job records:
+
+- `docs/plans/jobs/2026-02-19-batch-jobs-phase1-3-implementation.md`
+- `docs/plans/jobs/2026-02-19-jobs-limit-guardrail.md`
+- `docs/plans/jobs/2026-02-19-phase6-diagnostics-checklist-alignment.md`
 
 ### Phase 7 - Benchmark and Release Validation
 
