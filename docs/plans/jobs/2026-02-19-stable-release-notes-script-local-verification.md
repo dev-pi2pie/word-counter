@@ -37,6 +37,7 @@ Make stable release-note generation locally reproducible before CI by extracting
 - Updated changelog format:
   - Replaced list-style range metadata with `Full Changelog: <range-or-compare-link>`.
   - Removed standalone contributors section; contributor attribution is now shown only in `### Changelog` lines.
+  - Refined PR mode grouping to classify by underlying commit type (Conventional Commit subject) instead of PR title text, preventing everything from collapsing into `Other Changes` when PR titles are non-conventional.
 
 ## Verification
 
@@ -51,3 +52,4 @@ Make stable release-note generation locally reproducible before CI by extracting
 - Ran fallback path with `--fallback-login @your-account-name` and confirmed contributor output is forced to the requested login.
 - Ran script against stable range `v0.1.2..v0.1.3` and confirmed expected markdown output structure.
 - Confirmed manual workflow dispatch for an existing older tag no longer depends on that tag containing newly added helper scripts.
+- Confirmed PR mode now retains category grouping by commit type even when displayed change lines use PR-oriented titles/references.

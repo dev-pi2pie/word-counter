@@ -385,6 +385,9 @@ while IFS=$'\t' read -r SHA SUBJECT AUTHOR_NAME AUTHOR_EMAIL; do
   fi
 
   # PR mode: one line per PR when possible, with inline contributor attribution.
+  set_group_and_display_from_subject "$SUBJECT"
+  ITEM_GROUP_KEY="$GROUP_KEY"
+
   PR_NUMBER=""
   PR_TITLE=""
   PR_AUTHOR=""
@@ -414,21 +417,25 @@ EOF
   fi
 
   set_group_and_display_from_subject "$ITEM_SUBJECT"
-  ITEM_DISPLAY="$DISPLAY_MESSAGE"
+  ITEM_DISPLAY="$ITEM_SUBJECT"
   ITEM_CONTRIBUTOR=$(format_contributor_for_mention "$ITEM_CONTRIBUTOR")
 
   if ! grep -Fqx "$ITEM_KEY" "$PR_ITEMS_SEEN_FILE"; then
     printf '%s\n' "$ITEM_KEY" >> "$PR_ITEMS_SEEN_FILE"
     printf '%s\t%s\t%s\t%s\t%s\n' \
-      "$ITEM_KEY" "$GROUP_KEY" "$ITEM_REF" "$ITEM_DISPLAY" "$ITEM_CONTRIBUTOR" >> "$PR_ITEMS_FILE"
+      "$ITEM_KEY" "$ITEM_GROUP_KEY" "$ITEM_REF" "$ITEM_DISPLAY" "$ITEM_CONTRIBUTOR" >> "$PR_ITEMS_FILE"
   else
     TMP_UPDATED="$TMP_DIR/pr_items.updated.tsv"
     : > "$TMP_UPDATED"
     while IFS=$'\t' read -r EXIST_KEY EXIST_GROUP EXIST_REF EXIST_DISPLAY EXIST_CONTRIBS; do
       if [ "$EXIST_KEY" = "$ITEM_KEY" ]; then
         UPDATED_CONTRIBS=$(append_csv_unique "$EXIST_CONTRIBS" "$ITEM_CONTRIBUTOR")
+        UPDATED_GROUP="$EXIST_GROUP"
+        if [ "$EXIST_GROUP" = "other_changes" ] && [ "$ITEM_GROUP_KEY" != "other_changes" ]; then
+          UPDATED_GROUP="$ITEM_GROUP_KEY"
+        fi
         printf '%s\t%s\t%s\t%s\t%s\n' \
-          "$EXIST_KEY" "$EXIST_GROUP" "$EXIST_REF" "$EXIST_DISPLAY" "$UPDATED_CONTRIBS" >> "$TMP_UPDATED"
+          "$EXIST_KEY" "$UPDATED_GROUP" "$EXIST_REF" "$EXIST_DISPLAY" "$UPDATED_CONTRIBS" >> "$TMP_UPDATED"
       else
         printf '%s\t%s\t%s\t%s\t%s\n' \
           "$EXIST_KEY" "$EXIST_GROUP" "$EXIST_REF" "$EXIST_DISPLAY" "$EXIST_CONTRIBS" >> "$TMP_UPDATED"
