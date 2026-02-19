@@ -41,4 +41,4 @@ Implement and document a consistent JSON output contract for optional features, 
 
 ## Related Research
 
-- `docs/research-2026-02-17-json-output-schema-contract.md`
+- `docs/researches/research-2026-02-17-json-output-schema-contract.md`

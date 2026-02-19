@@ -94,8 +94,8 @@ Deliver a spike decision for `v0.1.x`: whether to ship a WASM detector path behi
 - `docs/plans/plan-2026-01-14-latin-ambiguous-locale.md`
 
 ## Related Research
-- `docs/research-2026-01-02-language-detection.md`
-- `docs/research-2026-02-18-latin-custom-hints-v2.md`
+- `docs/researches/research-2026-01-02-language-detection.md`
+- `docs/researches/research-2026-02-18-latin-custom-hints-v2.md`
 
 ## References
 [^1]: https://rustwasm.github.io/docs/wasm-pack/commands/build.html

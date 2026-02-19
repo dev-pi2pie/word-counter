@@ -57,4 +57,4 @@ Resolve the existing docs clarity issue for `--path-mode manual` and the regex-b
 
 ## Related Research
 
-- `docs/research-2026-02-17-filename-regex-matching.md`
+- `docs/researches/research-2026-02-17-filename-regex-matching.md`

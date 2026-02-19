@@ -9,7 +9,7 @@ agent: codex
 Provide a minimal TOML parser for frontmatter so `--section per-key` and `--section split-per-key` can extract key/value pairs and count them as plain text strings, while keeping security risks low and remaining compatible with the current frontmatter parsing design.
 
 ## Related Research
-- [Frontmatter vs Content Counting Modes: Parsing Options](../research-2026-01-15-frontmatter-counting-modes.md)
+- `docs/researches/research-2026-01-15-frontmatter-counting-modes.md`
 
 ## Related Plans
 - [Custom YAML Frontmatter Split for Two Counting Modes](plan-2026-01-15-custom-yaml-frontmatter.md)

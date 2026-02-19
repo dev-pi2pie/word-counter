@@ -61,4 +61,4 @@ Implement the custom Latin hints v2 plan across API, locale detection, CLI flags
 
 ## Related Research
 
-- `docs/research-2026-02-18-latin-custom-hints-v2.md`
+- `docs/researches/research-2026-02-18-latin-custom-hints-v2.md`

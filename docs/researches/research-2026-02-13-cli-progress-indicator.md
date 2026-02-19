@@ -116,4 +116,4 @@ None.
 
 - `src/command.ts`
 - `README.md`
-- `docs/research-2026-02-13-batch-file-counting.md`
+- `docs/researches/research-2026-02-13-batch-file-counting.md`

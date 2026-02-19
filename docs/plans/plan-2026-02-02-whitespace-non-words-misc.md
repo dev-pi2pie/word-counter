@@ -81,8 +81,8 @@ Note: `--non-words` alone does not include whitespace; use `--include-whitespace
 
 ## Related Research
 
-- `docs/research-2026-01-21-whitespace-tab-counting.md`
-- `docs/research-2026-01-16-emoji-symbol-segmentation.md`
+- `docs/researches/research-2026-01-21-whitespace-tab-counting.md`
+- `docs/researches/research-2026-01-16-emoji-symbol-segmentation.md`
 
 ## Related Plans
 

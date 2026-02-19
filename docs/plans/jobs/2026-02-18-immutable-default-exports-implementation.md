@@ -44,4 +44,4 @@ Implement immutable default export hardening for mutable uppercase constants, fo
 
 ## Related Research
 
-- `docs/research-2026-02-18-latin-custom-hints-v2.md`
+- `docs/researches/research-2026-02-18-latin-custom-hints-v2.md`

@@ -35,8 +35,8 @@ agent: Codex
 - Any script detection expansion should align with the research doc and include tests.
 
 ## Related Research
-- `docs/research-2026-01-02-language-detection.md`
-- `docs/research-2026-01-02-word-counter-options.md`
+- `docs/researches/research-2026-01-02-language-detection.md`
+- `docs/researches/research-2026-01-02-word-counter-options.md`
 
 ## References
-- `docs/research-2026-01-02-language-detection.md`
+- `docs/researches/research-2026-01-02-language-detection.md`

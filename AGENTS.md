@@ -65,12 +65,13 @@ Use research docs for exploratory work that is not yet ready for a plan but may 
 Location:
 
 ```text
-docs/research-YYYY-MM-DD-<short-title>.md
+docs/researches/research-YYYY-MM-DD-<short-title>.md
 ```
 
 Notes:
 
 - Use the creation date and a short, kebab-case title.
+- Keep all research docs inside `docs/researches/` (not directly under `docs/`).
 - Keep scope focused on a single topic or question.
 - If research becomes actionable, create a plan doc and link to it.
 

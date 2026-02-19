@@ -55,4 +55,4 @@ Eliminate mutation risk from exported default configuration constants, starting 
 
 ## Related Research
 
-- `docs/research-2026-02-18-latin-custom-hints-v2.md`
+- `docs/researches/research-2026-02-18-latin-custom-hints-v2.md`

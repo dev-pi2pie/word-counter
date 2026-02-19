@@ -31,5 +31,5 @@ Add an opt-in `--non-words` feature that collects emoji, symbols, and punctuatio
 - Ensure JSON output remains stable and backward-compatible when flag is not used.
 
 ## Related Research
-- `docs/research-2026-01-16-emoji-symbol-segmentation.md`
-- `docs/research-2026-01-02-word-counter-options.md`
+- `docs/researches/research-2026-01-16-emoji-symbol-segmentation.md`
+- `docs/researches/research-2026-01-02-word-counter-options.md`

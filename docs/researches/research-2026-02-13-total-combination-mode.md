@@ -76,4 +76,4 @@ None.
 - `src/command.ts`
 - `src/wc/wc.ts`
 - `src/wc/types.ts`
-- `docs/research-2026-01-21-whitespace-tab-counting.md`
+- `docs/researches/research-2026-01-21-whitespace-tab-counting.md`

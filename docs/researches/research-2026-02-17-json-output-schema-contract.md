@@ -71,4 +71,4 @@ Close the `--per-file --format json --total-of` contract gap by defining where o
 - `src/cli/runtime/single.ts`
 - `test/command.test.ts`
 - `README.md`
-- `docs/research-2026-02-13-total-combination-mode.md`
+- `docs/researches/research-2026-02-13-total-combination-mode.md`

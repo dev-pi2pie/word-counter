@@ -142,8 +142,8 @@ Rationale:
 - `docs/plans/plan-2026-01-02-wc-refactor-locale-research.md`
 
 ## Related Research
-- `docs/research-2026-01-02-language-detection.md`
-- `docs/research-2026-01-02-word-counter-options.md`
+- `docs/researches/research-2026-01-02-language-detection.md`
+- `docs/researches/research-2026-01-02-word-counter-options.md`
 
 ## References
 [^1]: https://www.rfc-editor.org/rfc/rfc5646
