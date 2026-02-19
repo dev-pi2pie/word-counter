@@ -24,22 +24,57 @@ parentPort.on("message", async (message: WorkerRequestMessage) => {
 
   const path = message.path;
 
+  let buffer: Buffer;
   try {
-    const buffer = await readFile(path);
-    if (isProbablyBinary(buffer)) {
+    buffer = await readFile(path);
+  } catch (error) {
+    const code =
+      typeof error === "object" && error !== null && "code" in error
+        ? String(error.code)
+        : undefined;
+    const messageText = error instanceof Error ? error.message : String(error);
+
+    if (code === "EMFILE" || code === "ENFILE") {
       const response: WorkerResponseMessage = {
-        type: "result",
+        type: "fatal",
         taskId: message.taskId,
         index: message.index,
-        payload: {
-          kind: "skip",
-          skip: { path, reason: "binary file" },
-        },
+        path,
+        code,
+        message: messageText,
       };
       parentPort?.postMessage(response);
       return;
     }
 
+    const response: WorkerResponseMessage = {
+      type: "result",
+      taskId: message.taskId,
+      index: message.index,
+      payload: {
+        kind: "skip",
+        skip: { path, reason: `not readable: ${messageText}` },
+      },
+    };
+    parentPort?.postMessage(response);
+    return;
+  }
+
+  if (isProbablyBinary(buffer)) {
+    const response: WorkerResponseMessage = {
+      type: "result",
+      taskId: message.taskId,
+      index: message.index,
+      payload: {
+        kind: "skip",
+        skip: { path, reason: "binary file" },
+      },
+    };
+    parentPort?.postMessage(response);
+    return;
+  }
+
+  try {
     const content = buffer.toString("utf8");
     const result =
       config.section === "all"
@@ -69,28 +104,13 @@ parentPort.on("message", async (message: WorkerRequestMessage) => {
         ? String(error.code)
         : undefined;
     const messageText = error instanceof Error ? error.message : String(error);
-
-    if (code === "EMFILE" || code === "ENFILE") {
-      const response: WorkerResponseMessage = {
-        type: "fatal",
-        taskId: message.taskId,
-        index: message.index,
-        path,
-        code,
-        message: messageText,
-      };
-      parentPort?.postMessage(response);
-      return;
-    }
-
     const response: WorkerResponseMessage = {
-      type: "result",
+      type: "fatal",
       taskId: message.taskId,
       index: message.index,
-      payload: {
-        kind: "skip",
-        skip: { path, reason: `not readable: ${messageText}` },
-      },
+      path,
+      code,
+      message: messageText,
     };
     parentPort?.postMessage(response);
   }

@@ -4,6 +4,10 @@ import { tmpdir } from "node:os";
 import { basename, join } from "node:path";
 import { buildBatchSummary, loadBatchInputs, resolveBatchFilePaths, runCli } from "../src/command";
 import { createDebugChannel } from "../src/cli/debug/channel";
+import {
+  WorkerRouteUnavailableError,
+  countBatchInputsWithWorkerJobs,
+} from "../src/cli/batch/jobs/load-count-worker-experimental";
 import { DEFAULT_INCLUDE_EXTENSIONS, buildDirectoryExtensionFilter } from "../src/cli/path/filter";
 import type { ProgressOutputStream } from "../src/cli/progress/reporter";
 import {
@@ -508,6 +512,34 @@ describe("CLI batch output", () => {
     expect(concurrent.stdout).toEqual(baseline.stdout);
   });
 
+  test("keeps empty files as zero-count inputs when --jobs>1", async () => {
+    const root = await makeTempFixture("cli-jobs-empty-file-zero-count");
+    await writeFile(join(root, "empty.txt"), "");
+    await writeFile(join(root, "words.txt"), "alpha beta");
+
+    const baseline = await captureCli([
+      "--path",
+      root,
+      "--jobs",
+      "1",
+      "--format",
+      "raw",
+      "--quiet-skips",
+    ]);
+    const concurrent = await captureCli([
+      "--path",
+      root,
+      "--jobs",
+      "4",
+      "--format",
+      "raw",
+      "--quiet-skips",
+    ]);
+
+    expect(concurrent.stdout).toEqual(baseline.stdout);
+    expect(concurrent.stdout).toEqual(["2"]);
+  });
+
   test("keeps per-file ordering deterministic when --jobs>1", async () => {
     const root = await makeTempFixture("cli-jobs-worker-order");
     await writeFile(join(root, "z.txt"), "zeta");
@@ -712,6 +744,38 @@ describe("CLI batch output", () => {
         process.env.WORD_COUNTER_DISABLE_EXPERIMENTAL_WORKERS = previous;
       }
     }
+  });
+
+  test("treats invalid counting options as fatal in worker route", async () => {
+    const root = await makeTempFixture("cli-jobs-worker-count-error");
+    const filePath = join(root, "a.txt");
+    await writeFile(filePath, "alpha beta");
+
+    const outcome = await countBatchInputsWithWorkerJobs([filePath], {
+      jobs: 4,
+      section: "all",
+      wcOptions: {
+        mode: "chunk",
+        latinTagHint: "invalid_tag",
+      },
+      preserveCollectorSegments: false,
+    })
+      .then((result) => ({ result }))
+      .catch((error: unknown) => ({ error }));
+
+    if ("error" in outcome) {
+      if (outcome.error instanceof WorkerRouteUnavailableError) {
+        return;
+      }
+
+      const message = outcome.error instanceof Error ? outcome.error.message : String(outcome.error);
+      expect(/invalid language tag: invalid_tag/i.test(message)).toBeTrue();
+      return;
+    }
+
+    expect(outcome.result.files.length).toBe(0);
+    expect(outcome.result.skipped.length).toBe(0);
+    throw new Error("Expected worker route to fail for invalid language tag.");
   });
 
   test("emits advisory warning when requested --jobs exceeds suggested limit", async () => {
