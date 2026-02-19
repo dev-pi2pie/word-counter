@@ -8,14 +8,15 @@ agent: Codex
 
 ## Goal
 
-Deliver a focused improvement set that improves large-batch runtime via bounded concurrency and practical host diagnostics, with a stable default route and a separate experimental route, without changing counting semantics.
+Deliver a focused improvement set that improves large-batch runtime via bounded concurrency and practical host diagnostics, with `--jobs` as the single concurrency control (`jobs=1` no extra workers, `jobs>1` worker `load+count`), without changing counting semantics.
 
 ## Scope
 
 - In scope:
-  - `--jobs <n>` bounded concurrency in batch mode (stable load-only route).
-  - Experimental `load+count` route behind explicit opt-in.
-  - Experimental `load+count` worker-pool route for true CPU parallel counting.
+  - `--jobs <n>` bounded concurrency in batch mode as the only concurrency UX control.
+  - Worker `load+count` execution when `--jobs > 1`.
+  - No-worker baseline when `--jobs` is omitted or `--jobs=1`.
+  - Removal of redundant `--experimental-load-count` flag from CLI UX.
   - Modularized jobs architecture (strategy + route executors + shared primitives).
   - Standalone `--print-jobs-limit` diagnostics flag.
   - Benchmark and parity validation for deterministic behavior.
@@ -64,7 +65,7 @@ Deliver a focused improvement set that improves large-batch runtime via bounded 
 - [x] Add executor `src/cli/batch/jobs/load-count-worker-experimental.ts` using bounded worker dispatch.
 - [x] Keep deterministic output ordering via index-stable result slots.
 - [x] Define explicit strategy behavior:
-  - prefer worker route when experimental flag is enabled and workers are available
+  - prefer worker route when `--jobs > 1` and workers are available
   - fallback to current async experimental route on unsupported environments
 - [x] Add worker failure handling (worker crash/init error/message protocol mismatch) with clear surfaced errors.
 - [x] Add parity tests vs stable route for:
@@ -74,7 +75,21 @@ Deliver a focused improvement set that improves large-batch runtime via bounded 
 - [x] Add targeted performance acceptance check:
   - benchmark profile should show meaningful median speedup vs stable `--jobs 1` baseline when `--jobs 4` is used.
 
-### Phase 5 - Diagnostics: `--print-jobs-limit`
+### Phase 5 - Strategy Consolidation (`--jobs` only)
+
+- [ ] Remove `--experimental-load-count` from CLI options and help text.
+- [ ] Update route selection policy:
+  - `--jobs` omitted or `--jobs=1` -> no extra workers
+  - `--jobs>1` -> worker `load+count` route by default
+- [ ] Keep async executor as internal fallback only (not user-facing route).
+- [ ] Remove/adjust tests that depend on explicit experimental flag behavior.
+- [ ] Add tests for policy behavior:
+  - default path (no `--jobs`) equals `--jobs=1`
+  - `--jobs>1` uses worker executor (with fallback diagnostics when unavailable)
+  - parity across sectioned and non-sectioned outputs
+- [ ] Update research/README/help text to reflect unified `--jobs` policy.
+
+### Phase 6 - Diagnostics: `--print-jobs-limit`
 
 - [ ] Add standalone `--print-jobs-limit` flag.
 - [ ] Enforce standalone-only usage (reject with non-zero when combined with other runtime flags or inputs).
@@ -91,23 +106,23 @@ Deliver a focused improvement set that improves large-batch runtime via bounded 
 - [ ] Add tests for standalone success and conflict failure.
 - [ ] Add CLI help text and README usage example.
 
-### Phase 6 - Benchmark and Release Validation
+### Phase 7 - Benchmark and Release Validation
 
 - [ ] Add benchmark script (for local verification), proposed:
   - `scripts/benchmark-batch-jobs.mjs`
 - [ ] Use `examples/manage-huge-logs.mjs` fixture workflow for reproducible large datasets.
-- [ ] Run benchmark matrix for stable and experimental routes (`--jobs 1,2,4,8`) with low-noise command settings:
+- [ ] Run benchmark matrix for unified jobs policy (`--jobs 1,2,4,8`) with low-noise command settings:
   - `--format raw --quiet-skips --no-progress`
 - [ ] Record median/p95 timing plus parity checks in a job record.
 - [ ] Final regression: `bun test`
-- [ ] Final regression: targeted CLI smoke checks for stable route, experimental route, and `--print-jobs-limit`.
+- [ ] Final regression: targeted CLI smoke checks for `--jobs` policy and `--print-jobs-limit`.
 
 ## Execution Notes
 
 - Keep rollout compatibility-first: no behavior change unless new flags are used.
 - Prioritize deterministic output guarantees before throughput optimization claims.
-- Ship stable route first; keep experimental route clearly marked and opt-in.
-- Treat current Phase 3 experimental route as transitional; expected major gains should come from Phase 4 worker-based execution.
+- Keep `--jobs` as the only user-facing concurrency switch.
+- Treat previous explicit experimental flag behavior as transitional and remove it in Phase 5.
 - Keep full `doctor` command out of this release; `--print-jobs-limit` is the minimal diagnostics bridge.
 
 ## Related Research

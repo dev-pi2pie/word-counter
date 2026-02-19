@@ -33,31 +33,28 @@ This is stable but leaves performance on the table for large directory scans.
 ## Proposed Route
 
 1. Add `--jobs <n>` (batch-only), validated as integer `>= 1`.
-2. Default to `1` (opt-in concurrency for safest rollout).
-3. First release: parallelize load only with bounded prefetching; keep count/aggregate deterministic and single-threaded.
-4. Add an experimental route for `load+count` in workers, gated behind an explicit experiment flag.
-5. Preserve output determinism by writing each result into its original sorted index.
-6. Keep skip/error behavior unchanged for this scope.
+2. Default to `1`; no `--jobs` or `--jobs 1` means no additional workers.
+3. `--jobs > 1` enables bounded `load+count` worker execution.
+4. Preserve output determinism by writing each result into its original sorted index.
+5. Keep skip/error behavior unchanged for this scope.
 
-## Modular Two-Route Design
+## Modular Execution Design
 
-Default route (stable):
-- `load-only` concurrency (`--jobs`) with single-threaded count/aggregate.
-
-Experimental route:
-- `load+count` inside workers, enabled only with an explicit experimental option.
+Execution policy:
+- Baseline mode: `jobs=1` runs without extra workers.
+- Worker mode: `jobs>1` runs `load+count` in bounded workers.
 
 Module boundaries (keep files small and composable):
-- `src/cli/batch/jobs/strategy.ts`: route selection and shared contracts.
-- `src/cli/batch/jobs/load-only.ts`: stable executor.
-- `src/cli/batch/jobs/load-count-experimental.ts`: experimental executor.
-- `src/cli/batch/jobs/queue.ts`: bounded queue/backpressure primitive.
-- `src/cli/batch/jobs/types.ts`: task/result/error event types.
+- `src/cli/batch/jobs/strategy.ts`: route selection from `jobs`.
+- `src/cli/batch/jobs/load-count-worker-experimental.ts`: worker executor entry.
+- `src/cli/batch/jobs/worker-pool.ts`: bounded worker dispatch and lifecycle.
+- `src/cli/batch/jobs/worker/protocol.ts`: worker message contracts.
+- `src/cli/batch/jobs/worker/count-worker.ts`: worker-side `load+count`.
 - `src/cli/batch/jobs/limits.ts`: host limit heuristic + warnings.
 - `src/cli/batch/jobs/render.ts`: deterministic finalize/render from index-ordered results.
 
 Guardrail:
-- Both routes must implement the same executor interface so CLI wiring and output contracts stay identical.
+- CLI behavior is controlled by `--jobs` only; worker fallback remains internal and does not require extra flags.
 
 ## ASCII Diagram
 
@@ -76,29 +73,19 @@ Current (sequential)
         ...repeat...
 
 
-Proposed v1 (bounded load concurrency with stable output order)
----------------------------------------------------------------
+Proposed (no extra workers when jobs=1)
+---------------------------------------
            [resolved files sorted]
                       |
                       v
-            [index-based task queue]
-             /         |          \
-            v          v           v
-      loader A     loader B    loader C   ... up to --jobs
-      load only    load only    load only
-            \          |           /
-             v         v          v
-     [loaded buffers written by original index]
-                      |
-                      v
-      [single deterministic count + aggregate pass]
+       [single load+count pass on main thread]
                       |
                       v
          [single deterministic finalize/render]
 
 
-Experimental route (bounded load+count workers, explicit opt-in)
-----------------------------------------------------------------
+Proposed (bounded worker load+count when jobs>1)
+------------------------------------------------
            [resolved files sorted]
                       |
                       v
@@ -208,9 +195,9 @@ CLI help text:
 
 ## Implications or Recommendations
 
-- Proceed with opt-in concurrency first (`--jobs`, default `1`).
-- Keep v1 implementation conservative: default route is load-only.
-- Keep `load+count` as an explicitly experimental route until benchmark and stability criteria pass.
+- Keep `--jobs` as the only concurrency control surface.
+- Interpret `--jobs 1` (or no `--jobs`) as no extra workers.
+- Use worker `load+count` by default when `--jobs > 1`.
 - Include benchmark tooling in-repo so performance claims are reproducible.
 - Add `--print-jobs-limit` now as lightweight diagnostics; keep a fuller `doctor` command as follow-up.
 
@@ -218,7 +205,7 @@ CLI help text:
 
 1. `--jobs` is opt-in for this release (default `1`).
 2. No hard max cap in CLI validation for now; prefer advisory guardrails and fail-fast on real resource-limit errors.
-3. First version should default to load-only parallelism for stability, while a separate `load+count` route exists as explicit experimental mode.
+3. `--jobs > 1` should default to worker `load+count`; no extra experimental CLI flag is required.
 4. Add `--print-jobs-limit` in this scope as the lightweight diagnostics option.
 
 ## Related Research
