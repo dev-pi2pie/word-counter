@@ -132,6 +132,14 @@ agent: <agent name>
 
 ---
 
+### Path Reference Policy (Strict)
+
+- Never write OS-specific absolute paths with user/home segments in docs (for example: `/Users/<name>/...`, `/home/<name>/...`, `C:\Users\<name>\...`).
+- Always use repository-relative paths in documentation (for example: `.github/workflows/release.yml`, `docs/plans/jobs/...`, `src/...`).
+- This rule applies to plan, research, and job documents, including summaries, change lists, and verification notes.
+
+---
+
 ### Status Meanings
 
 - `draft` — idea or exploration, not executed

@@ -113,8 +113,6 @@ jobs:
             echo "IS_PRERELEASE=false" >> "$GITHUB_OUTPUT"
           fi
 
-          echo "PRERELEASE_LABEL=$PRERELEASE_LABEL" >> "$GITHUB_OUTPUT"
-
       - name: Resolve release range
         id: range
         env:
@@ -150,8 +148,8 @@ jobs:
           echo "previous_tag=$PREVIOUS_TAG" >> "$GITHUB_OUTPUT"
           echo "range=$RANGE" >> "$GITHUB_OUTPUT"
 
-      - name: Generate release notes (pre-release, GitHub default)
-        id: cliff_github
+      - name: Generate release notes (pre-release, GitHub default via git-cliff)
+        id: prerelease_notes
         if: steps.prerelease.outputs.IS_PRERELEASE == 'true'
         uses: orhun/git-cliff-action@v4
         with:
@@ -161,26 +159,111 @@ jobs:
           GITHUB_REPO: ${{ github.repository }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Generate release notes (stable, custom cliff)
-        id: cliff_custom
+      - name: Generate release notes (stable, curated aggregate)
+        id: stable_notes
         if: steps.prerelease.outputs.IS_PRERELEASE != 'true'
-        uses: orhun/git-cliff-action@v4
-        with:
-          config: .cliff.toml
-          args: --strip header ${{ steps.range.outputs.range }}
+        shell: bash
         env:
-          GITHUB_REPO: ${{ github.repository }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_RANGE: ${{ steps.range.outputs.range }}
+        run: |
+          set -euo pipefail
+          # Stable notes are intentionally aggregated from one range pass
+          # to avoid canary-style repeated chunks between stable tags.
+
+          mapfile -t COMMITS < <(git log --no-merges --reverse --format='%H%x09%s' "$RELEASE_RANGE")
+
+          if [ "${#COMMITS[@]}" -eq 0 ]; then
+            printf -v NOTES '%s\n' \
+              "## What's Changed" \
+              "" \
+              "- No notable changes in this release." \
+              "" \
+              "### Full Changelog" \
+              "- No commits in selected range."
+          else
+            declare -a GROUP_ORDER=(
+              "New Features"
+              "Bug Fixes"
+              "Performance"
+              "Refactors"
+              "Documentation"
+              "Tests"
+              "Build"
+              "CI"
+              "Chores"
+              "Reverts"
+              "Other Changes"
+            )
+
+            declare -A GROUPED_LINES=()
+            declare -a ALL_CHANGES=()
+
+            for line in "${COMMITS[@]}"; do
+              SHA="${line%%$'\t'*}"
+              SUBJECT="${line#*$'\t'}"
+              GROUP="Other Changes"
+              DISPLAY="$SUBJECT"
+
+              if [[ "$SUBJECT" =~ ^([[:alpha:]]+)(\(([[:alnum:]./_-]+)\))?:[[:space:]]+(.+)$ ]]; then
+                TYPE_LOWER="${BASH_REMATCH[1],,}"
+                SCOPE="${BASH_REMATCH[3]:-}"
+                MESSAGE="${BASH_REMATCH[4]}"
+
+                case "$TYPE_LOWER" in
+                  feat) GROUP="New Features" ;;
+                  fix) GROUP="Bug Fixes" ;;
+                  perf) GROUP="Performance" ;;
+                  refactor) GROUP="Refactors" ;;
+                  docs) GROUP="Documentation" ;;
+                  test) GROUP="Tests" ;;
+                  build) GROUP="Build" ;;
+                  ci) GROUP="CI" ;;
+                  chore) GROUP="Chores" ;;
+                  revert) GROUP="Reverts" ;;
+                esac
+
+                if [ -n "$SCOPE" ]; then
+                  DISPLAY="**$SCOPE:** $MESSAGE"
+                else
+                  DISPLAY="$MESSAGE"
+                fi
+              elif [[ "$SUBJECT" =~ ^Bump[[:space:]] ]]; then
+                GROUP="Chores"
+              fi
+
+              GROUPED_LINES["$GROUP"]+="- $DISPLAY"$'\n'
+              ALL_CHANGES+=("- $SHA $DISPLAY")
+            done
+
+            NOTES="## What's Changed"
+            for GROUP_NAME in "${GROUP_ORDER[@]}"; do
+              BLOCK="${GROUPED_LINES[$GROUP_NAME]-}"
+              if [ -n "$BLOCK" ]; then
+                NOTES+=$'\n\n'"### $GROUP_NAME"$'\n'"$BLOCK"
+              fi
+            done
+
+            NOTES+=$'\n\n'"### Full Changelog"
+            for CHANGE_LINE in "${ALL_CHANGES[@]}"; do
+              NOTES+=$'\n'"$CHANGE_LINE"
+            done
+          fi
+
+          {
+            echo "content<<__RELEASE_NOTES__"
+            printf '%s\n' "$NOTES"
+            echo "__RELEASE_NOTES__"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Select release notes content
         id: notes
         env:
           IS_PRERELEASE: ${{ steps.prerelease.outputs.IS_PRERELEASE }}
-          PREVIEW_NOTES: ${{ steps.cliff_github.outputs.content }}
-          STABLE_NOTES: ${{ steps.cliff_custom.outputs.content }}
+          PRERELEASE_NOTES: ${{ steps.prerelease_notes.outputs.content }}
+          STABLE_NOTES: ${{ steps.stable_notes.outputs.content }}
         run: |
           if [ "$IS_PRERELEASE" = "true" ]; then
-            SELECTED="$PREVIEW_NOTES"
+            SELECTED="$PRERELEASE_NOTES"
           else
             SELECTED="$STABLE_NOTES"
           fi
