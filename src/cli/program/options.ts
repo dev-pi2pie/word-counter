@@ -26,6 +26,19 @@ function collectLatinHintValue(value: string, previous: string[] = []): string[]
   return [...previous, value];
 }
 
+function parseJobsOption(value: string): number {
+  if (!/^\d+$/.test(value)) {
+    throw new Error("`--jobs` must be an integer >= 1.");
+  }
+
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isSafeInteger(parsed) || parsed < 1) {
+    throw new Error("`--jobs` must be an integer >= 1.");
+  }
+
+  return parsed;
+}
+
 export function configureProgramOptions(
   program: Command,
   parseMode: (value: string) => WordCounterMode,
@@ -87,6 +100,13 @@ export function configureProgramOptions(
     .option("--debug-tee", "alias of --debug-report-tee")
     .option("--merged", "show merged aggregate output (default)")
     .option("--per-file", "show per-file output plus merged summary")
+    .option(
+      "--jobs <n>",
+      "concurrent file jobs in batch mode (default: 1; >1 enables worker load+count)",
+      parseJobsOption,
+      1,
+    )
+    .option("--print-jobs-limit", "print suggested max --jobs for current host and exit")
     .option("--no-progress", "disable batch progress indicator")
     .option("--keep-progress", "keep final batch progress line visible in standard mode")
     .option("--no-recursive", "disable recursive directory traversal")

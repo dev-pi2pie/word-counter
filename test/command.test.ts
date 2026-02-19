@@ -4,9 +4,18 @@ import { tmpdir } from "node:os";
 import { basename, join } from "node:path";
 import { buildBatchSummary, loadBatchInputs, resolveBatchFilePaths, runCli } from "../src/command";
 import { createDebugChannel } from "../src/cli/debug/channel";
+import {
+  WorkerRouteUnavailableError,
+  countBatchInputsWithWorkerJobs,
+} from "../src/cli/batch/jobs/load-count-worker-experimental";
+import { resolveBatchJobsLimit } from "../src/cli/batch/jobs/limits";
 import { DEFAULT_INCLUDE_EXTENSIONS, buildDirectoryExtensionFilter } from "../src/cli/path/filter";
 import type { ProgressOutputStream } from "../src/cli/progress/reporter";
-import { parseInlineLatinHintRule, validateSingleRegexOptionUsage } from "../src/cli/runtime/options";
+import {
+  parseInlineLatinHintRule,
+  validateSingleRegexOptionUsage,
+  validateStandalonePrintJobsLimitUsage,
+} from "../src/cli/runtime/options";
 import { TOTAL_OF_PARTS } from "../src/cli/total-of";
 
 const tempRoots: string[] = [];
@@ -61,6 +70,22 @@ async function captureCli(
   }
 
   return { stdout, stderr };
+}
+
+async function captureBatchJsonAcrossJobs(args: string[]): Promise<{
+  noJobs: unknown;
+  jobsOne: unknown;
+  jobsFour: unknown;
+}> {
+  const noJobs = await captureCli(args);
+  const jobsOne = await captureCli([...args, "--jobs", "1"]);
+  const jobsFour = await captureCli([...args, "--jobs", "4"]);
+
+  return {
+    noJobs: JSON.parse(noJobs.stdout[0] ?? "{}"),
+    jobsOne: JSON.parse(jobsOne.stdout[0] ?? "{}"),
+    jobsFour: JSON.parse(jobsFour.stdout[0] ?? "{}"),
+  };
 }
 
 function createCapturedStream(isTTY: boolean): { stream: ProgressOutputStream; writes: string[] } {
@@ -424,6 +449,384 @@ describe("CLI batch output", () => {
     const output = await captureCli(["--path", root, "--path", explicitPath, "--format", "raw"]);
 
     expect(output.stdout).toEqual(["3"]);
+  });
+
+  test("treats default batch path as equivalent to --jobs=1", async () => {
+    const root = await makeTempFixture("cli-jobs-default-equals-jobs-1");
+    await writeFile(join(root, "a.txt"), "alpha beta");
+    await writeFile(join(root, "b.txt"), "gamma delta");
+
+    const defaultOutput = await captureCli([
+      "--path",
+      root,
+      "--format",
+      "raw",
+      "--debug",
+      "--quiet-skips",
+    ]);
+    const jobsOneOutput = await captureCli([
+      "--path",
+      root,
+      "--jobs",
+      "1",
+      "--format",
+      "raw",
+      "--debug",
+      "--quiet-skips",
+    ]);
+
+    const defaultEvents = parseDebugEvents(defaultOutput.stderr);
+    const jobsOneEvents = parseDebugEvents(jobsOneOutput.stderr);
+    const defaultStrategy = defaultEvents.find((item) => item.event === "batch.jobs.strategy");
+    const jobsOneStrategy = jobsOneEvents.find((item) => item.event === "batch.jobs.strategy");
+
+    expect(defaultOutput.stdout).toEqual(jobsOneOutput.stdout);
+    expect(defaultStrategy?.strategy).toBe("load-only");
+    expect(jobsOneStrategy?.strategy).toBe("load-only");
+  });
+
+  test("keeps totals consistent between --jobs=1 and --jobs>1 routes", async () => {
+    const root = await makeTempFixture("cli-jobs-route-policy-parity");
+    await writeFile(join(root, "z.txt"), "zeta");
+    await writeFile(join(root, "a.txt"), "alpha beta");
+    await writeFile(join(root, "binary.dat"), Buffer.from([0, 1, 2, 3]));
+
+    const baseline = await captureCli([
+      "--path",
+      root,
+      "--jobs",
+      "1",
+      "--format",
+      "raw",
+      "--quiet-skips",
+    ]);
+    const concurrent = await captureCli([
+      "--path",
+      root,
+      "--jobs",
+      "4",
+      "--format",
+      "raw",
+      "--quiet-skips",
+    ]);
+
+    expect(concurrent.stdout).toEqual(baseline.stdout);
+  });
+
+  test("keeps empty files as zero-count inputs when --jobs>1", async () => {
+    const root = await makeTempFixture("cli-jobs-empty-file-zero-count");
+    await writeFile(join(root, "empty.txt"), "");
+    await writeFile(join(root, "words.txt"), "alpha beta");
+
+    const baseline = await captureCli([
+      "--path",
+      root,
+      "--jobs",
+      "1",
+      "--format",
+      "raw",
+      "--quiet-skips",
+    ]);
+    const concurrent = await captureCli([
+      "--path",
+      root,
+      "--jobs",
+      "4",
+      "--format",
+      "raw",
+      "--quiet-skips",
+    ]);
+
+    expect(concurrent.stdout).toEqual(baseline.stdout);
+    expect(concurrent.stdout).toEqual(["2"]);
+  });
+
+  test("keeps per-file ordering deterministic when --jobs>1", async () => {
+    const root = await makeTempFixture("cli-jobs-worker-order");
+    await writeFile(join(root, "z.txt"), "zeta");
+    await writeFile(join(root, "a.txt"), "alpha");
+    await writeFile(join(root, "m.txt"), "mu");
+
+    const output = await captureCli([
+      "--path",
+      root,
+      "--jobs",
+      "3",
+      "--per-file",
+      "--format",
+      "json",
+      "--quiet-skips",
+    ]);
+    const parsed = JSON.parse(output.stdout[0] ?? "{}");
+    const files = Array.isArray(parsed.files) ? parsed.files : [];
+
+    expect(files.map((item: { path: string }) => basename(item.path))).toEqual([
+      "a.txt",
+      "m.txt",
+      "z.txt",
+    ]);
+  });
+
+  test("keeps sectioned json output parity between --jobs=1 and --jobs>1", async () => {
+    const root = await makeTempFixture("cli-jobs-route-policy-parity-sectioned");
+    await writeFile(join(root, "a.md"), ["---", "title: One", "---", "Alpha beta"].join("\n"));
+    await writeFile(join(root, "b.txt"), "Gamma delta");
+
+    const baseline = await captureCli([
+      "--path",
+      root,
+      "--section",
+      "split",
+      "--jobs",
+      "1",
+      "--format",
+      "json",
+      "--quiet-skips",
+    ]);
+    const concurrent = await captureCli([
+      "--path",
+      root,
+      "--section",
+      "split",
+      "--jobs",
+      "4",
+      "--format",
+      "json",
+      "--quiet-skips",
+    ]);
+
+    const baselineParsed = JSON.parse(baseline.stdout[0] ?? "{}");
+    const concurrentParsed = JSON.parse(concurrent.stdout[0] ?? "{}");
+    expect(concurrentParsed).toEqual(baselineParsed);
+  });
+
+  test("keeps json --misc output parity across no --jobs, --jobs=1, and --jobs>1", async () => {
+    const root = await makeTempFixture("cli-jobs-json-misc-parity");
+    await writeFile(join(root, "a.txt"), "alpha  beta\n\ngamma");
+    await writeFile(join(root, "b.md"), ["---", "title: T", "---", "delta\nepsilon"].join("\n"));
+
+    const merged = await captureBatchJsonAcrossJobs([
+      "--path",
+      root,
+      "--format",
+      "json",
+      "--misc",
+      "--quiet-skips",
+    ]);
+    expect(merged.jobsOne).toEqual(merged.noJobs);
+    expect(merged.jobsFour).toEqual(merged.noJobs);
+
+    const perFile = await captureBatchJsonAcrossJobs([
+      "--path",
+      root,
+      "--per-file",
+      "--format",
+      "json",
+      "--misc",
+      "--quiet-skips",
+    ]);
+    expect(perFile.jobsOne).toEqual(perFile.noJobs);
+    expect(perFile.jobsFour).toEqual(perFile.noJobs);
+
+    const sectioned = await captureBatchJsonAcrossJobs([
+      "--path",
+      root,
+      "--section",
+      "split",
+      "--format",
+      "json",
+      "--misc",
+      "--quiet-skips",
+    ]);
+    expect(sectioned.jobsOne).toEqual(sectioned.noJobs);
+    expect(sectioned.jobsFour).toEqual(sectioned.noJobs);
+  });
+
+  test("keeps json --total-of whitespace,words parity across job routes", async () => {
+    const root = await makeTempFixture("cli-jobs-json-total-of-whitespace-words-parity");
+    await writeFile(join(root, "a.txt"), "alpha  beta\n\ngamma");
+    await writeFile(join(root, "b.md"), ["---", "title: T", "---", "delta\nepsilon"].join("\n"));
+
+    const merged = await captureBatchJsonAcrossJobs([
+      "--path",
+      root,
+      "--format",
+      "json",
+      "--total-of",
+      "whitespace,words",
+      "--quiet-skips",
+    ]);
+    expect(merged.jobsOne).toEqual(merged.noJobs);
+    expect(merged.jobsFour).toEqual(merged.noJobs);
+
+    const perFile = await captureBatchJsonAcrossJobs([
+      "--path",
+      root,
+      "--per-file",
+      "--format",
+      "json",
+      "--total-of",
+      "whitespace,words",
+      "--quiet-skips",
+    ]);
+    expect(perFile.jobsOne).toEqual(perFile.noJobs);
+    expect(perFile.jobsFour).toEqual(perFile.noJobs);
+
+    const sectioned = await captureBatchJsonAcrossJobs([
+      "--path",
+      root,
+      "--section",
+      "split",
+      "--format",
+      "json",
+      "--total-of",
+      "whitespace,words",
+      "--quiet-skips",
+    ]);
+    expect(sectioned.jobsOne).toEqual(sectioned.noJobs);
+    expect(sectioned.jobsFour).toEqual(sectioned.noJobs);
+  });
+
+  test("emits executor diagnostics for --jobs>1 route", async () => {
+    const root = await makeTempFixture("cli-jobs-worker-executor");
+    await writeFile(join(root, "a.txt"), "alpha beta");
+    await writeFile(join(root, "b.txt"), "gamma delta");
+
+    const output = await captureCli([
+      "--path",
+      root,
+      "--jobs",
+      "4",
+      "--format",
+      "raw",
+      "--debug",
+      "--quiet-skips",
+    ]);
+    const events = parseDebugEvents(output.stderr);
+    const strategy = events.find((item) => item.event === "batch.jobs.strategy");
+    const executor = events.find((item) => item.event === "batch.jobs.executor");
+
+    expect(strategy?.strategy).toBe("load-count");
+    expect(executor).toBeDefined();
+    expect(executor?.executor === "worker-pool" || executor?.executor === "async-fallback").toBeTrue();
+    if (executor?.executor === "async-fallback") {
+      expect(typeof executor.reason).toBe("string");
+    }
+    expect(output.stdout).toEqual(["4"]);
+  });
+
+  test("falls back to async executor when worker route is disabled", async () => {
+    const root = await makeTempFixture("cli-jobs-worker-fallback");
+    await writeFile(join(root, "a.txt"), "alpha beta");
+    await writeFile(join(root, "b.txt"), "gamma delta");
+
+    const previous = process.env.WORD_COUNTER_DISABLE_EXPERIMENTAL_WORKERS;
+    process.env.WORD_COUNTER_DISABLE_EXPERIMENTAL_WORKERS = "1";
+    try {
+      const output = await captureCli([
+        "--path",
+        root,
+        "--jobs",
+        "4",
+        "--format",
+        "raw",
+        "--debug",
+        "--quiet-skips",
+      ]);
+      const events = parseDebugEvents(output.stderr);
+      const executor = events.find((item) => item.event === "batch.jobs.executor");
+
+      expect(executor?.executor).toBe("async-fallback");
+      expect(output.stdout).toEqual(["4"]);
+    } finally {
+      if (previous === undefined) {
+        delete process.env.WORD_COUNTER_DISABLE_EXPERIMENTAL_WORKERS;
+      } else {
+        process.env.WORD_COUNTER_DISABLE_EXPERIMENTAL_WORKERS = previous;
+      }
+    }
+  });
+
+  test("treats invalid counting options as fatal in worker route", async () => {
+    const root = await makeTempFixture("cli-jobs-worker-count-error");
+    const filePath = join(root, "a.txt");
+    await writeFile(filePath, "alpha beta");
+
+    const outcome = await countBatchInputsWithWorkerJobs([filePath], {
+      jobs: 4,
+      section: "all",
+      wcOptions: {
+        mode: "chunk",
+        latinTagHint: "invalid_tag",
+      },
+      preserveCollectorSegments: false,
+    })
+      .then((result) => ({ result }))
+      .catch((error: unknown) => ({ error }));
+
+    if ("error" in outcome) {
+      if (outcome.error instanceof WorkerRouteUnavailableError) {
+        return;
+      }
+
+      const message = outcome.error instanceof Error ? outcome.error.message : String(outcome.error);
+      expect(/invalid language tag: invalid_tag/i.test(message)).toBeTrue();
+      return;
+    }
+
+    expect(outcome.result.files.length).toBe(0);
+    expect(outcome.result.skipped.length).toBe(0);
+    throw new Error("Expected worker route to fail for invalid language tag.");
+  });
+
+  test("emits advisory warning when requested --jobs exceeds suggested limit", async () => {
+    const root = await makeTempFixture("cli-jobs-advisory-warning");
+    await writeFile(join(root, "a.txt"), "alpha beta");
+    await writeFile(join(root, "b.txt"), "gamma delta");
+    const expectedCappedJobs = resolveBatchJobsLimit().suggestedMaxJobs;
+
+    const output = await captureCli([
+      "--path",
+      root,
+      "--jobs",
+      "99999",
+      "--format",
+      "raw",
+      "--debug",
+      "--quiet-skips",
+    ]);
+    const events = parseDebugEvents(output.stderr);
+    const strategy = events.find((item) => item.event === "batch.jobs.strategy");
+
+    expect(output.stderr.some((line) => line.includes("Warning: requested --jobs=99999"))).toBeTrue();
+    expect(output.stderr.some((line) => line.includes(`Running with --jobs=${expectedCappedJobs}`))).toBeTrue();
+    expect(strategy?.jobs).toBe(expectedCappedJobs);
+    expect(output.stdout).toEqual(["4"]);
+  });
+});
+
+describe("CLI jobs diagnostics", () => {
+  test("prints jobs limit summary as JSON", async () => {
+    const output = await captureCli(["--print-jobs-limit"]);
+    const parsed = JSON.parse(output.stdout[0] ?? "{}");
+
+    expect(typeof parsed.suggestedMaxJobs).toBe("number");
+    expect(typeof parsed.cpuLimit).toBe("number");
+    expect(typeof parsed.uvThreadpool).toBe("number");
+    expect(typeof parsed.ioLimit).toBe("number");
+    expect(parsed.suggestedMaxJobs >= 1).toBeTrue();
+  });
+
+  test("enforces standalone usage for --print-jobs-limit", () => {
+    expect(() =>
+      validateStandalonePrintJobsLimitUsage([
+        "node",
+        "word-counter",
+        "--print-jobs-limit",
+        "--format",
+        "json",
+      ]),
+    ).toThrow("`--print-jobs-limit` must be used alone.");
   });
 });
 

@@ -12,6 +12,11 @@ type BuildBatchSummaryOptions = {
   preserveCollectorSegments?: boolean;
 };
 
+type FinalizeBatchSummaryFromFileResultsOptions = {
+  onFinalizeStart?: () => void;
+  preserveCollectorSegments?: boolean;
+};
+
 function mergeWordCounterResult(
   left: WordCounterResult,
   right: WordCounterResult,
@@ -315,6 +320,17 @@ function stripCollectorSegmentsFromSectionedResult(result: SectionedResult): voi
   }
 }
 
+export function compactCollectorSegmentsInCountResult(
+  result: WordCounterResult | SectionedResult,
+): void {
+  if ("section" in result) {
+    stripCollectorSegmentsFromSectionedResult(result);
+    return;
+  }
+
+  stripCollectorSegmentsFromWordCounterResult(result);
+}
+
 export async function buildBatchSummary(
   inputs: BatchFileInput[],
   section: SectionMode,
@@ -331,11 +347,7 @@ export async function buildBatchSummary(
         : countSections(input.content, section, wcOptions);
 
     if (!preserveCollectorSegments) {
-      if ("section" in result) {
-        stripCollectorSegmentsFromSectionedResult(result);
-      } else {
-        stripCollectorSegmentsFromWordCounterResult(result);
-      }
+      compactCollectorSegmentsInCountResult(result);
     }
 
     files.push({
@@ -349,8 +361,26 @@ export async function buildBatchSummary(
     });
   }
 
-  options.onFinalizeStart?.();
+  return finalizeBatchSummaryFromFileResults(files, section, wcOptions, {
+    onFinalizeStart: options.onFinalizeStart,
+    preserveCollectorSegments: options.preserveCollectorSegments,
+  });
+}
 
+export function finalizeBatchSummaryFromFileResults(
+  files: BatchFileResult[],
+  section: SectionMode,
+  wcOptions: Parameters<typeof wordCounter>[1],
+  options: FinalizeBatchSummaryFromFileResultsOptions = {},
+): BatchSummary {
+  const preserveCollectorSegments = options.preserveCollectorSegments ?? true;
+  if (!preserveCollectorSegments) {
+    for (const file of files) {
+      compactCollectorSegmentsInCountResult(file.result);
+    }
+  }
+
+  options.onFinalizeStart?.();
   if (files.length === 0) {
     return {
       files,
