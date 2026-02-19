@@ -22,6 +22,9 @@ Make stable release-note generation locally reproducible before CI by extracting
   - Supports `--mode pr` for PR-oriented rendering with per-line contributor attribution (`by @user`):
     - Uses GitHub PR metadata when available.
     - Falls back to plain local author text when GitHub login resolution is unavailable.
+  - Supports `--mode hybrid`:
+    - Keeps commit-based grouped sections in `## What's Changed`.
+    - Uses PR-attributed lines in `### Changelog`.
   - Uses GitHub REST API (`curl` + `jq`) for login/PR resolution, removing dependency on local `gh` CLI auth state.
 - Added `scripts/local-release-verification.sh` as a quick local wrapper.
   - Auto-resolves current/previous stable tags and range by default.
@@ -29,7 +32,7 @@ Make stable release-note generation locally reproducible before CI by extracting
   - Includes built-in `--help` usage text.
 - Updated `.github/workflows/release.yml` stable notes step to call `scripts/generate-stable-release-notes.sh` instead of embedding the logic inline.
   - Added `GH_TOKEN` env so GitHub login resolution works in CI for contributor attribution.
-  - Set stable release default mode to `pr` for contributor-attributed release lines in CI output.
+  - Set stable release default mode to `hybrid` for balanced grouped context + contributor-attributed changelog lines.
   - Adjusted `workflow_dispatch` checkout ref to use the selected branch (`github.ref`) so current scripts are available even when generating notes for an older tag via `inputs.tag`.
 - Added `docs/release-notes-local-verification.md` with local verification commands.
 - Added a local mode-diff workflow in docs to compare commit vs PR render outputs.
@@ -53,3 +56,4 @@ Make stable release-note generation locally reproducible before CI by extracting
 - Ran script against stable range `v0.1.2..v0.1.3` and confirmed expected markdown output structure.
 - Confirmed manual workflow dispatch for an existing older tag no longer depends on that tag containing newly added helper scripts.
 - Confirmed PR mode now retains category grouping by commit type even when displayed change lines use PR-oriented titles/references.
+- Confirmed hybrid mode keeps detailed feature/fix grouping while retaining contributor-attributed changelog lines.

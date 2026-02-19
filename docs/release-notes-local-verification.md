@@ -2,7 +2,7 @@
 
 Use `scripts/local-release-verification.sh` for a quick local preview before running CI.
 
-Current CI default for stable release notes is `--mode pr`.
+Current CI default for stable release notes is `--mode hybrid`.
 
 ## Quick Run
 
@@ -26,6 +26,14 @@ set -x GH_TOKEN (gh auth token)
 scripts/local-release-verification.sh --mode commit --output /tmp/release-notes-commit.md
 scripts/local-release-verification.sh --mode pr --output /tmp/release-notes-pr.md
 diff -u /tmp/release-notes-commit.md /tmp/release-notes-pr.md
+```
+
+## Compare `hybrid` vs `pr` Mode
+
+```bash
+scripts/local-release-verification.sh --mode hybrid --output /tmp/release-notes-hybrid.md
+scripts/local-release-verification.sh --mode pr --output /tmp/release-notes-pr.md
+diff -u /tmp/release-notes-hybrid.md /tmp/release-notes-pr.md
 ```
 
 ## Save Preview to a File
@@ -61,6 +69,7 @@ scripts/local-release-verification.sh --show-inputs
 
 # switch render mode
 scripts/local-release-verification.sh --mode pr --show-inputs
+scripts/local-release-verification.sh --mode hybrid --show-inputs
 
 # fallback contributor login when API resolution fails
 scripts/local-release-verification.sh --fallback-login @your-account-name --show-inputs
@@ -79,6 +88,30 @@ scripts/local-release-verification.sh --output /tmp/stable-release-notes-preview
 
 - `scripts/local-release-verification.sh` resolves tag/range inputs.
 - It then calls `scripts/generate-stable-release-notes.sh` to render final markdown.
+
+## Why Local and CI Can Differ (PR Mode)
+
+Differences are usually caused by one of these:
+- Different release range (auto-resolved locally vs fixed range in CI).
+- Different auth context (`GH_TOKEN`/`GITHUB_TOKEN` availability, token scopes, rate limits).
+- Different mode (`commit`, `pr`, `hybrid`).
+- Local fallback flags in use (for example, `--fallback-login`) that CI does not use.
+- Stale local tags/history.
+
+To compare with CI behavior, run with explicit inputs:
+
+```bash
+git fetch --tags --prune origin
+
+GH_TOKEN="<token>" scripts/generate-stable-release-notes.sh \
+  --mode "pr" \
+  --range "<from-commit>..<to-commit>" \
+  --current-tag "<current-tag>" \
+  --previous-tag "<previous-tag>" \
+  --repository "<owner>/<repo>"
+```
+
+For parity checks, do not pass `--fallback-login`.
 
 ## Notes
 

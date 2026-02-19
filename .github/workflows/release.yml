@@ -174,7 +174,7 @@ jobs:
         run: |
           set -euo pipefail
           SCRIPT_PATH="scripts/generate-stable-release-notes.sh"
-          ARGS=(--mode "pr" --range "$RELEASE_RANGE" --current-tag "$CURRENT_TAG" --repository "$REPOSITORY")
+          ARGS=(--mode "hybrid" --range "$RELEASE_RANGE" --current-tag "$CURRENT_TAG" --repository "$REPOSITORY")
 
           if [ -n "${PREVIOUS_TAG:-}" ]; then
             ARGS+=(--previous-tag "$PREVIOUS_TAG")

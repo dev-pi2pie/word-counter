@@ -12,7 +12,8 @@ Usage:
   scripts/local-release-verification.sh [options]
 
 Options:
-  --mode <commit|pr>     Render mode (default: commit)
+  --mode <commit|pr|hybrid>
+                         Render mode (default: commit)
   --current-tag <tag>    Stable tag to verify (default: latest stable tag)
   --previous-tag <tag>   Previous stable tag (default: auto-resolve)
   --range <git-range>    Explicit git range override (e.g. abc..def)
@@ -26,6 +27,7 @@ Examples:
   scripts/local-release-verification.sh
   scripts/local-release-verification.sh --fallback-login @your-account-name
   scripts/local-release-verification.sh --mode pr --show-inputs
+  scripts/local-release-verification.sh --mode hybrid --show-inputs
   scripts/local-release-verification.sh --current-tag v0.1.3 --show-inputs
   scripts/local-release-verification.sh --current-tag v0.1.3 --output /tmp/release-notes.md
   scripts/local-release-verification.sh --range "abc123..def456" --current-tag v0.1.3
@@ -87,8 +89,8 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-if [ "$MODE" != "commit" ] && [ "$MODE" != "pr" ]; then
-  echo "Invalid --mode: $MODE (expected: commit or pr)" >&2
+if [ "$MODE" != "commit" ] && [ "$MODE" != "pr" ] && [ "$MODE" != "hybrid" ]; then
+  echo "Invalid --mode: $MODE (expected: commit, pr, or hybrid)" >&2
   usage >&2
   exit 1
 fi

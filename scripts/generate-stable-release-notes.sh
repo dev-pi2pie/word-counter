@@ -7,7 +7,7 @@ Generate stable release notes from a git range.
 
 Usage:
   scripts/generate-stable-release-notes.sh \
-    [--mode <commit|pr>] \
+    [--mode <commit|pr|hybrid>] \
     --range <git-range> \
     --current-tag <tag> \
     [--previous-tag <tag>] \
@@ -23,6 +23,11 @@ Examples:
     --repository "<owner>/<repo>"
   scripts/generate-stable-release-notes.sh \
     --mode pr \
+    --range "abc123..def456" \
+    --current-tag "v1.2.3" \
+    --repository "<owner>/<repo>"
+  scripts/generate-stable-release-notes.sh \
+    --mode hybrid \
     --range "abc123..def456" \
     --current-tag "v1.2.3" \
     --repository "<owner>/<repo>"
@@ -89,8 +94,8 @@ if [ -z "$RELEASE_RANGE" ] || [ -z "$CURRENT_TAG" ]; then
   exit 1
 fi
 
-if [ "$MODE" != "commit" ] && [ "$MODE" != "pr" ]; then
-  echo "Invalid --mode: $MODE (expected: commit or pr)" >&2
+if [ "$MODE" != "commit" ] && [ "$MODE" != "pr" ] && [ "$MODE" != "hybrid" ]; then
+  echo "Invalid --mode: $MODE (expected: commit, pr, or hybrid)" >&2
   usage >&2
   exit 1
 fi
@@ -371,17 +376,21 @@ while IFS=$'\t' read -r SHA SUBJECT AUTHOR_NAME AUTHOR_EMAIL; do
     RESOLVED_CONTRIBUTOR="$FALLBACK_LOGIN"
   fi
 
-  if [ "$MODE" = "commit" ]; then
+  if [ "$MODE" = "commit" ] || [ "$MODE" = "hybrid" ]; then
     set_group_and_display_from_subject "$SUBJECT"
 
     printf -- '- %s\n' "$DISPLAY_MESSAGE" >> "$(group_file "$GROUP_KEY")"
-    COMMIT_CONTRIBUTOR=$(format_contributor_for_mention "$RESOLVED_CONTRIBUTOR")
-    CHANGELOG_LINE="- $SHA $DISPLAY_MESSAGE"
-    if [ -n "$COMMIT_CONTRIBUTOR" ] && [[ "$COMMIT_CONTRIBUTOR" != *"[bot]"* ]]; then
-      CHANGELOG_LINE="$CHANGELOG_LINE by $COMMIT_CONTRIBUTOR"
+    if [ "$MODE" = "commit" ]; then
+      COMMIT_CONTRIBUTOR=$(format_contributor_for_mention "$RESOLVED_CONTRIBUTOR")
+      CHANGELOG_LINE="- $SHA $DISPLAY_MESSAGE"
+      if [ -n "$COMMIT_CONTRIBUTOR" ] && [[ "$COMMIT_CONTRIBUTOR" != *"[bot]"* ]]; then
+        CHANGELOG_LINE="$CHANGELOG_LINE by $COMMIT_CONTRIBUTOR"
+      fi
+      printf '%s\n' "$CHANGELOG_LINE" >> "$ALL_CHANGES_FILE"
     fi
-    printf '%s\n' "$CHANGELOG_LINE" >> "$ALL_CHANGES_FILE"
-    continue
+    if [ "$MODE" = "commit" ]; then
+      continue
+    fi
   fi
 
   # PR mode: one line per PR when possible, with inline contributor attribution.
@@ -447,7 +456,7 @@ done < "$COMMITS_FILE"
 
 printf '%s\n' "## What's Changed"
 
-if [ "$MODE" = "commit" ]; then
+if [ "$MODE" = "commit" ] || [ "$MODE" = "hybrid" ]; then
   for KEY in "${GROUP_KEYS[@]}"; do
     FILE=$(group_file "$KEY")
     if [ -s "$FILE" ]; then
