@@ -21,8 +21,7 @@ function isFallbackFriendlyWorkerError(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error);
   return (
     message.includes("Unknown file extension") ||
-    message.includes("Cannot find module") ||
-    message.includes("Worker exited before completing assigned tasks")
+    message.includes("Cannot find module")
   );
 }
 
