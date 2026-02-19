@@ -39,4 +39,16 @@ export default defineConfig([
     inlineOnly: ["picocolors"],
     banner: "#!/usr/bin/env node\n",
   },
+  {
+    entry: { "worker/count-worker": "src/cli/batch/jobs/worker/count-worker.ts" },
+    format: ["esm"],
+    dts: false,
+    outDir: "dist/esm",
+    clean: false,
+    sourcemap: true,
+    platform: "node",
+    target: "node20",
+    hash: false,
+    fixedExtension: true,
+  },
 ]);

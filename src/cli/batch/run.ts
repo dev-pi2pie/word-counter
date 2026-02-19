@@ -3,6 +3,10 @@ import { appendAll } from "../../utils/append-all";
 import type wordCounter from "../../wc";
 import type { DebugChannel } from "../debug/channel";
 import { countBatchInputsWithJobs } from "./jobs/load-count-experimental";
+import {
+  WorkerRouteUnavailableError,
+  countBatchInputsWithWorkerJobs,
+} from "./jobs/load-count-worker-experimental";
 import { loadBatchInputsWithJobs } from "./jobs/load-only";
 import { finalizeBatchJobsSummary } from "./jobs/render";
 import type { BatchJobsStrategy } from "./jobs/types";
@@ -174,16 +178,45 @@ export async function runBatchCount(options: RunBatchCountOptions): Promise<Batc
     let finalizeStartedAtMs: number | null = null;
     let emittedCountTiming = false;
     try {
-      const counted = await countBatchInputsWithJobs(resolved.files, {
-        jobs: options.jobs,
-        section: options.section,
-        wcOptions: options.wcOptions,
-        onFileProcessed: (snapshot) => {
-          if (progressEnabled) {
-            options.progressReporter.advance(snapshot);
-          }
-        },
-      });
+      let counted: Awaited<ReturnType<typeof countBatchInputsWithJobs>>;
+      try {
+        counted = await countBatchInputsWithWorkerJobs(resolved.files, {
+          jobs: options.jobs,
+          section: options.section,
+          wcOptions: options.wcOptions,
+          onFileProcessed: (snapshot) => {
+            if (progressEnabled) {
+              options.progressReporter.advance(snapshot);
+            }
+          },
+        });
+        options.debug.emit("batch.jobs.executor", {
+          strategy: options.jobsStrategy,
+          executor: "worker-pool",
+          jobs: options.jobs,
+        });
+      } catch (error) {
+        if (!(error instanceof WorkerRouteUnavailableError)) {
+          throw error;
+        }
+
+        options.debug.emit("batch.jobs.executor", {
+          strategy: options.jobsStrategy,
+          executor: "async-fallback",
+          reason: error.message,
+          jobs: options.jobs,
+        });
+        counted = await countBatchInputsWithJobs(resolved.files, {
+          jobs: options.jobs,
+          section: options.section,
+          wcOptions: options.wcOptions,
+          onFileProcessed: (snapshot) => {
+            if (progressEnabled) {
+              options.progressReporter.advance(snapshot);
+            }
+          },
+        });
+      }
 
       routeSkips = counted.skipped;
       summary = finalizeBatchJobsSummary(counted.files, options.section, options.wcOptions, {

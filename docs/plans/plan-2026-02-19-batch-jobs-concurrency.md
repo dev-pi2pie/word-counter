@@ -15,6 +15,7 @@ Deliver a focused improvement set that improves large-batch runtime via bounded 
 - In scope:
   - `--jobs <n>` bounded concurrency in batch mode (stable load-only route).
   - Experimental `load+count` route behind explicit opt-in.
+  - Experimental `load+count` worker-pool route for true CPU parallel counting.
   - Modularized jobs architecture (strategy + route executors + shared primitives).
   - Standalone `--print-jobs-limit` diagnostics flag.
   - Benchmark and parity validation for deterministic behavior.
@@ -54,7 +55,26 @@ Deliver a focused improvement set that improves large-batch runtime via bounded 
 - [x] Add parity tests vs stable route for deterministic output and totals.
 - [x] Add safety checks for resource-limit failures (`EMFILE`/`ENFILE`) with clear failure messages.
 
-### Phase 4 - Diagnostics: `--print-jobs-limit`
+### Phase 4 - Experimental Route v2 (`worker_threads`)
+
+- [x] Add worker-pool infrastructure for counting:
+  - `src/cli/batch/jobs/worker/protocol.ts`
+  - `src/cli/batch/jobs/worker/count-worker.ts`
+  - `src/cli/batch/jobs/worker-pool.ts`
+- [x] Add executor `src/cli/batch/jobs/load-count-worker-experimental.ts` using bounded worker dispatch.
+- [x] Keep deterministic output ordering via index-stable result slots.
+- [x] Define explicit strategy behavior:
+  - prefer worker route when experimental flag is enabled and workers are available
+  - fallback to current async experimental route on unsupported environments
+- [x] Add worker failure handling (worker crash/init error/message protocol mismatch) with clear surfaced errors.
+- [x] Add parity tests vs stable route for:
+  - totals
+  - per-file ordering
+  - sectioned and non-sectioned output contracts
+- [x] Add targeted performance acceptance check:
+  - benchmark profile should show meaningful median speedup vs stable `--jobs 1` baseline when `--jobs 4` is used.
+
+### Phase 5 - Diagnostics: `--print-jobs-limit`
 
 - [ ] Add standalone `--print-jobs-limit` flag.
 - [ ] Enforce standalone-only usage (reject with non-zero when combined with other runtime flags or inputs).
@@ -71,7 +91,7 @@ Deliver a focused improvement set that improves large-batch runtime via bounded 
 - [ ] Add tests for standalone success and conflict failure.
 - [ ] Add CLI help text and README usage example.
 
-### Phase 5 - Benchmark and Release Validation
+### Phase 6 - Benchmark and Release Validation
 
 - [ ] Add benchmark script (for local verification), proposed:
   - `scripts/benchmark-batch-jobs.mjs`
@@ -87,6 +107,7 @@ Deliver a focused improvement set that improves large-batch runtime via bounded 
 - Keep rollout compatibility-first: no behavior change unless new flags are used.
 - Prioritize deterministic output guarantees before throughput optimization claims.
 - Ship stable route first; keep experimental route clearly marked and opt-in.
+- Treat current Phase 3 experimental route as transitional; expected major gains should come from Phase 4 worker-based execution.
 - Keep full `doctor` command out of this release; `--print-jobs-limit` is the minimal diagnostics bridge.
 
 ## Related Research

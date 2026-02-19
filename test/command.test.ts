@@ -504,6 +504,73 @@ describe("CLI batch output", () => {
     ]);
   });
 
+  test("keeps sectioned json output parity between stable and experimental jobs routes", async () => {
+    const root = await makeTempFixture("cli-jobs-route-parity-sectioned");
+    await writeFile(join(root, "a.md"), ["---", "title: One", "---", "Alpha beta"].join("\n"));
+    await writeFile(join(root, "b.txt"), "Gamma delta");
+
+    const stable = await captureCli([
+      "--path",
+      root,
+      "--section",
+      "split",
+      "--jobs",
+      "4",
+      "--format",
+      "json",
+      "--quiet-skips",
+    ]);
+    const experimental = await captureCli([
+      "--path",
+      root,
+      "--section",
+      "split",
+      "--jobs",
+      "4",
+      "--experimental-load-count",
+      "--format",
+      "json",
+      "--quiet-skips",
+    ]);
+
+    const stableParsed = JSON.parse(stable.stdout[0] ?? "{}");
+    const experimentalParsed = JSON.parse(experimental.stdout[0] ?? "{}");
+    expect(experimentalParsed).toEqual(stableParsed);
+  });
+
+  test("falls back to async experimental executor when worker route is disabled", async () => {
+    const root = await makeTempFixture("cli-jobs-worker-fallback");
+    await writeFile(join(root, "a.txt"), "alpha beta");
+    await writeFile(join(root, "b.txt"), "gamma delta");
+
+    const previous = process.env.WORD_COUNTER_DISABLE_EXPERIMENTAL_WORKERS;
+    process.env.WORD_COUNTER_DISABLE_EXPERIMENTAL_WORKERS = "1";
+    try {
+      const output = await captureCli([
+        "--path",
+        root,
+        "--jobs",
+        "4",
+        "--experimental-load-count",
+        "--format",
+        "raw",
+        "--debug",
+        "--quiet-skips",
+      ]);
+      const events = parseDebugEvents(output.stderr);
+      const executor = events.find((item) => item.event === "batch.jobs.executor");
+
+      expect(executor?.executor).toBe("async-fallback");
+      expect(output.stdout).toEqual(["4"]);
+    } finally {
+      if (previous === undefined) {
+        delete process.env.WORD_COUNTER_DISABLE_EXPERIMENTAL_WORKERS;
+      } else {
+        process.env.WORD_COUNTER_DISABLE_EXPERIMENTAL_WORKERS = previous;
+      }
+    }
+  });
+
   test("emits advisory warning when requested --jobs exceeds suggested limit", async () => {
     const root = await makeTempFixture("cli-jobs-advisory-warning");
     await writeFile(join(root, "a.txt"), "alpha beta");
