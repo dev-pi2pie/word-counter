@@ -1,5 +1,5 @@
 import type { BatchJobsStrategy } from "./types";
 
-export function resolveBatchJobsStrategy(enableExperimentalLoadCount: boolean | undefined): BatchJobsStrategy {
-  return enableExperimentalLoadCount ? "load-count-experimental" : "load-only";
+export function resolveBatchJobsStrategy(jobs: number): BatchJobsStrategy {
+  return jobs > 1 ? "load-count" : "load-only";
 }

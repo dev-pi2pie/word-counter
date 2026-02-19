@@ -207,6 +207,7 @@ CLI help text:
 2. No hard max cap in CLI validation for now; prefer advisory guardrails and fail-fast on real resource-limit errors.
 3. `--jobs > 1` should default to worker `load+count`; no extra experimental CLI flag is required.
 4. Add `--print-jobs-limit` in this scope as the lightweight diagnostics option.
+5. Phase 5 consolidation removes `--experimental-load-count` from CLI UX; async `load+count` remains internal fallback only.
 
 ## Related Research
 

@@ -3,7 +3,7 @@ import type wordCounter from "../../../wc";
 import type { BatchFileInput, BatchFileResult, BatchSkip } from "../../types";
 import type { BatchProgressSnapshot } from "../../progress/reporter";
 
-export type BatchJobsStrategy = "load-only" | "load-count-experimental";
+export type BatchJobsStrategy = "load-only" | "load-count";
 
 export type BatchJobsLimit = {
   suggestedMaxJobs: number;

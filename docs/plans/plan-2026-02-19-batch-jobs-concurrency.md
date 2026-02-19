@@ -77,17 +77,17 @@ Deliver a focused improvement set that improves large-batch runtime via bounded 
 
 ### Phase 5 - Strategy Consolidation (`--jobs` only)
 
-- [ ] Remove `--experimental-load-count` from CLI options and help text.
-- [ ] Update route selection policy:
+- [x] Remove `--experimental-load-count` from CLI options and help text.
+- [x] Update route selection policy:
   - `--jobs` omitted or `--jobs=1` -> no extra workers
   - `--jobs>1` -> worker `load+count` route by default
-- [ ] Keep async executor as internal fallback only (not user-facing route).
-- [ ] Remove/adjust tests that depend on explicit experimental flag behavior.
-- [ ] Add tests for policy behavior:
+- [x] Keep async executor as internal fallback only (not user-facing route).
+- [x] Remove/adjust tests that depend on explicit experimental flag behavior.
+- [x] Add tests for policy behavior:
   - default path (no `--jobs`) equals `--jobs=1`
   - `--jobs>1` uses worker executor (with fallback diagnostics when unavailable)
   - parity across sectioned and non-sectioned outputs
-- [ ] Update research/README/help text to reflect unified `--jobs` policy.
+- [x] Update research/README/help text to reflect unified `--jobs` policy.
 
 ### Phase 6 - Diagnostics: `--print-jobs-limit`
 

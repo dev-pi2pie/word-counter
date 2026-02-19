@@ -100,10 +100,11 @@ export function configureProgramOptions(
     .option("--debug-tee", "alias of --debug-report-tee")
     .option("--merged", "show merged aggregate output (default)")
     .option("--per-file", "show per-file output plus merged summary")
-    .option("--jobs <n>", "concurrent file jobs in batch mode (default: 1)", parseJobsOption, 1)
     .option(
-      "--experimental-load-count",
-      "experimental: run load+count together in concurrent workers",
+      "--jobs <n>",
+      "concurrent file jobs in batch mode (default: 1; >1 enables worker load+count)",
+      parseJobsOption,
+      1,
     )
     .option("--print-jobs-limit", "print suggested max --jobs for current host and exit")
     .option("--no-progress", "disable batch progress indicator")

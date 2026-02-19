@@ -51,7 +51,7 @@ export async function executeBatchCount({
   if (jobs > jobsLimit.suggestedMaxJobs) {
     console.error(formatJobsAdvisoryWarning(jobs, jobsLimit));
   }
-  const jobsStrategy = resolveBatchJobsStrategy(options.experimentalLoadCount);
+  const jobsStrategy = resolveBatchJobsStrategy(jobs);
 
   const debugEnabled = Boolean(options.debug);
   const mirrorDebugToTerminal = debugEnabled && (!debug.reportPath || teeEnabled);

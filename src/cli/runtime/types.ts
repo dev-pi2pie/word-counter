@@ -25,7 +25,6 @@ export type CliActionOptions = {
   totalOf?: TotalOfPart[];
   path?: string[];
   jobs: number;
-  experimentalLoadCount?: boolean;
   printJobsLimit?: boolean;
   pathMode: PathMode;
   recursive: boolean;

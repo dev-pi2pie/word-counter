@@ -139,6 +139,21 @@ word-counter --path ./examples/test-case-multi-files-support --keep-progress
 
 Progress is transient by default, auto-disabled for single-input runs, and suppressed in `--format raw` and `--format json`.
 
+### Batch Concurrency (`--jobs`)
+
+Use `--jobs` to control batch concurrency:
+
+```bash
+word-counter --path ./examples/test-case-multi-files-support --jobs 1
+word-counter --path ./examples/test-case-multi-files-support --jobs 4
+```
+
+Concurrency policy:
+
+- no `--jobs` (default) or `--jobs 1`: baseline single-threaded batch route.
+- `--jobs > 1`: worker `load+count` route by default.
+- if workers are unavailable on the host/runtime, execution falls back internally to async `load+count` while preserving deterministic output order.
+
 ### Stable Path Resolution Contract
 
 - Repeated `--path` values are accepted as mixed inputs (file + directory).

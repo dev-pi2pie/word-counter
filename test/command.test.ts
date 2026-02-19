@@ -67,6 +67,22 @@ async function captureCli(
   return { stdout, stderr };
 }
 
+async function captureBatchJsonAcrossJobs(args: string[]): Promise<{
+  noJobs: unknown;
+  jobsOne: unknown;
+  jobsFour: unknown;
+}> {
+  const noJobs = await captureCli(args);
+  const jobsOne = await captureCli([...args, "--jobs", "1"]);
+  const jobsFour = await captureCli([...args, "--jobs", "4"]);
+
+  return {
+    noJobs: JSON.parse(noJobs.stdout[0] ?? "{}"),
+    jobsOne: JSON.parse(jobsOne.stdout[0] ?? "{}"),
+    jobsFour: JSON.parse(jobsFour.stdout[0] ?? "{}"),
+  };
+}
+
 function createCapturedStream(isTTY: boolean): { stream: ProgressOutputStream; writes: string[] } {
   const writes: string[] = [];
   return {
@@ -430,55 +446,70 @@ describe("CLI batch output", () => {
     expect(output.stdout).toEqual(["3"]);
   });
 
-  test("supports opt-in --jobs concurrency in stable route", async () => {
-    const root = await makeTempFixture("cli-jobs-stable");
+  test("treats default batch path as equivalent to --jobs=1", async () => {
+    const root = await makeTempFixture("cli-jobs-default-equals-jobs-1");
     await writeFile(join(root, "a.txt"), "alpha beta");
     await writeFile(join(root, "b.txt"), "gamma delta");
 
-    const output = await captureCli([
+    const defaultOutput = await captureCli([
+      "--path",
+      root,
+      "--format",
+      "raw",
+      "--debug",
+      "--quiet-skips",
+    ]);
+    const jobsOneOutput = await captureCli([
       "--path",
       root,
       "--jobs",
-      "2",
+      "1",
       "--format",
       "raw",
+      "--debug",
       "--quiet-skips",
     ]);
 
-    expect(output.stdout).toEqual(["4"]);
+    const defaultEvents = parseDebugEvents(defaultOutput.stderr);
+    const jobsOneEvents = parseDebugEvents(jobsOneOutput.stderr);
+    const defaultStrategy = defaultEvents.find((item) => item.event === "batch.jobs.strategy");
+    const jobsOneStrategy = jobsOneEvents.find((item) => item.event === "batch.jobs.strategy");
+
+    expect(defaultOutput.stdout).toEqual(jobsOneOutput.stdout);
+    expect(defaultStrategy?.strategy).toBe("load-only");
+    expect(jobsOneStrategy?.strategy).toBe("load-only");
   });
 
-  test("keeps totals consistent between stable and experimental jobs routes", async () => {
-    const root = await makeTempFixture("cli-jobs-route-parity");
+  test("keeps totals consistent between --jobs=1 and --jobs>1 routes", async () => {
+    const root = await makeTempFixture("cli-jobs-route-policy-parity");
     await writeFile(join(root, "z.txt"), "zeta");
     await writeFile(join(root, "a.txt"), "alpha beta");
     await writeFile(join(root, "binary.dat"), Buffer.from([0, 1, 2, 3]));
 
-    const stable = await captureCli([
+    const baseline = await captureCli([
       "--path",
       root,
       "--jobs",
-      "4",
+      "1",
       "--format",
       "raw",
       "--quiet-skips",
     ]);
-    const experimental = await captureCli([
+    const concurrent = await captureCli([
       "--path",
       root,
       "--jobs",
       "4",
-      "--experimental-load-count",
       "--format",
       "raw",
       "--quiet-skips",
     ]);
 
-    expect(experimental.stdout).toEqual(stable.stdout);
+    expect(concurrent.stdout).toEqual(baseline.stdout);
   });
 
-  test("keeps per-file ordering deterministic in experimental jobs route", async () => {
-    const root = await makeTempFixture("cli-jobs-experimental-order");
+  test("keeps per-file ordering deterministic when --jobs>1", async () => {
+    const root = await makeTempFixture("cli-jobs-worker-order");
     await writeFile(join(root, "z.txt"), "zeta");
     await writeFile(join(root, "a.txt"), "alpha");
     await writeFile(join(root, "m.txt"), "mu");
@@ -488,7 +519,6 @@ describe("CLI batch output", () => {
       root,
       "--jobs",
       "3",
-      "--experimental-load-count",
       "--per-file",
       "--format",
       "json",
@@ -504,41 +534,155 @@ describe("CLI batch output", () => {
     ]);
   });
 
-  test("keeps sectioned json output parity between stable and experimental jobs routes", async () => {
-    const root = await makeTempFixture("cli-jobs-route-parity-sectioned");
+  test("keeps sectioned json output parity between --jobs=1 and --jobs>1", async () => {
+    const root = await makeTempFixture("cli-jobs-route-policy-parity-sectioned");
     await writeFile(join(root, "a.md"), ["---", "title: One", "---", "Alpha beta"].join("\n"));
     await writeFile(join(root, "b.txt"), "Gamma delta");
 
-    const stable = await captureCli([
+    const baseline = await captureCli([
       "--path",
       root,
       "--section",
       "split",
       "--jobs",
-      "4",
+      "1",
       "--format",
       "json",
       "--quiet-skips",
     ]);
-    const experimental = await captureCli([
+    const concurrent = await captureCli([
       "--path",
       root,
       "--section",
       "split",
       "--jobs",
       "4",
-      "--experimental-load-count",
       "--format",
       "json",
       "--quiet-skips",
     ]);
 
-    const stableParsed = JSON.parse(stable.stdout[0] ?? "{}");
-    const experimentalParsed = JSON.parse(experimental.stdout[0] ?? "{}");
-    expect(experimentalParsed).toEqual(stableParsed);
+    const baselineParsed = JSON.parse(baseline.stdout[0] ?? "{}");
+    const concurrentParsed = JSON.parse(concurrent.stdout[0] ?? "{}");
+    expect(concurrentParsed).toEqual(baselineParsed);
   });
 
-  test("falls back to async experimental executor when worker route is disabled", async () => {
+  test("keeps json --misc output parity across no --jobs, --jobs=1, and --jobs>1", async () => {
+    const root = await makeTempFixture("cli-jobs-json-misc-parity");
+    await writeFile(join(root, "a.txt"), "alpha  beta\n\ngamma");
+    await writeFile(join(root, "b.md"), ["---", "title: T", "---", "delta\nepsilon"].join("\n"));
+
+    const merged = await captureBatchJsonAcrossJobs([
+      "--path",
+      root,
+      "--format",
+      "json",
+      "--misc",
+      "--quiet-skips",
+    ]);
+    expect(merged.jobsOne).toEqual(merged.noJobs);
+    expect(merged.jobsFour).toEqual(merged.noJobs);
+
+    const perFile = await captureBatchJsonAcrossJobs([
+      "--path",
+      root,
+      "--per-file",
+      "--format",
+      "json",
+      "--misc",
+      "--quiet-skips",
+    ]);
+    expect(perFile.jobsOne).toEqual(perFile.noJobs);
+    expect(perFile.jobsFour).toEqual(perFile.noJobs);
+
+    const sectioned = await captureBatchJsonAcrossJobs([
+      "--path",
+      root,
+      "--section",
+      "split",
+      "--format",
+      "json",
+      "--misc",
+      "--quiet-skips",
+    ]);
+    expect(sectioned.jobsOne).toEqual(sectioned.noJobs);
+    expect(sectioned.jobsFour).toEqual(sectioned.noJobs);
+  });
+
+  test("keeps json --total-of whitespace,words parity across job routes", async () => {
+    const root = await makeTempFixture("cli-jobs-json-total-of-whitespace-words-parity");
+    await writeFile(join(root, "a.txt"), "alpha  beta\n\ngamma");
+    await writeFile(join(root, "b.md"), ["---", "title: T", "---", "delta\nepsilon"].join("\n"));
+
+    const merged = await captureBatchJsonAcrossJobs([
+      "--path",
+      root,
+      "--format",
+      "json",
+      "--total-of",
+      "whitespace,words",
+      "--quiet-skips",
+    ]);
+    expect(merged.jobsOne).toEqual(merged.noJobs);
+    expect(merged.jobsFour).toEqual(merged.noJobs);
+
+    const perFile = await captureBatchJsonAcrossJobs([
+      "--path",
+      root,
+      "--per-file",
+      "--format",
+      "json",
+      "--total-of",
+      "whitespace,words",
+      "--quiet-skips",
+    ]);
+    expect(perFile.jobsOne).toEqual(perFile.noJobs);
+    expect(perFile.jobsFour).toEqual(perFile.noJobs);
+
+    const sectioned = await captureBatchJsonAcrossJobs([
+      "--path",
+      root,
+      "--section",
+      "split",
+      "--format",
+      "json",
+      "--total-of",
+      "whitespace,words",
+      "--quiet-skips",
+    ]);
+    expect(sectioned.jobsOne).toEqual(sectioned.noJobs);
+    expect(sectioned.jobsFour).toEqual(sectioned.noJobs);
+  });
+
+  test("emits executor diagnostics for --jobs>1 route", async () => {
+    const root = await makeTempFixture("cli-jobs-worker-executor");
+    await writeFile(join(root, "a.txt"), "alpha beta");
+    await writeFile(join(root, "b.txt"), "gamma delta");
+
+    const output = await captureCli([
+      "--path",
+      root,
+      "--jobs",
+      "4",
+      "--format",
+      "raw",
+      "--debug",
+      "--quiet-skips",
+    ]);
+    const events = parseDebugEvents(output.stderr);
+    const strategy = events.find((item) => item.event === "batch.jobs.strategy");
+    const executor = events.find((item) => item.event === "batch.jobs.executor");
+
+    expect(strategy?.strategy).toBe("load-count");
+    expect(executor).toBeDefined();
+    expect(executor?.executor === "worker-pool" || executor?.executor === "async-fallback").toBeTrue();
+    if (executor?.executor === "async-fallback") {
+      expect(typeof executor.reason).toBe("string");
+    }
+    expect(output.stdout).toEqual(["4"]);
+  });
+
+  test("falls back to async executor when worker route is disabled", async () => {
     const root = await makeTempFixture("cli-jobs-worker-fallback");
     await writeFile(join(root, "a.txt"), "alpha beta");
     await writeFile(join(root, "b.txt"), "gamma delta");
@@ -551,7 +695,6 @@ describe("CLI batch output", () => {
         root,
         "--jobs",
         "4",
-        "--experimental-load-count",
         "--format",
         "raw",
         "--debug",
