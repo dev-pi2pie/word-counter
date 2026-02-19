@@ -148,11 +148,12 @@ word-counter --path ./examples/test-case-multi-files-support --jobs 1
 word-counter --path ./examples/test-case-multi-files-support --jobs 4
 ```
 
-Concurrency policy:
+Quick policy:
 
-- no `--jobs` (default) or `--jobs 1`: baseline single-threaded batch route.
-- `--jobs > 1`: worker `load+count` route by default.
-- if workers are unavailable on the host/runtime, execution falls back internally to async `load+count` while preserving deterministic output order.
+- no `--jobs` and `--jobs 1` are equivalent baseline behavior.
+- `--jobs > 1` enables concurrent `load+count`.
+
+For full policy details, JSON parity expectations (`--misc`, `--total-of whitespace,words`), and benchmark standards, see [`docs/batch-jobs-usage-guide.md`](docs/batch-jobs-usage-guide.md).
 
 ### Stable Path Resolution Contract
 
