@@ -491,8 +491,9 @@ Example (trimmed):
   "frontmatterType": "yaml",
   "total": 7,
   "items": [
-    { "name": "content", "source": "frontmatter", "result": { "total": 3 } },
-    { "name": "content", "source": "content", "result": { "total": 4 } }
+    { "name": "content", "source": "frontmatter", "result": { "total": 4 } },
+    { "name": "content", "source": "frontmatter", "result": { "total": 2 } },
+    { "name": "content", "source": "content", "result": { "total": 5 } }
   ]
 }
 ```
