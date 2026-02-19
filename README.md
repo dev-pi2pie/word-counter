@@ -591,27 +591,10 @@ Example JSON (trimmed):
 
 ## Locale Tag Detection Notes
 
-- Detection is regex/script based (Unicode script checks), not a statistical language-ID model.
-- Ambiguous Latin text uses `und-Latn` unless a Latin hint is provided.
-- Han-script fallback uses `und-Hani` by default because regex script checks cannot natively distinguish `zh-Hans` vs `zh-Hant`.
-- Current built-in Latin diacritic heuristics include:
-  - `de`: `äöüÄÖÜß`
-  - `es`: `ñÑ¿¡`
-  - `pt`: `ãõÃÕ`
-  - `fr`: `œŒæÆ`
-  - `pl`: `ąćęłńśźżĄĆĘŁŃŚŹŻ`
-  - `tr`: `ıİğĞşŞ`
-  - `ro`: `ăĂâÂîÎșȘțȚ`
-  - `hu`: `őŐűŰ`
-  - `is`: `ðÐþÞ`
-- Latin text with other European diacritics may still remain in `und-Latn` unless a hint is provided.
-- Use `--mode chunk`/`--mode segments` or `--format json` to see the exact locale tag assigned to each chunk.
-- Regex/script-only detection cannot reliably identify English vs. other Latin-script languages; 100% certainty requires explicit metadata (document language tags, user-provided locale, headers) or a language-ID model.
-- Use `--latin-language <tag>` or `--latin-tag <tag>` for ambiguous Latin text.
-- Use `--latin-hint <tag>=<pattern>` (repeatable) and `--latin-hints-file <path>` to add custom Latin rules.
-- Use `--no-default-latin-hints` to disable built-in Latin diacritic rules.
-- Use `--han-language <tag>` or `--han-tag <tag>` for Han-script fallback.
-- `--latin-locale` remains supported as a legacy alias for now and is planned for future deprecation.
+- Detection is regex/script based, not statistical language-ID.
+- Ambiguous Latin defaults to `und-Latn`; Han fallback defaults to `und-Hani`.
+- Use explicit tag and hint flags when you need deterministic tagging.
+- Full notes (built-in heuristics, limitations, and override guidance) are tracked in `docs/locale-tag-detection-notes.md`.
 
 ## Breaking Changes Notes
 
