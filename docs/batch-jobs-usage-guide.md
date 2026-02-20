@@ -1,7 +1,7 @@
 ---
 title: "Batch Jobs Usage Guide"
 created-date: 2026-02-19
-modified-date: 2026-02-19
+modified-date: 2026-02-20
 status: completed
 agent: Codex
 ---
@@ -78,12 +78,18 @@ Benchmark profile:
 node dist/esm/bin.mjs --path ./examples/test-case-huge-logs --format raw --quiet-skips --no-progress --jobs <n>
 ```
 
-Example local snapshot (3 runs each, lower is better):
+Scripted local benchmark:
 
-- `jobs=1`: median `896.04ms`, p95 `897.14ms`
-- `jobs=2`: median `539.51ms`, p95 `542.23ms`
-- `jobs=4`: median `347.74ms`, p95 `350.99ms`
-- `jobs=8`: median `310.94ms`, p95 `314.52ms`
+```bash
+node scripts/benchmark-batch-jobs.mjs --runs 6 --jobs 1,2,4,8
+```
+
+Example local snapshot (6 runs each, lower is better):
+
+- `jobs=1`: median `872.16ms`, p95 `889.88ms`
+- `jobs=2`: median `533.90ms`, p95 `550.64ms`
+- `jobs=4`: median `350.70ms`, p95 `353.22ms`
+- `jobs=8`: median `312.61ms`, p95 `326.22ms`
 - Raw total parity across all runs/jobs: `822000`
 
 Benchmark standard:
