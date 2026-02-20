@@ -8,6 +8,7 @@ const DEFAULT_JOBS = [1, 2, 4, 8];
 const DEFAULT_RUNS = 3;
 const DEFAULT_FIXTURE = "examples/test-case-huge-logs";
 const DEFAULT_BIN = "dist/esm/bin.mjs";
+const WORKER_FALLBACK_WARNING = "Worker executor unavailable; falling back to async load+count.";
 
 function parseInteger(value, name) {
   const parsed = Number.parseInt(value, 10);
@@ -106,7 +107,20 @@ function runNode(args) {
   return {
     elapsedMs,
     stdout: result.stdout?.trim() ?? "",
+    stderr: result.stderr?.trim() ?? "",
   };
+}
+
+function findWorkerFallbackWarning(stderr) {
+  if (!stderr) {
+    return null;
+  }
+  const lines = stderr
+    .split(/\r?\n/u)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+  const warning = lines.find((line) => line.includes(WORKER_FALLBACK_WARNING));
+  return warning ?? null;
 }
 
 function median(values) {
@@ -165,6 +179,7 @@ function main() {
     const effectiveJobs = clampJobs(requestedJobs, jobsLimit.suggestedMaxJobs);
     const elapsedRuns = [];
     const totalRuns = [];
+    const workerFallbackRuns = [];
 
     for (let run = 1; run <= parsed.runs; run += 1) {
       const result = runNode([
@@ -178,6 +193,7 @@ function main() {
         "--jobs",
         String(effectiveJobs),
       ]);
+      const fallbackWarning = findWorkerFallbackWarning(result.stderr);
 
       const total = Number.parseInt(result.stdout, 10);
       if (!Number.isFinite(total)) {
@@ -189,9 +205,20 @@ function main() {
       elapsedRuns.push(result.elapsedMs);
       totalRuns.push(total);
       totals.add(total);
+      if (fallbackWarning) {
+        workerFallbackRuns.push({
+          run,
+          warning: fallbackWarning,
+        });
+      }
       console.log(
-        `requestedJobs=${requestedJobs} effectiveJobs=${effectiveJobs} run=${run}/${parsed.runs} -> ${formatMs(result.elapsedMs)} total=${total}`,
+        `requestedJobs=${requestedJobs} effectiveJobs=${effectiveJobs} run=${run}/${parsed.runs} -> ${formatMs(result.elapsedMs)} total=${total}${fallbackWarning ? " executor=async-fallback" : ""}`,
       );
+      if (fallbackWarning) {
+        console.warn(
+          `warning requestedJobs=${requestedJobs} effectiveJobs=${effectiveJobs} run=${run}/${parsed.runs}: ${fallbackWarning}`,
+        );
+      }
     }
 
     rows.push({
@@ -200,10 +227,13 @@ function main() {
       medianMs: median(elapsedRuns),
       p95Ms: p95(elapsedRuns),
       totals: totalRuns,
+      workerFallbackDetected: workerFallbackRuns.length > 0,
+      workerFallbackRuns,
     });
   }
 
   const parity = totals.size === 1;
+  const workerFallbackDetected = rows.some((row) => row.workerFallbackDetected);
   const output = {
     benchmark: {
       fixture: fixturePath,
@@ -215,15 +245,17 @@ function main() {
     hostLimit: jobsLimit,
     parity,
     parityTotal: parity ? [...totals][0] : null,
+    workerFallbackDetected,
     rows,
   };
 
   console.log("\nSummary:");
   for (const row of rows) {
     console.log(
-      `requestedJobs=${row.requestedJobs} effectiveJobs=${row.effectiveJobs} median=${formatMs(row.medianMs)} p95=${formatMs(row.p95Ms)} totals=${row.totals.join(",")}`,
+      `requestedJobs=${row.requestedJobs} effectiveJobs=${row.effectiveJobs} median=${formatMs(row.medianMs)} p95=${formatMs(row.p95Ms)} totals=${row.totals.join(",")}${row.workerFallbackDetected ? ` fallbackRuns=${row.workerFallbackRuns.map((entry) => entry.run).join(",")}` : ""}`,
     );
   }
+  console.log(`workerFallbackDetected=${workerFallbackDetected}`);
   console.log(`parity=${parity}${parity ? ` total=${String(output.parityTotal)}` : ""}`);
   console.log("\nJSON:");
   console.log(JSON.stringify(output, null, 2));
