@@ -123,12 +123,14 @@ Phase 6 related job records:
   - `docs/breaking-changes-notes.md`
 - [ ] Track and execute sub-plan:
   - `docs/plans/plan-2026-02-20-batch-jobs-route-cleanup-and-diagnostics-noise.md`
+- [x] Benchmark protocol is documented in:
+  - `docs/batch-jobs-usage-guide.md`
+  - includes fixture workflow (`examples/manage-huge-logs.mjs`), benchmark matrix (`--jobs 1,2,4,8`), and acceptance criteria (median/p95 + parity).
 - [ ] Add benchmark script (for local verification), proposed:
   - `scripts/benchmark-batch-jobs.mjs`
-- [ ] Use `examples/manage-huge-logs.mjs` fixture workflow for reproducible large datasets.
-- [ ] Run benchmark matrix for unified jobs policy (`--jobs 1,2,4,8`) with low-noise command settings:
+- [ ] Re-run benchmark matrix for unified jobs policy (`--jobs 1,2,4,8`) with low-noise command settings after route/logging cleanup:
   - `--format raw --quiet-skips --no-progress`
-- [ ] Record median/p95 timing plus parity checks in a job record.
+- [ ] Record refreshed median/p95 timing plus parity checks in a new job record.
 - [ ] Final regression: `bun test`
 - [ ] Final regression: targeted CLI smoke checks for `--jobs` policy and `--print-jobs-limit`.
 
