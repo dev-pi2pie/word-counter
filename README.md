@@ -151,9 +151,8 @@ word-counter --path ./examples/test-case-multi-files-support --jobs 4
 Quick policy:
 
 - no `--jobs` and `--jobs 1` are equivalent baseline behavior.
-- batch execution always uses `load+count`:
-  - `--jobs 1`: async main-thread `load+count` baseline
-  - `--jobs > 1`: worker `load+count` with async fallback when workers are unavailable
+- `--jobs 1`: async main-thread `load+count` baseline.
+- `--jobs > 1`: worker `load+count` with async fallback when workers are unavailable.
 - if requested `--jobs` exceeds host `suggestedMaxJobs` (from `--print-jobs-limit`), the CLI warns and runs with the suggested limit as a safety cap.
 - use `--quiet-warnings` to suppress non-fatal warning lines (for example jobs-limit advisory and worker-fallback warning).
 
@@ -162,6 +161,8 @@ Inspect host jobs diagnostics:
 ```bash
 word-counter --print-jobs-limit
 ```
+
+`--print-jobs-limit` must be used alone (no other inputs or runtime flags).
 
 For full policy details, JSON parity expectations (`--misc`, `--total-of whitespace,words`), and benchmark standards, see [`docs/batch-jobs-usage-guide.md`](docs/batch-jobs-usage-guide.md).
 
@@ -222,6 +223,8 @@ Regex behavior contract:
 For additional usage details and troubleshooting, see [`docs/regex-usage-guide.md`](docs/regex-usage-guide.md).
 
 ### Debugging Diagnostics (`--debug`)
+
+Noise policy: default output shows errors + warnings; `--debug` enables diagnostics; `--verbose` enables per-item diagnostics; `--quiet-warnings` suppresses warnings.
 
 `--debug` remains the diagnostics gate and now defaults to `compact` event volume:
 
@@ -589,7 +592,7 @@ word-counter --include-whitespace "Hi\tthere\n"
 word-counter --misc "Hi\tthere\n"
 ```
 
-In the CLI, `--include-whitespace` implies with `--non-words` (same behavior as `--misc`). `--non-words` alone does not include whitespace. When enabled, whitespace counts appear under `nonWords.whitespace`, and `total = words + nonWords` (emoji + symbols + punctuation + whitespace). JSON output also includes top-level `counts` when `nonWords` is enabled. See `docs/schemas/whitespace-categories.md` for how whitespace is categorized.
+In the CLI, `--include-whitespace` implies `--non-words` (same behavior as `--misc`). `--non-words` alone does not include whitespace. When enabled, whitespace counts appear under `nonWords.whitespace`, and `total = words + nonWords` (emoji + symbols + punctuation + whitespace). JSON output also includes top-level `counts` when `nonWords` is enabled. See `docs/schemas/whitespace-categories.md` for how whitespace is categorized.
 
 Example JSON (trimmed):
 
