@@ -1,7 +1,7 @@
 ---
 title: "Batch concurrency via --jobs"
 created-date: 2026-02-19
-modified-date: 2026-02-19
+modified-date: 2026-02-20
 status: draft
 agent: Codex
 ---
@@ -46,7 +46,7 @@ Execution policy:
 
 Module boundaries (keep files small and composable):
 - `src/cli/batch/jobs/strategy.ts`: route selection from `jobs`.
-- `src/cli/batch/jobs/load-count-worker-experimental.ts`: worker executor entry.
+- `src/cli/batch/jobs/load-count-worker.ts`: worker executor entry.
 - `src/cli/batch/jobs/worker-pool.ts`: bounded worker dispatch and lifecycle.
 - `src/cli/batch/jobs/worker/protocol.ts`: worker message contracts.
 - `src/cli/batch/jobs/worker/count-worker.ts`: worker-side `load+count`.

@@ -110,7 +110,8 @@ export function configureProgramOptions(
     .option("--no-progress", "disable batch progress indicator")
     .option("--keep-progress", "keep final batch progress line visible in standard mode")
     .option("--no-recursive", "disable recursive directory traversal")
-    .option("--quiet-skips", "hide skip diagnostics (applies when --debug is enabled)")
+    .option("--quiet-warnings", "suppress non-fatal warning diagnostics")
+    .option("--quiet-skips", "hide skip diagnostics and skipped json payloads in debug mode")
     .option(
       "--include-ext <exts>",
       "comma-separated extensions to include during directory scanning",

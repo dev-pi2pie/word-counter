@@ -29,7 +29,10 @@ export async function countBatchInputsWithWorkerJobs(
   filePaths: string[],
   options: CountBatchWithJobsOptions,
 ): Promise<CountBatchWithJobsResult> {
-  if (process.env.WORD_COUNTER_DISABLE_EXPERIMENTAL_WORKERS === "1") {
+  const workerRouteDisabled =
+    process.env.WORD_COUNTER_DISABLE_WORKER_JOBS === "1" ||
+    process.env.WORD_COUNTER_DISABLE_EXPERIMENTAL_WORKERS === "1";
+  if (workerRouteDisabled) {
     throw new WorkerRouteUnavailableError("Worker route disabled by environment.");
   }
 

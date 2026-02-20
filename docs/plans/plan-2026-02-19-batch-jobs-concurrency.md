@@ -116,12 +116,12 @@ Phase 6 related job records:
 
 ### Phase 7 - Benchmark and Release Validation
 
-- [ ] Route cleanup: remove active `load-only` route usage and keep only `load+count` family (`jobs=1` async baseline, `jobs>1` worker route with internal fallback).
-- [ ] Internal naming cleanup: remove `experimental` wording from active route module filenames/imports.
-- [ ] Diagnostics sub-plan execution: implement unified noise policy (error/warning/debug tiers), warning suppression option, and `--quiet-skips` contract alignment.
-- [ ] Update breaking-change tracking for diagnostics contract updates:
+- [x] Route cleanup: remove active `load-only` route usage and keep only `load+count` family (`jobs=1` async baseline, `jobs>1` worker route with internal fallback).
+- [x] Internal naming cleanup: remove `experimental` wording from active route module filenames/imports.
+- [x] Diagnostics sub-plan execution: implement unified noise policy (error/warning/debug tiers), warning suppression option, and `--quiet-skips` contract alignment.
+- [x] Update breaking-change tracking for diagnostics contract updates:
   - `docs/breaking-changes-notes.md`
-- [ ] Track and execute sub-plan:
+- [x] Track and execute sub-plan:
   - `docs/plans/plan-2026-02-20-batch-jobs-route-cleanup-and-diagnostics-noise.md`
 - [x] Benchmark protocol is documented in:
   - `docs/batch-jobs-usage-guide.md`
@@ -131,8 +131,12 @@ Phase 6 related job records:
 - [ ] Re-run benchmark matrix for unified jobs policy (`--jobs 1,2,4,8`) with low-noise command settings after route/logging cleanup:
   - `--format raw --quiet-skips --no-progress`
 - [ ] Record refreshed median/p95 timing plus parity checks in a new job record.
-- [ ] Final regression: `bun test`
-- [ ] Final regression: targeted CLI smoke checks for `--jobs` policy and `--print-jobs-limit`.
+- [x] Final regression: `bun test`
+- [x] Final regression: targeted CLI smoke checks for `--jobs` policy and `--print-jobs-limit`.
+
+Phase 7 related job records:
+
+- `docs/plans/jobs/2026-02-20-batch-jobs-route-cleanup-and-noise-policy.md`
 
 ## Execution Notes
 

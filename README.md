@@ -151,8 +151,11 @@ word-counter --path ./examples/test-case-multi-files-support --jobs 4
 Quick policy:
 
 - no `--jobs` and `--jobs 1` are equivalent baseline behavior.
-- `--jobs > 1` enables concurrent `load+count`.
+- batch execution always uses `load+count`:
+  - `--jobs 1`: async main-thread `load+count` baseline
+  - `--jobs > 1`: worker `load+count` with async fallback when workers are unavailable
 - if requested `--jobs` exceeds host `suggestedMaxJobs` (from `--print-jobs-limit`), the CLI warns and runs with the suggested limit as a safety cap.
+- use `--quiet-warnings` to suppress non-fatal warning lines (for example jobs-limit advisory and worker-fallback warning).
 
 Inspect host jobs diagnostics:
 
@@ -252,7 +255,7 @@ word-counter --path ./examples/test-case-multi-files-support --debug --debug-rep
 word-counter --path ./examples/test-case-multi-files-support --debug --debug-report ./logs/debug.jsonl --debug-tee
 ```
 
-Skip details stay debug-gated and can still be suppressed with `--quiet-skips`.
+Skip details stay debug-gated and can be suppressed with `--quiet-skips`.
 
 ## How It Works
 

@@ -7,7 +7,7 @@ import { createDebugChannel } from "../src/cli/debug/channel";
 import {
   WorkerRouteUnavailableError,
   countBatchInputsWithWorkerJobs,
-} from "../src/cli/batch/jobs/load-count-worker-experimental";
+} from "../src/cli/batch/jobs/load-count-worker";
 import { resolveBatchJobsLimit } from "../src/cli/batch/jobs/limits";
 import { DEFAULT_INCLUDE_EXTENSIONS, buildDirectoryExtensionFilter } from "../src/cli/path/filter";
 import type { ProgressOutputStream } from "../src/cli/progress/reporter";
@@ -479,10 +479,14 @@ describe("CLI batch output", () => {
     const jobsOneEvents = parseDebugEvents(jobsOneOutput.stderr);
     const defaultStrategy = defaultEvents.find((item) => item.event === "batch.jobs.strategy");
     const jobsOneStrategy = jobsOneEvents.find((item) => item.event === "batch.jobs.strategy");
+    const defaultExecutor = defaultEvents.find((item) => item.event === "batch.jobs.executor");
+    const jobsOneExecutor = jobsOneEvents.find((item) => item.event === "batch.jobs.executor");
 
     expect(defaultOutput.stdout).toEqual(jobsOneOutput.stdout);
-    expect(defaultStrategy?.strategy).toBe("load-only");
-    expect(jobsOneStrategy?.strategy).toBe("load-only");
+    expect(defaultStrategy?.strategy).toBe("load-count");
+    expect(jobsOneStrategy?.strategy).toBe("load-count");
+    expect(defaultExecutor?.executor).toBe("async-main");
+    expect(jobsOneExecutor?.executor).toBe("async-main");
   });
 
   test("keeps totals consistent between --jobs=1 and --jobs>1 routes", async () => {
@@ -720,8 +724,8 @@ describe("CLI batch output", () => {
     await writeFile(join(root, "a.txt"), "alpha beta");
     await writeFile(join(root, "b.txt"), "gamma delta");
 
-    const previous = process.env.WORD_COUNTER_DISABLE_EXPERIMENTAL_WORKERS;
-    process.env.WORD_COUNTER_DISABLE_EXPERIMENTAL_WORKERS = "1";
+    const previousDisableWorkerJobs = process.env.WORD_COUNTER_DISABLE_WORKER_JOBS;
+    process.env.WORD_COUNTER_DISABLE_WORKER_JOBS = "1";
     try {
       const output = await captureCli([
         "--path",
@@ -737,12 +741,15 @@ describe("CLI batch output", () => {
       const executor = events.find((item) => item.event === "batch.jobs.executor");
 
       expect(executor?.executor).toBe("async-fallback");
+      expect(
+        output.stderr.some((line) => line.includes("Worker executor unavailable; falling back to async load+count")),
+      ).toBeTrue();
       expect(output.stdout).toEqual(["4"]);
     } finally {
-      if (previous === undefined) {
-        delete process.env.WORD_COUNTER_DISABLE_EXPERIMENTAL_WORKERS;
+      if (previousDisableWorkerJobs === undefined) {
+        delete process.env.WORD_COUNTER_DISABLE_WORKER_JOBS;
       } else {
-        process.env.WORD_COUNTER_DISABLE_EXPERIMENTAL_WORKERS = previous;
+        process.env.WORD_COUNTER_DISABLE_WORKER_JOBS = previousDisableWorkerJobs;
       }
     }
   });
@@ -802,6 +809,55 @@ describe("CLI batch output", () => {
     expect(output.stderr.some((line) => line.includes(`Running with --jobs=${expectedCappedJobs}`))).toBeTrue();
     expect(strategy?.jobs).toBe(expectedCappedJobs);
     expect(output.stdout).toEqual(["4"]);
+  });
+
+  test("suppresses advisory warning when --quiet-warnings is enabled", async () => {
+    const root = await makeTempFixture("cli-jobs-advisory-warning-quiet");
+    await writeFile(join(root, "a.txt"), "alpha beta");
+    await writeFile(join(root, "b.txt"), "gamma delta");
+
+    const output = await captureCli([
+      "--path",
+      root,
+      "--jobs",
+      "99999",
+      "--format",
+      "raw",
+      "--quiet-warnings",
+    ]);
+
+    expect(output.stderr.some((line) => line.includes("Warning: requested --jobs=99999"))).toBeFalse();
+    expect(output.stdout).toEqual(["4"]);
+  });
+
+  test("suppresses worker fallback warning when --quiet-warnings is enabled", async () => {
+    const root = await makeTempFixture("cli-jobs-worker-fallback-quiet");
+    await writeFile(join(root, "a.txt"), "alpha beta");
+    await writeFile(join(root, "b.txt"), "gamma delta");
+
+    const previousDisableWorkerJobs = process.env.WORD_COUNTER_DISABLE_WORKER_JOBS;
+    process.env.WORD_COUNTER_DISABLE_WORKER_JOBS = "1";
+    try {
+      const output = await captureCli([
+        "--path",
+        root,
+        "--jobs",
+        "4",
+        "--format",
+        "raw",
+        "--quiet-warnings",
+      ]);
+      expect(
+        output.stderr.some((line) => line.includes("Worker executor unavailable; falling back to async load+count")),
+      ).toBeFalse();
+      expect(output.stdout).toEqual(["4"]);
+    } finally {
+      if (previousDisableWorkerJobs === undefined) {
+        delete process.env.WORD_COUNTER_DISABLE_WORKER_JOBS;
+      } else {
+        process.env.WORD_COUNTER_DISABLE_WORKER_JOBS = previousDisableWorkerJobs;
+      }
+    }
   });
 });
 

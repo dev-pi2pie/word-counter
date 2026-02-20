@@ -16,16 +16,16 @@ Track possible breaking changes and deprecation plans before stable `v0.1.0`.
 - Preferred replacements are `--latin-language <tag>` and `--latin-tag <tag>`.
 - Planned action: deprecate `--latin-locale` in a later release after canary feedback.
 
-## Planned CLI Behavior Changes (Batch Diagnostics)
+## CLI Behavior Changes (Batch Diagnostics)
 
-- Batch jobs routing is planned to remove active `load-only` strategy usage and keep only `load+count` execution paths.
-- Diagnostics output policy is planned to be unified into explicit tiers:
+- Batch jobs routing now removes active `load-only` strategy usage and keeps only `load+count` execution paths.
+- Diagnostics output policy is now unified into explicit tiers:
   - errors (always shown)
   - warnings (shown by default, suppressible)
   - debug (`--debug`, with per-item details under `--verbose`)
-- This may change when and how some batch informational lines are shown, including worker fallback and jobs-limit advisory messaging.
-- A warning suppression option is planned for low-noise operational runs.
-- `--quiet-skips` behavior will be reconciled with the new policy so skip-related diagnostics are not ambiguous.
+- Batch warnings now include worker-fallback and jobs-limit advisory messaging.
+- `--quiet-warnings` is available for low-noise operational runs.
+- `--quiet-skips` remains debug-gated for skip diagnostics and skip payload suppression in per-file JSON debug flows.
 
 Tracking plan:
 

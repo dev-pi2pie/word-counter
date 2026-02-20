@@ -1,5 +1,5 @@
 import type { BatchJobsStrategy } from "./types";
 
-export function resolveBatchJobsStrategy(jobs: number): BatchJobsStrategy {
-  return jobs > 1 ? "load-count" : "load-only";
+export function resolveBatchJobsStrategy(_jobs: number): BatchJobsStrategy {
+  return "load-count";
 }
