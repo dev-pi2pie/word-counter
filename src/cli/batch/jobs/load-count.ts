@@ -1,10 +1,9 @@
-import { readFile } from "node:fs/promises";
 import { countSections } from "../../../markdown";
 import wordCounter from "../../../wc";
 import { compactCollectorSegmentsInCountResult } from "../aggregate";
-import { isProbablyBinary } from "../../path/load";
-import { createResourceLimitError, isResourceLimitError, resolveBatchJobsLimit } from "./limits";
+import { resolveBatchJobsLimit } from "./limits";
 import { runBoundedQueue } from "./queue";
+import { readBatchInput } from "./read-input";
 import type { CountBatchWithJobsOptions, CountBatchWithJobsResult } from "./types";
 
 type CountBatchEntry =
@@ -26,46 +25,23 @@ export async function countBatchInputsWithJobs(
   let completed = 0;
 
   const entries = await runBoundedQueue(filePaths.length, options.jobs, async (index) => {
-    const path = filePaths[index];
-    if (!path) {
+    const loaded = await readBatchInput(filePaths[index], {
+      requestedJobs: options.jobs,
+      limits,
+    });
+    if (loaded.type === "skip") {
       completed += 1;
       options.onFileProcessed?.({ completed, total });
       return {
         type: "skip",
-        skip: { path: "", reason: "not readable: missing path" },
+        skip: { path: loaded.path, reason: loaded.reason },
       } satisfies CountBatchEntry;
     }
 
-    let buffer: Buffer;
-    try {
-      buffer = await readFile(path);
-    } catch (error) {
-      if (isResourceLimitError(error)) {
-        throw createResourceLimitError(path, error, options.jobs, limits);
-      }
-      const message = error instanceof Error ? error.message : String(error);
-      completed += 1;
-      options.onFileProcessed?.({ completed, total });
-      return {
-        type: "skip",
-        skip: { path, reason: `not readable: ${message}` },
-      } satisfies CountBatchEntry;
-    }
-
-    if (isProbablyBinary(buffer)) {
-      completed += 1;
-      options.onFileProcessed?.({ completed, total });
-      return {
-        type: "skip",
-        skip: { path, reason: "binary file" },
-      } satisfies CountBatchEntry;
-    }
-
-    const content = buffer.toString("utf8");
     const result =
       options.section === "all"
-        ? wordCounter(content, options.wcOptions)
-        : countSections(content, options.section, options.wcOptions);
+        ? wordCounter(loaded.content, options.wcOptions)
+        : countSections(loaded.content, options.section, options.wcOptions);
 
     if (!options.preserveCollectorSegments) {
       compactCollectorSegmentsInCountResult(result);
@@ -76,7 +52,7 @@ export async function countBatchInputsWithJobs(
     return {
       type: "file",
       file: {
-        path,
+        path: loaded.path,
         result,
       },
     } satisfies CountBatchEntry;

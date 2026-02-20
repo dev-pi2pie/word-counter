@@ -1,7 +1,7 @@
 ---
 title: "Batch jobs concurrency and diagnostics"
 created-date: 2026-02-19
-modified-date: 2026-02-19
+modified-date: 2026-02-20
 status: draft
 agent: Codex
 ---
@@ -116,14 +116,28 @@ Phase 6 related job records:
 
 ### Phase 7 - Benchmark and Release Validation
 
-- [ ] Add benchmark script (for local verification), proposed:
+- [x] Route cleanup: remove active `load-only` route usage and keep only `load+count` family (`jobs=1` async baseline, `jobs>1` worker route with internal fallback).
+- [x] Internal naming cleanup: remove `experimental` wording from active route module filenames/imports.
+- [x] Diagnostics sub-plan execution: implement unified noise policy (error/warning/debug tiers), warning suppression option, and `--quiet-skips` contract alignment.
+- [x] Update breaking-change tracking for diagnostics contract updates:
+  - `docs/breaking-changes-notes.md`
+- [x] Track and execute sub-plan:
+  - `docs/plans/plan-2026-02-20-batch-jobs-route-cleanup-and-diagnostics-noise.md`
+- [x] Benchmark protocol is documented in:
+  - `docs/batch-jobs-usage-guide.md`
+  - includes fixture workflow (`examples/manage-huge-logs.mjs`), benchmark matrix (`--jobs 1,2,4,8`), and acceptance criteria (median/p95 + parity).
+- [x] Add benchmark script (for local verification), proposed:
   - `scripts/benchmark-batch-jobs.mjs`
-- [ ] Use `examples/manage-huge-logs.mjs` fixture workflow for reproducible large datasets.
-- [ ] Run benchmark matrix for unified jobs policy (`--jobs 1,2,4,8`) with low-noise command settings:
+- [x] Re-run benchmark matrix for unified jobs policy (`--jobs 1,2,4,8`) with low-noise command settings after route/logging cleanup:
   - `--format raw --quiet-skips --no-progress`
-- [ ] Record median/p95 timing plus parity checks in a job record.
-- [ ] Final regression: `bun test`
-- [ ] Final regression: targeted CLI smoke checks for `--jobs` policy and `--print-jobs-limit`.
+- [x] Record refreshed median/p95 timing plus parity checks in a new job record.
+- [x] Final regression: `bun test`
+- [x] Final regression: targeted CLI smoke checks for `--jobs` policy and `--print-jobs-limit`.
+
+Phase 7 related job records:
+
+- `docs/plans/jobs/2026-02-20-batch-jobs-route-cleanup-and-noise-policy.md`
+- `docs/plans/jobs/2026-02-20-batch-jobs-phase7-benchmark-refresh.md`
 
 ## Execution Notes
 
@@ -138,3 +152,7 @@ Phase 6 related job records:
 - `docs/researches/research-2026-02-19-batch-concurrency-jobs.md`
 - `docs/researches/research-2026-02-13-batch-file-counting.md`
 - `docs/researches/research-2026-02-13-cli-progress-indicator.md`
+
+## Related Plans
+
+- `docs/plans/plan-2026-02-20-batch-jobs-route-cleanup-and-diagnostics-noise.md`

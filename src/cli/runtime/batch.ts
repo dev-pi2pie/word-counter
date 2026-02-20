@@ -42,6 +42,15 @@ export async function executeBatchCount({
   debug,
   teeEnabled,
 }: ExecuteBatchCountOptions): Promise<void> {
+  const warningsEnabled = !Boolean(options.quietWarnings);
+  const emitWarning = (message: string): void => {
+    if (!warningsEnabled) {
+      return;
+    }
+    const warningLine = message.startsWith("Warning:") ? message : `Warning: ${message}`;
+    console.error(pc.yellow(warningLine));
+  };
+
   const batchOptions: BatchOptions = {
     scope: resolveBatchScope(argv),
     pathMode: options.pathMode,
@@ -55,7 +64,7 @@ export async function executeBatchCount({
   const jobsLimit = resolveBatchJobsLimit();
   const jobs = clampRequestedJobs(requestedJobs, jobsLimit);
   if (requestedJobs > jobsLimit.suggestedMaxJobs) {
-    console.error(pc.yellow(formatJobsAdvisoryWarning(requestedJobs, jobs, jobsLimit)));
+    emitWarning(formatJobsAdvisoryWarning(requestedJobs, jobs, jobsLimit));
   }
   const jobsStrategy = resolveBatchJobsStrategy(jobs);
 
@@ -76,18 +85,21 @@ export async function executeBatchCount({
     }),
     jobs,
     jobsStrategy,
+    emitWarning,
   });
 
   const showSkipDiagnostics = debugEnabled && !batchOptions.quietSkips;
+  const showSkipItems = showSkipDiagnostics && Boolean(options.verbose);
   debug.emit("batch.skips.policy", {
     enabled: showSkipDiagnostics,
+    items: showSkipItems,
     quietSkips: batchOptions.quietSkips,
   });
   if (showSkipDiagnostics) {
     debug.emit("batch.skips.report", {
       count: summary.skipped.length,
     });
-    if (options.verbose) {
+    if (showSkipItems) {
       for (const skip of summary.skipped) {
         debug.emit(
           "batch.skips.item",

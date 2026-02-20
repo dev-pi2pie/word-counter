@@ -1,7 +1,7 @@
 ---
 title: "Breaking Changes Notes"
 created-date: 2026-02-15
-modified-date: 2026-02-18
+modified-date: 2026-02-20
 status: active
 agent: Codex
 ---
@@ -15,6 +15,21 @@ Track possible breaking changes and deprecation plans before stable `v0.1.0`.
 - `--latin-locale <locale>` is now a legacy alias.
 - Preferred replacements are `--latin-language <tag>` and `--latin-tag <tag>`.
 - Planned action: deprecate `--latin-locale` in a later release after canary feedback.
+
+## CLI Behavior Changes (Batch Diagnostics)
+
+- Batch jobs routing now removes active `load-only` strategy usage and keeps only `load+count` execution paths.
+- Diagnostics output policy is now unified into explicit tiers:
+  - errors (always shown)
+  - warnings (shown by default, suppressible)
+  - debug (`--debug`, with per-item details under `--verbose`)
+- Batch warnings now include worker-fallback and jobs-limit advisory messaging.
+- `--quiet-warnings` is available for low-noise operational runs.
+- `--quiet-skips` remains debug-gated for skip diagnostics and skip payload suppression in per-file JSON debug flows.
+
+Tracking plan:
+
+- `docs/plans/plan-2026-02-20-batch-jobs-route-cleanup-and-diagnostics-noise.md`
 
 ## Language Tag Notes
 

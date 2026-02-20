@@ -30,6 +30,7 @@ export type CliActionOptions = {
   recursive: boolean;
   progress: boolean;
   keepProgress?: boolean;
+  quietWarnings?: boolean;
   quietSkips?: boolean;
   debug?: boolean;
   verbose?: boolean;

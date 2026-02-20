@@ -84,7 +84,7 @@ export function configureProgramOptions(
     .option("--non-words", "collect emoji, symbols, and punctuation (excludes whitespace)")
     .option(
       "--include-whitespace",
-      "include whitespace counts (implies with --non-words; same as --misc)",
+      "include whitespace counts (implies --non-words; same as --misc)",
     )
     .option("--misc", "collect non-words plus whitespace (alias for --include-whitespace)")
     .option(
@@ -102,15 +102,16 @@ export function configureProgramOptions(
     .option("--per-file", "show per-file output plus merged summary")
     .option(
       "--jobs <n>",
-      "concurrent file jobs in batch mode (default: 1; >1 enables worker load+count)",
+      "batch jobs in --path mode (1=async main-thread, >1=worker load+count)",
       parseJobsOption,
       1,
     )
-    .option("--print-jobs-limit", "print suggested max --jobs for current host and exit")
+    .option("--print-jobs-limit", "print host jobs-limit JSON and exit (must be used alone)")
     .option("--no-progress", "disable batch progress indicator")
     .option("--keep-progress", "keep final batch progress line visible in standard mode")
     .option("--no-recursive", "disable recursive directory traversal")
-    .option("--quiet-skips", "hide skip diagnostics (applies when --debug is enabled)")
+    .option("--quiet-warnings", "suppress non-fatal warning diagnostics")
+    .option("--quiet-skips", "suppress debug skip output and per-file json skipped field")
     .option(
       "--include-ext <exts>",
       "comma-separated extensions to include during directory scanning",
