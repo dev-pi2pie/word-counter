@@ -140,6 +140,10 @@ function resolveJobsLimit(binPath) {
   return JSON.parse(stdout);
 }
 
+function clampJobs(requestedJobs, suggestedMaxJobs) {
+  return Math.max(1, Math.min(requestedJobs, suggestedMaxJobs));
+}
+
 function main() {
   const parsed = parseArgs(process.argv);
   const binPath = resolve(parsed.bin);
@@ -157,7 +161,8 @@ function main() {
   const rows = [];
   const totals = new Set();
 
-  for (const jobs of parsed.jobs) {
+  for (const requestedJobs of parsed.jobs) {
+    const effectiveJobs = clampJobs(requestedJobs, jobsLimit.suggestedMaxJobs);
     const elapsedRuns = [];
     const totalRuns = [];
 
@@ -171,22 +176,27 @@ function main() {
         "--quiet-skips",
         "--no-progress",
         "--jobs",
-        String(jobs),
+        String(effectiveJobs),
       ]);
 
       const total = Number.parseInt(result.stdout, 10);
       if (!Number.isFinite(total)) {
-        throw new Error(`Unexpected raw output for --jobs=${jobs}: ${result.stdout}`);
+        throw new Error(
+          `Unexpected raw output for requestedJobs=${requestedJobs} effectiveJobs=${effectiveJobs}: ${result.stdout}`,
+        );
       }
 
       elapsedRuns.push(result.elapsedMs);
       totalRuns.push(total);
       totals.add(total);
-      console.log(`jobs=${jobs} run=${run}/${parsed.runs} -> ${formatMs(result.elapsedMs)} total=${total}`);
+      console.log(
+        `requestedJobs=${requestedJobs} effectiveJobs=${effectiveJobs} run=${run}/${parsed.runs} -> ${formatMs(result.elapsedMs)} total=${total}`,
+      );
     }
 
     rows.push({
-      jobs,
+      requestedJobs,
+      effectiveJobs,
       medianMs: median(elapsedRuns),
       p95Ms: p95(elapsedRuns),
       totals: totalRuns,
@@ -198,7 +208,8 @@ function main() {
     benchmark: {
       fixture: fixturePath,
       runs: parsed.runs,
-      jobs: parsed.jobs,
+      requestedJobs: parsed.jobs,
+      effectiveJobs: rows.map((row) => row.effectiveJobs),
       command: "node dist/esm/bin.mjs --path <fixture> --format raw --quiet-skips --no-progress --jobs <n>",
     },
     hostLimit: jobsLimit,
@@ -210,7 +221,7 @@ function main() {
   console.log("\nSummary:");
   for (const row of rows) {
     console.log(
-      `jobs=${row.jobs} median=${formatMs(row.medianMs)} p95=${formatMs(row.p95Ms)} totals=${row.totals.join(",")}`,
+      `requestedJobs=${row.requestedJobs} effectiveJobs=${row.effectiveJobs} median=${formatMs(row.medianMs)} p95=${formatMs(row.p95Ms)} totals=${row.totals.join(",")}`,
     );
   }
   console.log(`parity=${parity}${parity ? ` total=${String(output.parityTotal)}` : ""}`);

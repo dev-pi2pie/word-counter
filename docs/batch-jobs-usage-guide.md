@@ -84,6 +84,8 @@ Scripted local benchmark:
 node scripts/benchmark-batch-jobs.mjs --runs 6 --jobs 1,2,4,8
 ```
 
+The benchmark script clamps requested jobs to the host `suggestedMaxJobs` limit and reports both `requestedJobs` and `effectiveJobs` in summary/JSON output.
+
 Example local snapshot (6 runs each, lower is better):
 
 - `jobs=1`: median `872.16ms`, p95 `889.88ms`
