@@ -36,7 +36,9 @@ export default defineConfig([
     target: "node20",
     hash: false,
     fixedExtension: true,
-    inlineOnly: ["picocolors"],
+    deps: {
+      onlyBundle: ["picocolors"],
+    },
     banner: "#!/usr/bin/env node\n",
   },
   {

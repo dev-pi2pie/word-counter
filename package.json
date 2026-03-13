@@ -1,6 +1,6 @@
 {
   "name": "@dev-pi2pie/word-counter",
-  "version": "0.1.4",
+  "version": "0.1.5-canary.1",
   "keywords": [
     "cli",
     "intl-segmenter",
@@ -49,11 +49,11 @@
     "yaml": "^2.8.2"
   },
   "devDependencies": {
-    "@types/node": "^25.2.3",
-    "oxfmt": "^0.32.0",
-    "oxlint": "^1.47.0",
+    "@types/node": "^25.5.0",
+    "oxfmt": "^0.40.0",
+    "oxlint": "^1.55.0",
     "picocolors": "^1.1.1",
-    "tsdown": "^0.20.3",
+    "tsdown": "^0.21.2",
     "typescript": "^5.9.3"
   },
   "peerDependencies": {
