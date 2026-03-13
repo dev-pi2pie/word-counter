@@ -317,6 +317,7 @@ Behavior contract:
 
 ## Related Plans
 
+- `docs/plans/plan-2026-03-13-doctor-command-implementation.md`
 - `docs/plans/plan-2026-02-19-batch-jobs-concurrency.md`
 - `docs/plans/plan-2026-02-20-batch-jobs-route-cleanup-and-diagnostics-noise.md`
 
