@@ -179,7 +179,7 @@ Doctor scope in v1:
 - checks runtime support policy against Node.js `>=20`
 - verifies `Intl.Segmenter` availability plus word/grapheme constructor health
 - reports batch jobs host limits using the same heuristics as `--print-jobs-limit`
-- reports worker-route preflight signals and env toggles that affect worker availability
+- reports worker-route preflight signals and the worker-disable env toggle that affects worker availability
 
 Doctor output contract:
 
@@ -188,6 +188,8 @@ Doctor output contract:
 - `--format json --pretty` prints indented JSON
 - doctor exits with code `0` for `ok` / `warn`, `1` for invalid doctor usage, and `2` for runtime `fail`
 - doctor does not accept counting inputs, `--path`, `--jobs`, or other counting/debug flags
+
+For a field-by-field explanation of doctor text and JSON output, see [`docs/doctor-usage-guide.md`](docs/doctor-usage-guide.md).
 
 For full policy details, JSON parity expectations (`--misc`, `--total-of whitespace,words`), and benchmark standards, see [`docs/batch-jobs-usage-guide.md`](docs/batch-jobs-usage-guide.md).
 
