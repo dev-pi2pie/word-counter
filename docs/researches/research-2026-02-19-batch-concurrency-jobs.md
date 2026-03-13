@@ -1,8 +1,8 @@
 ---
 title: "Batch concurrency via --jobs"
 created-date: 2026-02-19
-modified-date: 2026-02-20
-status: draft
+modified-date: 2026-03-13
+status: completed
 agent: Codex
 ---
 
@@ -208,6 +208,11 @@ CLI help text:
 3. `--jobs > 1` should default to worker `load+count`; no extra experimental CLI flag is required.
 4. Add `--print-jobs-limit` in this scope as the lightweight diagnostics option.
 5. Phase 5 consolidation removes `--experimental-load-count` from CLI UX; async `load+count` remains internal fallback only.
+
+## Related Plans
+
+- `docs/plans/plan-2026-02-19-batch-jobs-concurrency.md`
+- `docs/plans/plan-2026-02-20-batch-jobs-route-cleanup-and-diagnostics-noise.md`
 
 ## Related Research
 
