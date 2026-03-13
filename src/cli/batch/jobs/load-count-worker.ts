@@ -7,7 +7,6 @@ export type WorkerRoutePreflight = {
   workerThreadsAvailable: boolean;
   workerRouteDisabledByEnv: boolean;
   disableWorkerJobsEnv: string | null;
-  disableExperimentalWorkersEnv: string | null;
   workerPoolModuleLoadable: boolean;
   workerEntryFound: boolean;
 };
@@ -47,9 +46,7 @@ export async function resolveWorkerRoutePreflight(
   env: NodeJS.ProcessEnv = process.env,
 ): Promise<WorkerRoutePreflight> {
   const disableWorkerJobsEnv = env.WORD_COUNTER_DISABLE_WORKER_JOBS ?? null;
-  const disableExperimentalWorkersEnv = env.WORD_COUNTER_DISABLE_EXPERIMENTAL_WORKERS ?? null;
-  const workerRouteDisabledByEnv =
-    disableWorkerJobsEnv === "1" || disableExperimentalWorkersEnv === "1";
+  const workerRouteDisabledByEnv = disableWorkerJobsEnv === "1";
   const workerThreadsAvailable = await resolveWorkerThreadsAvailability();
 
   try {
@@ -58,7 +55,6 @@ export async function resolveWorkerRoutePreflight(
       workerThreadsAvailable,
       workerRouteDisabledByEnv,
       disableWorkerJobsEnv,
-      disableExperimentalWorkersEnv,
       workerPoolModuleLoadable: true,
       workerEntryFound: workerPoolModule.resolveWorkerEntryUrl() !== null,
     };
@@ -67,7 +63,6 @@ export async function resolveWorkerRoutePreflight(
       workerThreadsAvailable,
       workerRouteDisabledByEnv,
       disableWorkerJobsEnv,
-      disableExperimentalWorkersEnv,
       workerPoolModuleLoadable: false,
       workerEntryFound: false,
     };
@@ -78,9 +73,7 @@ export async function countBatchInputsWithWorkerJobs(
   filePaths: string[],
   options: CountBatchWithJobsOptions,
 ): Promise<CountBatchWithJobsResult> {
-  const workerRouteDisabled =
-    process.env.WORD_COUNTER_DISABLE_WORKER_JOBS === "1" ||
-    process.env.WORD_COUNTER_DISABLE_EXPERIMENTAL_WORKERS === "1";
+  const workerRouteDisabled = process.env.WORD_COUNTER_DISABLE_WORKER_JOBS === "1";
   if (workerRouteDisabled) {
     throw new WorkerRouteUnavailableError("Worker route disabled by environment.");
   }

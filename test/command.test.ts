@@ -946,7 +946,6 @@ describe("CLI doctor diagnostics", () => {
       "workerThreadsAvailable",
       "workerRouteDisabledByEnv",
       "disableWorkerJobsEnv",
-      "disableExperimentalWorkersEnv",
       "workerPoolModuleLoadable",
       "workerEntryFound",
     ]);
@@ -1018,7 +1017,6 @@ describe("CLI doctor diagnostics", () => {
         env: {
           UV_THREADPOOL_SIZE: "7",
           WORD_COUNTER_DISABLE_WORKER_JOBS: "1",
-          WORD_COUNTER_DISABLE_EXPERIMENTAL_WORKERS: "1",
         },
       },
     });
@@ -1028,7 +1026,6 @@ describe("CLI doctor diagnostics", () => {
     expect(parsed.jobs.ioLimit).toBe(14);
     expect(parsed.workerRoute.workerRouteDisabledByEnv).toBeTrue();
     expect(parsed.workerRoute.disableWorkerJobsEnv).toBe("1");
-    expect(parsed.workerRoute.disableExperimentalWorkersEnv).toBe("1");
   });
 
   test("rejects --pretty without --format json", async () => {

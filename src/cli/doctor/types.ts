@@ -36,7 +36,6 @@ export type DoctorWorkerRouteHealth = {
   workerThreadsAvailable: boolean;
   workerRouteDisabledByEnv: boolean;
   disableWorkerJobsEnv: string | null;
-  disableExperimentalWorkersEnv: string | null;
   workerPoolModuleLoadable: boolean;
   workerEntryFound: boolean;
 };

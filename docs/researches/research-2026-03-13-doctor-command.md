@@ -1,7 +1,7 @@
 ---
 title: "Doctor command for runtime capability checks"
 created-date: 2026-03-13
-modified-date: 2026-03-13
+modified-date: 2026-03-14
 status: draft
 agent: Codex
 ---
@@ -30,9 +30,8 @@ Provide an implementation-ready direction for a diagnostics surface that reduces
   - `os.availableParallelism()`
   - `UV_THREADPOOL_SIZE`
   - derived `suggestedMaxJobs`
-- There are also hidden environment controls that affect runtime behavior and are useful to surface in diagnostics:
+- There is also a hidden environment control that affects runtime behavior and is useful to surface in diagnostics:
   - `WORD_COUNTER_DISABLE_WORKER_JOBS`
-  - `WORD_COUNTER_DISABLE_EXPERIMENTAL_WORKERS`
 
 ## Proposed Direction
 
@@ -142,7 +141,6 @@ Suggested fields:
 - `workerThreadsAvailable`
 - `workerRouteDisabledByEnv`
 - `disableWorkerJobsEnv`
-- `disableExperimentalWorkersEnv`
 - `workerPoolModuleLoadable`
 - `workerEntryFound`
 
@@ -243,7 +241,6 @@ Recommended automation shape:
     "workerThreadsAvailable": true,
     "workerRouteDisabledByEnv": false,
     "disableWorkerJobsEnv": null,
-    "disableExperimentalWorkersEnv": null,
     "workerPoolModuleLoadable": true,
     "workerEntryFound": true
   },
