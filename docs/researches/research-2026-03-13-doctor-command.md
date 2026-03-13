@@ -191,6 +191,7 @@ Segmenter
 - Intl.Segmenter: available
 - word granularity: ok
 - grapheme granularity: ok
+- sample segmentation: ok
 
 Batch jobs
 - cpuLimit: 10
@@ -200,6 +201,8 @@ Batch jobs
 Worker route
 - worker threads: available
 - disabled by env: no
+- worker pool module: loadable
+- worker entry: found
 ```
 
 Presentation note:
@@ -227,7 +230,8 @@ Recommended automation shape:
   "segmenter": {
     "available": true,
     "wordGranularity": true,
-    "graphemeGranularity": true
+    "graphemeGranularity": true,
+    "sampleWordSegmentation": true
   },
   "jobs": {
     "cpuLimit": 10,
@@ -239,7 +243,9 @@ Recommended automation shape:
     "workerThreadsAvailable": true,
     "workerRouteDisabledByEnv": false,
     "disableWorkerJobsEnv": null,
-    "disableExperimentalWorkersEnv": null
+    "disableExperimentalWorkersEnv": null,
+    "workerPoolModuleLoadable": true,
+    "workerEntryFound": true
   },
   "warnings": []
 }

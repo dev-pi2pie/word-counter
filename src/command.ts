@@ -1,5 +1,6 @@
 import { Command } from "commander";
 import { createDebugChannel } from "./cli/debug/channel";
+import { executeDoctorCommand } from "./cli/doctor/run";
 import { configureProgramOptions } from "./cli/program/options";
 import { getFormattedVersionLabel } from "./cli/program/version";
 import { resolveBatchJobsLimit } from "./cli/batch/jobs/limits";
@@ -34,6 +35,22 @@ export async function runCli(
     .name("word-counter")
     .description("Locale-aware word counting powered by Intl.Segmenter.")
     .version(getFormattedVersionLabel(), "-v, --version", "output the version number");
+
+  program
+    .command("doctor")
+    .description("report runtime diagnostics for this host")
+    .allowUnknownOption(true)
+    .allowExcessArguments(true)
+    .option("--format <format>", "doctor output format (json)")
+    .option("--pretty", "pretty print doctor JSON output", false)
+    .showHelpAfterError()
+    .action(async () => {
+      await executeDoctorCommand({
+        argv,
+        runtime: runtime.doctor,
+      });
+    });
+
   configureProgramOptions(program, parseMode);
 
   program.action(

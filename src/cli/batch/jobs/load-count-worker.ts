@@ -3,6 +3,24 @@ import type { CountBatchWithJobsOptions, CountBatchWithJobsResult } from "./type
 
 export class WorkerRouteUnavailableError extends Error {}
 
+export type WorkerRoutePreflight = {
+  workerThreadsAvailable: boolean;
+  workerRouteDisabledByEnv: boolean;
+  disableWorkerJobsEnv: string | null;
+  disableExperimentalWorkersEnv: string | null;
+  workerPoolModuleLoadable: boolean;
+  workerEntryFound: boolean;
+};
+
+async function resolveWorkerThreadsAvailability(): Promise<boolean> {
+  try {
+    const workerThreads = await import("node:worker_threads");
+    return typeof workerThreads.Worker === "function";
+  } catch {
+    return false;
+  }
+}
+
 function isFallbackFriendlyWorkerError(error: unknown): boolean {
   if (typeof error !== "object" || error === null) {
     return false;
@@ -23,6 +41,37 @@ function isFallbackFriendlyWorkerError(error: unknown): boolean {
     message.includes("Unknown file extension") ||
     message.includes("Cannot find module")
   );
+}
+
+export async function resolveWorkerRoutePreflight(
+  env: NodeJS.ProcessEnv = process.env,
+): Promise<WorkerRoutePreflight> {
+  const disableWorkerJobsEnv = env.WORD_COUNTER_DISABLE_WORKER_JOBS ?? null;
+  const disableExperimentalWorkersEnv = env.WORD_COUNTER_DISABLE_EXPERIMENTAL_WORKERS ?? null;
+  const workerRouteDisabledByEnv =
+    disableWorkerJobsEnv === "1" || disableExperimentalWorkersEnv === "1";
+  const workerThreadsAvailable = await resolveWorkerThreadsAvailability();
+
+  try {
+    const workerPoolModule = await import("./worker-pool");
+    return {
+      workerThreadsAvailable,
+      workerRouteDisabledByEnv,
+      disableWorkerJobsEnv,
+      disableExperimentalWorkersEnv,
+      workerPoolModuleLoadable: true,
+      workerEntryFound: workerPoolModule.resolveWorkerEntryUrl() !== null,
+    };
+  } catch {
+    return {
+      workerThreadsAvailable,
+      workerRouteDisabledByEnv,
+      disableWorkerJobsEnv,
+      disableExperimentalWorkersEnv,
+      workerPoolModuleLoadable: false,
+      workerEntryFound: false,
+    };
+  }
 }
 
 export async function countBatchInputsWithWorkerJobs(

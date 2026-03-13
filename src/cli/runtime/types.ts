@@ -2,6 +2,7 @@ import type { SectionMode, SectionedResult } from "../../markdown";
 import type { ProgressOutputStream } from "../progress/reporter";
 import type { TotalOfPart } from "../total-of";
 import type { PathMode } from "../types";
+import type { DoctorRuntimeOverrides } from "../doctor/types";
 import type { WordCounterMode, WordCounterOptions, WordCounterResult } from "../../wc";
 
 export type OutputFormat = "standard" | "raw" | "json";
@@ -44,6 +45,7 @@ export type CliActionOptions = {
 
 export type RunCliOptions = {
   stderr?: ProgressOutputStream;
+  doctor?: DoctorRuntimeOverrides;
 };
 
 export type ResolvedCountRunOptions = {
