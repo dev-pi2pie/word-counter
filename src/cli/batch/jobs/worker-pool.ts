@@ -48,7 +48,7 @@ type PendingTask = {
   workerIndex: number;
 };
 
-function resolveWorkerEntryUrl(): URL | null {
+export function resolveWorkerEntryUrl(): URL | null {
   const candidates = [
     new URL("./worker/count-worker.mjs", import.meta.url),
     new URL("./worker/count-worker.js", import.meta.url),
@@ -62,6 +62,10 @@ function resolveWorkerEntryUrl(): URL | null {
   }
 
   return null;
+}
+
+export function isWorkerThreadsAvailable(): boolean {
+  return typeof Worker === "function";
 }
 
 function isWorkerResponseMessage(value: unknown): value is WorkerResponseMessage {

@@ -4,6 +4,8 @@ on:
   push:
     tags:
       - "*"
+      - "!*-alpha*"
+      - "!*-beta*"
   workflow_dispatch:
     inputs:
       tag:
@@ -91,24 +93,20 @@ jobs:
         env:
           TAG_NAME: ${{ steps.tag.outputs.tag }}
         run: |
-          PRERELEASE_LABEL=""
-          if [[ "$TAG_NAME" == *-alpha* ]]; then
-            PRERELEASE_LABEL="alpha"
-          elif [[ "$TAG_NAME" == *-beta* ]]; then
-            PRERELEASE_LABEL="beta"
-          elif [[ "$TAG_NAME" == *-rc* ]]; then
-            PRERELEASE_LABEL="rc"
-          elif [[ "$TAG_NAME" == *-canary* ]]; then
-            PRERELEASE_LABEL="canary"
-          fi
-
-          if [[ -n "$PRERELEASE_LABEL" ]]; then
+          if [[ "$TAG_NAME" == *-alpha* || "$TAG_NAME" == *-beta* || "$TAG_NAME" == *-rc* || "$TAG_NAME" == *-canary* ]]; then
             echo "IS_PRERELEASE=true" >> "$GITHUB_OUTPUT"
           else
             echo "IS_PRERELEASE=false" >> "$GITHUB_OUTPUT"
           fi
 
-          echo "PRERELEASE_LABEL=$PRERELEASE_LABEL" >> "$GITHUB_OUTPUT"
+      - name: Block unsupported pre-release channels
+        env:
+          TAG_NAME: ${{ steps.tag.outputs.tag }}
+        run: |
+          if [[ "$TAG_NAME" == *-alpha* || "$TAG_NAME" == *-beta* ]]; then
+            echo "Alpha and beta tags are intentionally excluded from npm publishing in this workflow: '$TAG_NAME'." >&2
+            exit 1
+          fi
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -118,31 +116,35 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 22.14.0
           registry-url: https://registry.npmjs.org
 
-      - name: Update npm to latest # Ensuring NPM Trusted Publishing is Work
+      - name: Update npm for trusted publishing
         run: npm install -g npm@latest
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
+
+      - name: Ensure tag matches package version
+        env:
+          TAG_NAME: ${{ steps.tag.outputs.tag }}
+        run: |
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          if [[ "$TAG_NAME" != "$PKG_VERSION" && "$TAG_NAME" != "v$PKG_VERSION" ]]; then
+            echo "Tag '$TAG_NAME' does not match package version '$PKG_VERSION'." >&2
+            exit 1
+          fi
 
       - name: Build
         run: bun run build
 
       - name: Publish
         env:
+          # Clear inherited tokens so npm uses GitHub OIDC trusted publishing.
           NODE_AUTH_TOKEN: ""
         run: |
           if [[ "${{ steps.prerelease.outputs.IS_PRERELEASE }}" == "true" ]]; then
-            npm publish --registry https://registry.npmjs.org --access public --provenance --tag next
-            PKG_NAME=$(node -p "require('./package.json').name")
-            PKG_VERSION=$(node -p "require('./package.json').version")
-            if [[ -n "${NODE_AUTH_TOKEN}" ]]; then
-              npm dist-tag add "$PKG_NAME@$PKG_VERSION" "${{ steps.prerelease.outputs.PRERELEASE_LABEL }}" --registry https://registry.npmjs.org
-            else
-              echo "NODE_AUTH_TOKEN unset; skipping dist-tag add"
-            fi
+            npm publish --registry https://registry.npmjs.org --access public --tag next
           else
-            npm publish --registry https://registry.npmjs.org --access public --provenance
+            npm publish --registry https://registry.npmjs.org --access public
           fi

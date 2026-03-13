@@ -3,6 +3,23 @@ import type { CountBatchWithJobsOptions, CountBatchWithJobsResult } from "./type
 
 export class WorkerRouteUnavailableError extends Error {}
 
+export type WorkerRoutePreflight = {
+  workerThreadsAvailable: boolean;
+  workerRouteDisabledByEnv: boolean;
+  disableWorkerJobsEnv: string | null;
+  workerPoolModuleLoadable: boolean;
+  workerEntryFound: boolean;
+};
+
+async function resolveWorkerThreadsAvailability(): Promise<boolean> {
+  try {
+    const workerThreads = await import("node:worker_threads");
+    return typeof workerThreads.Worker === "function";
+  } catch {
+    return false;
+  }
+}
+
 function isFallbackFriendlyWorkerError(error: unknown): boolean {
   if (typeof error !== "object" || error === null) {
     return false;
@@ -25,13 +42,38 @@ function isFallbackFriendlyWorkerError(error: unknown): boolean {
   );
 }
 
+export async function resolveWorkerRoutePreflight(
+  env: NodeJS.ProcessEnv = process.env,
+): Promise<WorkerRoutePreflight> {
+  const disableWorkerJobsEnv = env.WORD_COUNTER_DISABLE_WORKER_JOBS ?? null;
+  const workerRouteDisabledByEnv = disableWorkerJobsEnv === "1";
+  const workerThreadsAvailable = await resolveWorkerThreadsAvailability();
+
+  try {
+    const workerPoolModule = await import("./worker-pool");
+    return {
+      workerThreadsAvailable,
+      workerRouteDisabledByEnv,
+      disableWorkerJobsEnv,
+      workerPoolModuleLoadable: true,
+      workerEntryFound: workerPoolModule.resolveWorkerEntryUrl() !== null,
+    };
+  } catch {
+    return {
+      workerThreadsAvailable,
+      workerRouteDisabledByEnv,
+      disableWorkerJobsEnv,
+      workerPoolModuleLoadable: false,
+      workerEntryFound: false,
+    };
+  }
+}
+
 export async function countBatchInputsWithWorkerJobs(
   filePaths: string[],
   options: CountBatchWithJobsOptions,
 ): Promise<CountBatchWithJobsResult> {
-  const workerRouteDisabled =
-    process.env.WORD_COUNTER_DISABLE_WORKER_JOBS === "1" ||
-    process.env.WORD_COUNTER_DISABLE_EXPERIMENTAL_WORKERS === "1";
+  const workerRouteDisabled = process.env.WORD_COUNTER_DISABLE_WORKER_JOBS === "1";
   if (workerRouteDisabled) {
     throw new WorkerRouteUnavailableError("Worker route disabled by environment.");
   }
