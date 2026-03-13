@@ -24,12 +24,16 @@ function renderSection(title: string, lines: string[]): void {
   console.log("");
 }
 
-function boolWord(value: boolean, yes = "yes", no = "no"): string {
-  return value ? yes : no;
+function colorBoolean(value: boolean, yes = "yes", no = "no"): string {
+  return value ? pc.green(yes) : pc.red(no);
 }
 
-function statusWord(value: boolean): string {
-  return value ? "ok" : "fail";
+function colorNumber(value: number): string {
+  return pc.yellow(String(value));
+}
+
+function colorStatusWord(value: boolean): string {
+  return value ? pc.green("ok") : pc.red("fail");
 }
 
 function renderStandardDoctorReport(report: DoctorReport): void {
@@ -38,33 +42,32 @@ function renderStandardDoctorReport(report: DoctorReport): void {
 
   renderSection("Runtime", [
     `package: ${report.runtime.packageVersion} (${report.runtime.buildChannel})`,
-    `node: ${report.runtime.nodeVersion} (supported: ${boolWord(
+    `node: ${report.runtime.nodeVersion} (supported: ${colorBoolean(
       report.runtime.meetsProjectRequirement,
     )}; required ${report.runtime.requiredNodeRange})`,
     `platform: ${report.runtime.platform} ${report.runtime.arch}`,
   ]);
 
   renderSection("Segmenter", [
-    `Intl.Segmenter: ${boolWord(report.segmenter.available, "available", "missing")}`,
-    `word granularity: ${statusWord(report.segmenter.wordGranularity)}`,
-    `grapheme granularity: ${statusWord(report.segmenter.graphemeGranularity)}`,
-    `sample segmentation: ${statusWord(report.segmenter.sampleWordSegmentation)}`,
+    `Intl.Segmenter: ${colorBoolean(report.segmenter.available, "available", "missing")}`,
+    `word granularity: ${colorStatusWord(report.segmenter.wordGranularity)}`,
+    `grapheme granularity: ${colorStatusWord(report.segmenter.graphemeGranularity)}`,
+    `sample segmentation: ${colorStatusWord(report.segmenter.sampleWordSegmentation)}`,
   ]);
 
   renderSection("Batch jobs", [
-    `cpuLimit: ${report.jobs.cpuLimit}`,
-    `uvThreadpool: ${report.jobs.uvThreadpool}`,
-    `ioLimit: ${report.jobs.ioLimit}`,
-    `suggestedMaxJobs: ${report.jobs.suggestedMaxJobs}`,
+    `cpuLimit: ${colorNumber(report.jobs.cpuLimit)}`,
+    `uvThreadpool: ${colorNumber(report.jobs.uvThreadpool)}`,
+    `ioLimit: ${colorNumber(report.jobs.ioLimit)}`,
+    `suggestedMaxJobs: ${colorNumber(report.jobs.suggestedMaxJobs)}`,
   ]);
 
   renderSection("Worker route", [
-    `worker threads: ${boolWord(report.workerRoute.workerThreadsAvailable, "available", "missing")}`,
-    `disabled by env: ${boolWord(report.workerRoute.workerRouteDisabledByEnv)}`,
+    `worker threads: ${colorBoolean(report.workerRoute.workerThreadsAvailable, "available", "missing")}`,
+    `disabled by env: ${colorBoolean(report.workerRoute.workerRouteDisabledByEnv)}`,
     `disableWorkerJobsEnv: ${report.workerRoute.disableWorkerJobsEnv ?? "null"}`,
-    `disableExperimentalWorkersEnv: ${report.workerRoute.disableExperimentalWorkersEnv ?? "null"}`,
-    `worker pool module: ${boolWord(report.workerRoute.workerPoolModuleLoadable, "loadable", "missing")}`,
-    `worker entry: ${boolWord(report.workerRoute.workerEntryFound, "found", "missing")}`,
+    `worker pool module: ${colorBoolean(report.workerRoute.workerPoolModuleLoadable, "loadable", "missing")}`,
+    `worker entry: ${colorBoolean(report.workerRoute.workerEntryFound, "found", "missing")}`,
   ]);
 
   if (report.warnings.length > 0) {
@@ -86,4 +89,3 @@ export function renderDoctorReport(
 
   renderStandardDoctorReport(report);
 }
-
