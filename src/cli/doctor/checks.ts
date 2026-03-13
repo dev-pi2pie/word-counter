@@ -20,7 +20,22 @@ function normalizePackageVersion(value: string | undefined): string {
 }
 
 function deriveBuildChannel(packageVersion: string): DoctorBuildChannel {
-  return packageVersion.includes("canary") ? "canary" : "stable";
+  const prereleaseMatch = /(?:^|[.-])(alpha|beta|rc|canary)(?:[.-]|$)/i.exec(packageVersion);
+  if (!prereleaseMatch) {
+    return "stable";
+  }
+
+  const channel = prereleaseMatch[1]?.toLowerCase();
+  if (
+    channel === "alpha" ||
+    channel === "beta" ||
+    channel === "rc" ||
+    channel === "canary"
+  ) {
+    return channel;
+  }
+
+  return "stable";
 }
 
 function parseNodeMajor(version: string): number | null {
@@ -73,9 +88,6 @@ function resolveSegmenterHealth(overrides: DoctorRuntimeOverrides = {}): DoctorS
     for (const _segment of wordSegmenter.segment(SAMPLE_TEXT)) {
       sampleWordSegmentation = true;
       break;
-    }
-    if (!sampleWordSegmentation) {
-      sampleWordSegmentation = true;
     }
   } catch {
     wordGranularity = false;
@@ -181,4 +193,3 @@ export async function createDoctorReport(
 }
 
 export { REQUIRED_NODE_RANGE };
-

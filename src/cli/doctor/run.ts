@@ -15,9 +15,24 @@ type ValidDoctorInvocation =
       pretty: boolean;
     }
   | {
+      ok: true;
+      help: true;
+    }
+  | {
       ok: false;
       message: string;
     };
+
+const DOCTOR_HELP_LINES = [
+  "Usage: word-counter doctor [options]",
+  "",
+  "report runtime diagnostics for this host",
+  "",
+  "Options:",
+  "  --format <format>  doctor output format (json)",
+  "  --pretty           pretty print doctor JSON output (default: false)",
+  "  -h, --help         display help for command",
+];
 
 function parseDoctorFormat(rawValue: string | undefined): DoctorOutputFormat | null {
   if (rawValue === undefined) {
@@ -37,6 +52,13 @@ function validateDoctorInvocation(argv: string[]): ValidDoctorInvocation {
   let pretty = false;
 
   for (const token of tokens) {
+    if (token === "-h" || token === "--help") {
+      return {
+        ok: true,
+        help: true,
+      };
+    }
+
     if (expectsFormatValue) {
       const parsedFormat = parseDoctorFormat(token);
       if (parsedFormat === null) {
@@ -120,6 +142,25 @@ function validateDoctorInvocation(argv: string[]): ValidDoctorInvocation {
   };
 }
 
+export function isExplicitDoctorInvocation(argv: string[]): boolean {
+  if (argv[2] !== "doctor") {
+    return false;
+  }
+
+  const trailingTokens = argv.slice(3);
+  if (trailingTokens.length === 0) {
+    return true;
+  }
+
+  return trailingTokens.some((token) => token === "--" || token.startsWith("-"));
+}
+
+function printDoctorHelp(): void {
+  for (const line of DOCTOR_HELP_LINES) {
+    console.log(line);
+  }
+}
+
 export async function executeDoctorCommand({
   argv,
   runtime,
@@ -128,6 +169,12 @@ export async function executeDoctorCommand({
   if (!validated.ok) {
     console.error(pc.red(`error: ${validated.message}`));
     process.exitCode = 1;
+    return;
+  }
+
+  if ("help" in validated) {
+    printDoctorHelp();
+    process.exitCode = 0;
     return;
   }
 

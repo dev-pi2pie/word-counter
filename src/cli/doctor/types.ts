@@ -2,7 +2,7 @@ import type { BatchJobsLimit } from "../batch/jobs/types";
 
 export type DoctorOutputFormat = "standard" | "json";
 export type DoctorStatus = "ok" | "warn" | "fail";
-export type DoctorBuildChannel = "stable" | "canary";
+export type DoctorBuildChannel = "stable" | "alpha" | "beta" | "rc" | "canary";
 
 export type SegmenterConstructor = new (
   locale: string,

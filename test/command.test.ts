@@ -960,6 +960,14 @@ describe("CLI doctor diagnostics", () => {
     expect(output.stdout[0]?.includes('\n  "status": ')).toBeTrue();
   });
 
+  test("prints doctor help for explicit doctor help requests", async () => {
+    const output = await captureCli(["doctor", "--help"]);
+
+    expect(output.exitCode).toBe(0);
+    expect(output.stderr).toEqual([]);
+    expect(output.stdout[0]).toContain("Usage: word-counter doctor [options]");
+  });
+
   test("returns fail with exit code 2 when Intl.Segmenter is unavailable", async () => {
     const output = await captureCli(["doctor", "--format", "json"], {
       doctorRuntime: {
@@ -995,6 +1003,31 @@ describe("CLI doctor diagnostics", () => {
     expect(parsed.segmenter.graphemeGranularity).toBeFalse();
   });
 
+  test("returns fail when sample segmentation yields no segments", async () => {
+    const output = await captureCli(["doctor", "--format", "json"], {
+      doctorRuntime: {
+        intl: {
+          Segmenter: class {
+            constructor(_locale: string, _options: { granularity: "word" | "grapheme" }) {}
+
+            segment(): Iterable<unknown> {
+              return [];
+            }
+          } as never,
+        },
+      },
+    });
+    const parsed = JSON.parse(output.stdout[0] ?? "{}");
+
+    expect(output.exitCode).toBe(2);
+    expect(parsed.status).toBe("fail");
+    expect(parsed.segmenter.available).toBeTrue();
+    expect(parsed.segmenter.wordGranularity).toBeTrue();
+    expect(parsed.segmenter.graphemeGranularity).toBeTrue();
+    expect(parsed.segmenter.sampleWordSegmentation).toBeFalse();
+    expect(parsed.warnings).toContain("Intl.Segmenter sample segmentation failed.");
+  });
+
   test("returns warn with exit code 0 when runtime policy fails but capability checks pass", async () => {
     const output = await captureCli(["doctor", "--format", "json"], {
       doctorRuntime: {
@@ -1009,6 +1042,18 @@ describe("CLI doctor diagnostics", () => {
     expect(
       parsed.warnings.includes("Node.js v18.19.0 is outside the supported range >=20."),
     ).toBeTrue();
+  });
+
+  test("reports rc builds as rc instead of stable", async () => {
+    const output = await captureCli(["doctor", "--format", "json"], {
+      doctorRuntime: {
+        packageVersion: "0.1.5-rc.1",
+      },
+    });
+    const parsed = JSON.parse(output.stdout[0] ?? "{}");
+
+    expect(output.exitCode).toBe(0);
+    expect(parsed.runtime.buildChannel).toBe("rc");
   });
 
   test("reports worker env toggles and jobs diagnostics from the current helpers", async () => {
@@ -1048,19 +1093,26 @@ describe("CLI doctor diagnostics", () => {
     ).toBeTrue();
   });
 
-  test("rejects inherited batch flags and positional inputs", async () => {
+  test("rejects inherited batch flags for explicit doctor invocations", async () => {
     const withPath = await captureCli(["doctor", "--path", "/tmp/example"]);
-    const withInput = await captureCli(["doctor", "hello"]);
 
     expect(withPath.exitCode).toBe(1);
-    expect(withPath.stderr.some((line) => line.includes("`--path` is not supported by `doctor`."))).toBeTrue();
-    expect(withInput.exitCode).toBe(1);
-    expect(withInput.stderr.some((line) => line.includes("`doctor` does not accept positional inputs."))).toBeTrue();
+    expect(
+      withPath.stderr.some((line) => line.includes("`--path` is not supported by `doctor`.")),
+    ).toBeTrue();
   });
 
   test("keeps root counting flows intact after adding the doctor subcommand", async () => {
     const output = await captureCli(["Hello", "world"]);
 
+    expect(output.stdout[0]).toBe("Total words: 2");
+  });
+
+  test("keeps leading `doctor` text on the root counting path", async () => {
+    const output = await captureCli(["doctor", "appointment"]);
+
+    expect(output.exitCode).toBe(0);
+    expect(output.stderr).toEqual([]);
     expect(output.stdout[0]).toBe("Total words: 2");
   });
 

@@ -65,7 +65,7 @@ Worker route
 
 | Text key | Meaning | Typical values |
 | --- | --- | --- |
-| `package` | Embedded package version and derived release channel of the CLI you are actually running. | `0.1.5-canary.1 (canary)`, `0.1.5 (stable)` |
+| `package` | Embedded package version and derived release channel of the CLI you are actually running. | `0.1.5-canary.1 (canary)`, `0.1.5-rc.1 (rc)`, `0.1.5 (stable)` |
 | `node` | Current Node.js runtime version plus whether it is within the supported project policy. | `v22.14.0 (supported: yes; required >=20)` |
 | `platform` | Host OS platform and CPU architecture. | `darwin arm64`, `linux x64` |
 
@@ -76,7 +76,7 @@ Worker route
 | `Intl.Segmenter` | Whether the runtime exposes the API at all. | `available` | `missing` |
 | `word granularity` | Whether `new Intl.Segmenter(..., { granularity: "word" })` works. | `ok` | `fail` |
 | `grapheme granularity` | Whether `new Intl.Segmenter(..., { granularity: "grapheme" })` works. | `ok` | `fail` |
-| `sample segmentation` | Whether a simple segmentation pass can iterate without throwing. | `ok` | `fail` |
+| `sample segmentation` | Whether a simple segmentation pass yields at least one segment. | `ok` | `fail` |
 
 ### Batch Jobs Section
 
@@ -126,7 +126,7 @@ The JSON output reports the same diagnostics in machine-readable form.
 | Field | Meaning |
 | --- | --- |
 | `packageVersion` | Embedded package version. |
-| `buildChannel` | Derived build channel: `stable` or `canary`. |
+| `buildChannel` | Derived build channel: `stable`, `alpha`, `beta`, `rc`, or `canary`. |
 | `requiredNodeRange` | Supported Node.js range for the project. |
 | `nodeVersion` | Current runtime version string. |
 | `meetsProjectRequirement` | Whether the runtime satisfies the supported Node.js policy. |
@@ -140,7 +140,7 @@ The JSON output reports the same diagnostics in machine-readable form.
 | `available` | Whether `Intl.Segmenter` exists. |
 | `wordGranularity` | Whether the word-granularity constructor works. |
 | `graphemeGranularity` | Whether the grapheme-granularity constructor works. |
-| `sampleWordSegmentation` | Whether a simple sample segmentation run completes without throwing. |
+| `sampleWordSegmentation` | Whether a simple sample segmentation run yields at least one segment. |
 
 ### `jobs`
 
