@@ -1,4 +1,5 @@
 import { countSections } from "../../../markdown";
+import { countSectionsWithDetector, wordCounterWithDetector } from "../../../detector";
 import wordCounter from "../../../wc";
 import { compactCollectorSegmentsInCountResult } from "../aggregate";
 import { resolveBatchJobsLimit } from "./limits";
@@ -20,6 +21,7 @@ export async function countBatchInputsWithJobs(
   filePaths: string[],
   options: CountBatchWithJobsOptions,
 ): Promise<CountBatchWithJobsResult> {
+  const detectorMode = options.detectorMode ?? "regex";
   const limits = resolveBatchJobsLimit();
   const total = filePaths.length;
   let completed = 0;
@@ -39,9 +41,19 @@ export async function countBatchInputsWithJobs(
     }
 
     const result =
-      options.section === "all"
-        ? wordCounter(loaded.content, options.wcOptions)
-        : countSections(loaded.content, options.section, options.wcOptions);
+      detectorMode === "regex"
+        ? options.section === "all"
+          ? wordCounter(loaded.content, options.wcOptions)
+          : countSections(loaded.content, options.section, options.wcOptions)
+        : options.section === "all"
+          ? await wordCounterWithDetector(loaded.content, {
+              ...options.wcOptions,
+              detector: detectorMode,
+            })
+          : await countSectionsWithDetector(loaded.content, options.section, {
+              ...options.wcOptions,
+              detector: detectorMode,
+            });
 
     if (!options.preserveCollectorSegments) {
       compactCollectorSegmentsInCountResult(result);

@@ -1,6 +1,10 @@
 import type { SectionedResult } from "../../markdown";
 import { countSections } from "../../markdown";
 import {
+  countSectionsWithDetector,
+  wordCounterWithDetector,
+} from "../../detector";
+import {
   getTotalLabels,
   isSectionedResult,
   renderStandardResult,
@@ -37,8 +41,18 @@ export async function executeSingleCount({
   }
 
   const result: WordCounterResult | SectionedResult = resolved.useSection
-    ? countSections(trimmed, options.section, resolved.wcOptions)
-    : wordCounter(trimmed, resolved.wcOptions);
+    ? resolved.detectorMode === "regex"
+      ? countSections(trimmed, options.section, resolved.wcOptions)
+      : await countSectionsWithDetector(trimmed, options.section, {
+          ...resolved.wcOptions,
+          detector: resolved.detectorMode,
+        })
+    : resolved.detectorMode === "regex"
+      ? wordCounter(trimmed, resolved.wcOptions)
+      : await wordCounterWithDetector(trimmed, {
+          ...resolved.wcOptions,
+          detector: resolved.detectorMode,
+        });
   const totalOfOverride = resolveTotalOfOverride(result, resolved.totalOfParts);
   const displayResult = resolved.shouldNormalizeBaseOutput ? normalizeResultBase(result) : result;
 

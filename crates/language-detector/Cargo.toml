@@ -1,0 +1,17 @@
+[package]
+name = "language-detector"
+version = "0.1.0"
+edition = "2021"
+description = "Internal WASM-backed language detector for word-counter"
+repository = "https://github.com/dev-pi2pie/word-counter"
+license = "MIT"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde-wasm-bindgen = "0.6"
+wasm-bindgen = "0.2"
+whatlang = "0.16"

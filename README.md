@@ -37,6 +37,8 @@ For local development in this repository:
 ```bash
 git clone https://github.com/dev-pi2pie/word-counter.git
 cd word-counter
+rustup target add wasm32-unknown-unknown
+cargo install wasm-pack --locked
 bun install
 bun run build
 npm link
@@ -93,6 +95,22 @@ Hint a language tag for Han fallback:
 word-counter --han-language zh-Hant "漢字測試"
 word-counter --han-tag zh-Hans "汉字测试"
 ```
+
+Enable the optional WASM detector for ambiguous Latin and Han routes:
+
+```bash
+word-counter --detector wasm "This sentence should clearly be detected as English for the wasm detector path."
+word-counter --detector wasm "漢字測試需要更多內容才能觸發偵測"
+```
+
+Detector mode notes:
+
+- `--detector regex` is the default behavior.
+- `--detector wasm` only runs for ambiguous `und-Latn` and `und-Hani` chunks.
+- `--detector regex` keeps the original script/regex chunk-first detection path.
+- `--detector wasm` uses a detector-oriented ambiguous-window scoring pass before accepted tags are projected back onto the counting chunks.
+- Very short chunks stay on the original `und-*` fallback.
+- Low-confidence or unsupported detector results fall back to `und-*`.
 
 Collect non-words (emoji/symbols/punctuation):
 
@@ -293,6 +311,7 @@ Skip details stay debug-gated and can be suppressed with `--quiet-skips`.
 - Adjacent characters that share the same locale tag are grouped into a chunk.
 - Each chunk is counted with `Intl.Segmenter` at `granularity: "word"`, caching segmenters to avoid re-instantiation.
 - Per-locale counts are summed into an overall total and printed to stdout.
+- With `--detector wasm`, ambiguous `und-Latn` and `und-Hani` chunks can be relabeled through the optional WASM detector before counting.
 
 ## Locale vs Language Code
 
@@ -316,6 +335,10 @@ import wordCounter, {
   segmentTextByLocale,
   showSingularOrPluralWord,
 } from "@dev-pi2pie/word-counter";
+import {
+  wordCounterWithDetector,
+  segmentTextByLocaleWithDetector,
+} from "@dev-pi2pie/word-counter/detector";
 
 wordCounter("Hello world", { latinLanguageHint: "en" });
 wordCounter("Hello world", { latinTagHint: "en" });
@@ -329,6 +352,11 @@ wordCounter("Hi 👋, world!", { mode: "char", nonWords: true });
 wordCounter("飛鳥 bird 貓 cat", { mode: "char-collector" });
 wordCounter("Hi\tthere\n", { nonWords: true, includeWhitespace: true });
 countCharsForLocale("👋", "en");
+await wordCounterWithDetector(
+  "This sentence should clearly be detected as English for the wasm detector path.",
+  { detector: "wasm" },
+);
+await segmentTextByLocaleWithDetector("Hello 世界", { detector: "regex" });
 ```
 
 Note: `includeWhitespace` only affects results when `nonWords: true` is enabled.
@@ -362,6 +390,7 @@ Sample output (with `nonWords: true` and `includeWhitespace: true`):
 
 ```js
 const wordCounter = require("@dev-pi2pie/word-counter");
+const detector = require("@dev-pi2pie/word-counter/detector");
 const {
   countCharsForLocale,
   countWordsForLocale,
@@ -383,6 +412,10 @@ wordCounter("Hi 👋, world!", { mode: "char", nonWords: true });
 wordCounter("飛鳥 bird 貓 cat", { mode: "char-collector" });
 wordCounter("Hi\tthere\n", { nonWords: true, includeWhitespace: true });
 countCharsForLocale("👋", "en");
+await detector.wordCounterWithDetector(
+  "This sentence should clearly be detected as English for the wasm detector path.",
+  { detector: "wasm" },
+);
 ```
 
 Note: `includeWhitespace` only affects results when `nonWords: true` is enabled.
@@ -436,6 +469,18 @@ Sample output (with `nonWords: true` and `includeWhitespace: true`):
 | Export                     | Kind     | Notes                          |
 | -------------------------- | -------- | ------------------------------ |
 | `showSingularOrPluralWord` | function | Formats singular/plural words. |
+
+#### Detector Subpath
+
+Import from `@dev-pi2pie/word-counter/detector` for the explicit detector-enabled API.
+
+| Export                        | Kind     | Notes                                           |
+| ----------------------------- | -------- | ----------------------------------------------- |
+| `wordCounterWithDetector`     | function | Async detector-aware counting entrypoint.       |
+| `segmentTextByLocaleWithDetector` | function | Async detector-aware locale segmentation.  |
+| `countSectionsWithDetector`   | function | Async detector-aware section counting.          |
+| `DEFAULT_DETECTOR_MODE`       | value    | Current default detector mode (`regex`).        |
+| `DETECTOR_MODES`              | value    | Supported detector modes.                       |
 
 #### Types
 
@@ -650,6 +695,9 @@ Example JSON (trimmed):
 
 - Detection is regex/script based, not statistical language-ID.
 - Ambiguous Latin defaults to `und-Latn`; Han fallback defaults to `und-Hani`.
+- `--detector wasm` is optional and conservative; it only runs for ambiguous chunks that meet minimum script-bearing length thresholds.
+- The current first WASM engine is `whatlang`, remapped into this package's public tags.
+- The npm package ships one portable WASM artifact; users do not install per-OS detector packages.
 - Use explicit tag and hint flags when you need deterministic tagging.
 - Full notes (built-in heuristics, limitations, and override guidance) are tracked in `docs/locale-tag-detection-notes.md`.
 

@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { parentPort, workerData } from "node:worker_threads";
 import { countSections } from "../../../../markdown";
+import { countSectionsWithDetector, wordCounterWithDetector } from "../../../../detector";
 import wordCounter from "../../../../wc";
 import { compactCollectorSegmentsInCountResult } from "../../aggregate";
 import { isProbablyBinary } from "../../../path/load";
@@ -77,9 +78,19 @@ parentPort.on("message", async (message: WorkerRequestMessage) => {
   try {
     const content = buffer.toString("utf8");
     const result =
-      config.section === "all"
-        ? wordCounter(content, config.wcOptions)
-        : countSections(content, config.section, config.wcOptions);
+      config.detectorMode === "regex"
+        ? config.section === "all"
+          ? wordCounter(content, config.wcOptions)
+          : countSections(content, config.section, config.wcOptions)
+        : config.section === "all"
+          ? await wordCounterWithDetector(content, {
+              ...config.wcOptions,
+              detector: config.detectorMode,
+            })
+          : await countSectionsWithDetector(content, config.section, {
+              ...config.wcOptions,
+              detector: config.detectorMode,
+            });
 
     if (!config.preserveCollectorSegments) {
       compactCollectorSegmentsInCountResult(result);

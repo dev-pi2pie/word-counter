@@ -1,6 +1,6 @@
 {
   "name": "@dev-pi2pie/word-counter",
-  "version": "0.1.5-canary.1",
+  "version": "0.1.5-canary.2",
   "keywords": [
     "cli",
     "intl-segmenter",
@@ -28,17 +28,24 @@
   "type": "module",
   "main": "./dist/cjs/index.cjs",
   "module": "./dist/esm/index.mjs",
-  "types": "./dist/esm/index.d.ts",
+  "types": "./dist/esm/index2.d.mts",
   "exports": {
     ".": {
-      "types": "./dist/esm/index.d.ts",
+      "types": "./dist/esm/index2.d.mts",
       "import": "./dist/esm/index.mjs",
       "require": "./dist/cjs/index.cjs"
+    },
+    "./detector": {
+      "types": "./dist/esm/detector.d.mts",
+      "import": "./dist/esm/detector.mjs",
+      "require": "./dist/cjs/detector.cjs"
     },
     "./package.json": "./package.json"
   },
   "scripts": {
-    "build": "node scripts/generate-embedded-version.mjs && tsdown",
+    "build": "node scripts/generate-embedded-version.mjs && tsdown && node scripts/build-wasm.mjs",
+    "build:wasm": "node scripts/build-wasm.mjs",
+    "verify:package-contents": "node scripts/verify-package-contents.mjs",
     "type-check": "tsc -p tsconfig.json",
     "test": "bun test",
     "test:ci": "bun run build && bun test",
@@ -46,14 +53,14 @@
   },
   "dependencies": {
     "commander": "^14.0.3",
-    "yaml": "^2.8.2"
+    "yaml": "^2.8.3"
   },
   "devDependencies": {
     "@types/node": "^25.5.0",
-    "oxfmt": "^0.40.0",
-    "oxlint": "^1.55.0",
+    "oxfmt": "^0.41.0",
+    "oxlint": "^1.56.0",
     "picocolors": "^1.1.1",
-    "tsdown": "^0.21.2",
+    "tsdown": "^0.21.4",
     "typescript": "^5.9.3"
   },
   "peerDependencies": {

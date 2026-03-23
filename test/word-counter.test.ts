@@ -5,6 +5,12 @@ import wordCounter, {
   countWordsForLocale,
   segmentTextByLocale,
 } from "../src/wc";
+import {
+  countSectionsWithDetector,
+  segmentTextByLocaleWithDetector,
+  wordCounterWithDetector,
+} from "../src/detector";
+import { hasWasmDetectorRuntime } from "./support/wasm-detector-runtime";
 
 describe("wordCounter", () => {
   test("counts Latin words in chunk mode by default", () => {
@@ -77,6 +83,82 @@ describe("wordCounter", () => {
       expect(first.nonWords?.counts.whitespace).toBe(3);
     }
     expect(result.counts).toEqual({ words: 2, nonWords: 3, total: 5 });
+  });
+});
+
+describe("detector entrypoint", () => {
+  test("uses regex detector mode by default", async () => {
+    const result = await wordCounterWithDetector("Hello world");
+
+    expect(result.total).toBe(2);
+  });
+
+  test("supports explicit regex detector mode", async () => {
+    const result = await wordCounterWithDetector("Hello world", { detector: "regex" });
+
+    expect(result.total).toBe(2);
+  });
+
+  test("keeps short ambiguous Latin chunks on und-Latn in wasm mode", async () => {
+    const result = await wordCounterWithDetector("Hello world", { detector: "wasm" });
+
+    expect(result.breakdown.mode).toBe("chunk");
+    expect(result.breakdown.items[0]?.locale).toBe("und-Latn");
+  });
+
+  test("promotes long ambiguous Latin chunks in wasm mode", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const result = await wordCounterWithDetector(
+      "This sentence should clearly be detected as English for the wasm detector path.",
+      { detector: "wasm" },
+    );
+
+    expect(result.breakdown.mode).toBe("chunk");
+    expect(result.breakdown.items[0]?.locale).toBe("en");
+  });
+
+  test("promotes corroborated markdown-like Latin text in wasm mode", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const result = await wordCounterWithDetector(
+      ["---", "title: Alpha Story", "summary: Intro note", "---", "Hello world from alpha."].join(
+        "\n",
+      ),
+      { detector: "wasm" },
+    );
+
+    expect(result.breakdown.mode).toBe("chunk");
+    expect(result.breakdown.items[0]?.locale).toBe("en");
+  });
+
+  test("keeps low-confidence short English-like text on und-Latn in wasm mode", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const result = await wordCounterWithDetector("Plain text file for batch counting.", {
+      detector: "wasm",
+    });
+
+    expect(result.breakdown.mode).toBe("chunk");
+    expect(result.breakdown.items[0]?.locale).toBe("und-Latn");
+  });
+
+  test("segments text through detector entrypoint", async () => {
+    const chunks = await segmentTextByLocaleWithDetector("Hello 世界", { detector: "regex" });
+
+    expect(chunks.map((chunk) => chunk.locale)).toEqual(["und-Latn", "und-Hani"]);
+  });
+
+  test("counts sections through detector entrypoint", async () => {
+    const result = await countSectionsWithDetector("Hello world", "all", { detector: "regex" });
+
+    expect(result.total).toBe(2);
   });
 });
 

@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, test } from "bun:test";
+import { spawnSync } from "node:child_process";
 import { mkdtemp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, join } from "node:path";
@@ -18,6 +19,7 @@ import {
   validateStandalonePrintJobsLimitUsage,
 } from "../src/cli/runtime/options";
 import { TOTAL_OF_PARTS } from "../src/cli/total-of";
+import { hasWasmDetectorRuntime } from "./support/wasm-detector-runtime";
 
 const tempRoots: string[] = [];
 
@@ -208,6 +210,54 @@ describe("batch path resolution", () => {
 
     expect(resolved.files.map((file) => basename(file))).toEqual(["child.md", "root.md"]);
     expect(resolved.files.filter((file) => file.endsWith("child.md")).length).toBe(1);
+  });
+});
+
+describe("detector mode", () => {
+  test("keeps regex as the default detector mode", async () => {
+    const output = await captureCli(["--format", "json", "Hello world"]);
+
+    expect(output.exitCode).toBe(0);
+    expect(JSON.parse(output.stdout[0] ?? "{}")).toMatchObject({ total: 2 });
+  });
+
+  test("accepts explicit regex detector mode", async () => {
+    const output = await captureCli(["--detector", "regex", "--format", "json", "Hello world"]);
+
+    expect(output.exitCode).toBe(0);
+    expect(JSON.parse(output.stdout[0] ?? "{}")).toMatchObject({ total: 2 });
+  });
+
+  test("supports wasm detector mode for long ambiguous Latin text", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const output = await captureCli([
+      "--detector",
+      "wasm",
+      "--format",
+      "json",
+      "This sentence should clearly be detected as English for the wasm detector path.",
+    ]);
+
+    expect(output.exitCode).toBe(0);
+    const parsed = JSON.parse(output.stdout[0] ?? "{}");
+    expect(parsed.breakdown.items[0]?.locale).toBe("en");
+  });
+
+  test("rejects invalid detector mode values", () => {
+    const result = spawnSync(
+      process.execPath,
+      ["run", "src/bin.ts", "--detector", "invalid", "Hello world"],
+      {
+        cwd: process.cwd(),
+        encoding: "utf8",
+      },
+    );
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("option '--detector <mode>' argument 'invalid' is invalid");
   });
 });
 

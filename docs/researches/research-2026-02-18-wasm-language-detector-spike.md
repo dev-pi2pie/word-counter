@@ -1,7 +1,8 @@
 ---
 title: "WASM Language Detector Spike for Ambiguous Script Routes"
 created-date: 2026-02-18
-status: draft
+modified-date: 2026-03-24
+status: completed
 agent: Codex
 ---
 
@@ -25,8 +26,8 @@ Deliver a spike decision for `v0.1.x`: whether to ship a WASM detector path behi
 
 ## Recommended Pipeline
 1. Keep current regex/script gate as Step 0 (`und-Latn`, `und-Hani`, etc).
-2. Run WASM detection only for ambiguous runs and only when text length is above a minimum threshold.
-3. Keep this route opt-in first (for example `--detector wasm`) to avoid changing default performance/behavior.
+2. Run WASM detection only for ambiguous runs and only when script-bearing text length is above a minimum threshold.
+3. Keep this route opt-in first via `--detector wasm`; default detector mode remains regex/script detection.
 4. Add provenance metadata in JSON output to show resolution source (for example `script`, `hint`, `wasm`).
 
 ## Candidate Approaches
@@ -54,6 +55,15 @@ Deliver a spike decision for `v0.1.x`: whether to ship a WASM detector path behi
 - Project targets Node.js `>=20` and bundles TS with `tsdown`; optional detector loading should be lazy to avoid startup regression for default path.
 - CLI and library behavior should remain unchanged unless detector mode is explicitly enabled.
 
+## CLI Shape
+- Recommend a new `--detector <mode>` option.
+- Initial detector modes:
+  - `regex` (default)
+  - `wasm`
+- The first `wasm` engine should be `whatlang`.
+- Reserve `--detector-engine <engine>` as a future extension point if multiple WASM-backed engines become viable.
+- Do not expose engine selection in the first spike unless there is more than one supported implementation.
+
 ## Proposed Spike Plan
 1. Build a minimal detector interface in TS:
    - input: text chunk + wide tag
@@ -61,7 +71,10 @@ Deliver a spike decision for `v0.1.x`: whether to ship a WASM detector path behi
 2. Implement one Rust/WASM prototype using `whatlang` with `wasm-pack --target nodejs`.
 3. Add threshold/routing policy:
    - only call detector for `und-Latn` / `und-Hani`
-   - skip very short chunks
+   - count script-bearing characters only, excluding whitespace, punctuation, and digits
+   - start with `und-Latn` chunks at `>=24` Latin letters
+   - start with `und-Hani` chunks at `>=12` Han characters
+   - skip shorter chunks and keep the original `und-*` tag
 4. Add benchmark harness:
    - regex-only baseline
    - regex + WASM route on ambiguous corpora
@@ -83,11 +96,24 @@ Deliver a spike decision for `v0.1.x`: whether to ship a WASM detector path behi
 ## Implications / Recommendations
 - Proceed with a Rust/WASM spike first (Option A), starting with `whatlang`.
 - Keep detector optional in `v0.1.x`; do not replace the current default route yet.
+- Use `--detector wasm` as the opt-in CLI surface; keep regex/script detection as the default.
+- Treat `whatlang` as the first engine behind the `wasm` mode rather than exposing a `whatlang`-specific top-level flag.
+- Keep `--detector-engine <engine>` as a future-facing extension only; defer public engine selection until there is more than one real implementation candidate.
+- Use a conservative threshold policy first:
+  - measure only script-bearing characters
+  - start at `>=24` for `und-Latn`
+  - start at `>=12` for `und-Hani`
+  - tune later against representative samples
+- Emit low-confidence or unreliable detector results as the original ambiguous `und-*` tag instead of forcing a language tag.
 - Reassess `cld3-asm` only if spike cost is too high and maintenance risk is acceptable.
 
-## Open Questions
-- What minimum chunk length should gate WASM detection for acceptable precision?
-- Should low-confidence detector results be emitted as `und-*` instead of forced language tags?
+## Resolution Notes
+- Minimum chunk length should be measured in script-bearing characters, not raw string length.
+- Recommended starting gate:
+  - `und-Latn`: run WASM detection only when a chunk contains at least `24` Latin letters
+  - `und-Hani`: run WASM detection only when a chunk contains at least `12` Han characters
+- Chunks below the threshold should stay on the existing `und-*` route.
+- Low-confidence or unreliable detector results should fall back to the original ambiguous `und-*` tag instead of forcing a language tag.
 
 ## Related Plans
 - `docs/plans/plan-2026-01-02-wc-refactor-locale-research.md`
