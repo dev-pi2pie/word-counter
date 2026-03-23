@@ -54,6 +54,7 @@ async function copyRuntimeArtifacts() {
   await rm(distRuntimeDir, { recursive: true, force: true });
   await mkdir(join(repoRoot, "dist"), { recursive: true });
   await cp(generatedDir, distRuntimeDir, { recursive: true });
+  await rm(join(distRuntimeDir, ".gitignore"), { force: true });
 }
 
 async function main() {

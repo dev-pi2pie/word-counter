@@ -45,6 +45,7 @@
   "scripts": {
     "build": "node scripts/generate-embedded-version.mjs && tsdown && node scripts/build-wasm.mjs",
     "build:wasm": "node scripts/build-wasm.mjs",
+    "verify:package-contents": "node scripts/verify-package-contents.mjs",
     "type-check": "tsc -p tsconfig.json",
     "test": "bun test",
     "test:ci": "bun run build && bun test",

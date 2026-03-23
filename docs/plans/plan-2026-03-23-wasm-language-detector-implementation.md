@@ -2,7 +2,7 @@
 title: "WASM language detector implementation"
 created-date: 2026-03-23
 modified-date: 2026-03-23
-status: draft
+status: completed
 agent: Codex
 ---
 
@@ -90,7 +90,7 @@ Implement an optional WASM-backed language detector for ambiguous script routes 
   - npm publish workflow
   - GitHub Packages publish workflow
 - [x] Update automation or workflow setup so those environments provision Rust and `wasm-pack` before invoking the build that generates publishable outputs.
-- [ ] If any workflow intentionally avoids Rust/WASM setup, define the fallback behavior explicitly rather than assuming the root build can still produce publishable detector-enabled outputs.
+- [x] If any workflow intentionally avoids Rust/WASM setup, define the fallback behavior explicitly rather than assuming the root build can still produce publishable detector-enabled outputs.
 
 ### Phase 4 - Detector Remap Contract
 
@@ -140,11 +140,11 @@ Implement an optional WASM-backed language detector for ambiguous script routes 
 
 ### Phase 7 - CI/CD Follow-up
 
-- [ ] Review whether `cargo install wasm-pack --locked` should remain the long-term workflow choice or be replaced with a faster cached setup approach.
-- [ ] Recheck release, publish, and CI workflow duplication now that Rust/WASM setup exists in multiple workflows.
-- [ ] Decide whether detector-aware validation should be split into separate workflow jobs for faster feedback.
-- [ ] Decide whether non-publish workflows need artifact caching for Rust and generated WASM outputs.
-- [ ] Add any additional release verification needed for npm package contents that include the staged WASM runtime.
+- [x] Review whether `cargo install wasm-pack --locked` should remain the long-term workflow choice or be replaced with a faster cached setup approach.
+- [x] Recheck release, publish, and CI workflow duplication now that Rust/WASM setup exists in multiple workflows.
+- [x] Decide whether detector-aware validation should be split into separate workflow jobs for faster feedback.
+- [x] Decide whether non-publish workflows need artifact caching for Rust and generated WASM outputs.
+- [x] Add any additional release verification needed for npm package contents that include the staged WASM runtime.
 
 ## Execution Notes
 

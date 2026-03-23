@@ -127,6 +127,11 @@ jobs:
         with:
           targets: wasm32-unknown-unknown
 
+      - name: Cache Rust artifacts
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: crates/language-detector
+
       - name: Install wasm-pack
         run: cargo install wasm-pack --locked
 
@@ -135,6 +140,9 @@ jobs:
 
       - name: Build
         run: bun run build
+
+      - name: Verify package contents
+        run: bun run verify:package-contents
 
       - name: Set package name for GitHub Packages
         run: npm pkg set name=@${{ github.repository_owner }}/word-counter
