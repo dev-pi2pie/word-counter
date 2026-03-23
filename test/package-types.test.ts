@@ -1,9 +1,12 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { createRequire } from "node:module";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
 
 const tempRoots: string[] = [];
+const require = createRequire(import.meta.url);
+const tscEntrypoint = require.resolve("typescript/bin/tsc");
 
 afterEach(async () => {
   await Promise.all(
@@ -35,8 +38,9 @@ describe("published package types", () => {
     );
 
     const result = spawnSync(
-      "./node_modules/.bin/tsc",
+      process.execPath,
       [
+        tscEntrypoint,
         "--noEmit",
         "--pretty",
         "false",

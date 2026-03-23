@@ -1,8 +1,7 @@
 import { cp, mkdir, rm } from "node:fs/promises";
-import { accessSync, constants as fsConstants, existsSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(scriptDir, "..");
@@ -30,19 +29,13 @@ function runCommand(command, args, cwd) {
 }
 
 function assertCommandAvailable(command) {
-  const pathValue = process.env.PATH ?? "";
-  const segments = pathValue.split(":").filter((segment) => segment.length > 0);
-  for (const segment of segments) {
-    const candidate = join(segment, command);
-    if (!existsSync(candidate)) {
-      continue;
-    }
-    try {
-      accessSync(candidate, fsConstants.X_OK);
-      return;
-    } catch {
-      continue;
-    }
+  const result = spawnSync(command, ["--version"], {
+    stdio: "ignore",
+    env: process.env,
+  });
+
+  if (!result.error && result.status === 0) {
+    return;
   }
 
   throw new Error(
