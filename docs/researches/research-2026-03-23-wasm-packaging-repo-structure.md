@@ -1,8 +1,8 @@
 ---
 title: "WASM Packaging and Repo Structure for Optional Detector"
 created-date: 2026-03-23
-modified-date: 2026-03-23
-status: draft
+modified-date: 2026-03-24
+status: completed
 agent: Codex
 ---
 
@@ -16,7 +16,7 @@ Choose a packaging direction for the WASM spike that preserves the current Node.
 
 ## Key Findings
 
-- The current repo publishes exactly one package from the repository root via `package.json`, `tsdown.config.ts`, `.github/workflows/publish-npm-packages.yml`, and `.github/workflows/publish-github-packages.yml`.
+- The current repo publishes exactly one package from the repository root via `package.json`, `tsdown.config.ts`, and the release automation under `.github/workflows/release.yml`.
 - The current public library path is synchronous from `src/index.ts` into `src/wc/wc.ts` and `src/wc/segment.ts`. Any WASM design that forces async initialization is a larger contract change than the file-structure refactor itself.
 - The current build and publish workflows only prepare Bun and Node before running the root build, so a Rust/WASM route requires an explicit toolchain plan for local build, CI, and publish flows.
 - The existing WASM spike in `docs/researches/research-2026-02-18-wasm-language-detector-spike.md` is about detector feasibility and routing. It is not the right place to absorb package-boundary, build, and release-process decisions.

@@ -1,7 +1,8 @@
 ---
 title: "Release workflow consolidation and artifact reuse"
 created-date: 2026-03-24
-status: draft
+modified-date: 2026-03-24
+status: active
 agent: Codex
 ---
 
@@ -105,28 +106,28 @@ Reduce duplicated Rust/WASM build work across release and publish automation by 
 
 ### Phase 1 - Release Flow Design
 
-- [ ] Confirm the final job graph for `release.yml`.
-- [ ] Decide whether the `release` job should depend only on `notes` or on successful publication jobs as well.
-- [ ] Define the exact artifact contents required by both registry jobs.
-- [ ] Define artifact naming so reruns and prereleases stay easy to inspect.
-- [ ] Decide whether tag and branch validation should stay in `notes`, move to `prepare`, or be extracted into a shared job.
+- [x] Confirm the final job graph for `release.yml`.
+- [x] Decide whether the `release` job should depend only on `notes` or on successful publication jobs as well.
+- [x] Define the exact artifact contents required by both registry jobs.
+- [x] Define artifact naming so reruns and prereleases stay easy to inspect.
+- [x] Decide whether tag and branch validation should stay in `notes`, move to `prepare`, or be extracted into a shared job.
 
 ### Phase 2 - Workflow Consolidation
 
-- [ ] Move shared release-build logic into `.github/workflows/release.yml`.
-- [ ] Add a single `prepare` job that builds and verifies the package once.
-- [ ] Add artifact upload and download steps for downstream publish jobs.
-- [ ] Move npm publish logic into a `publish_npm` job inside `release.yml`.
-- [ ] Move GitHub Packages publish logic into a `publish_github_packages` job inside `release.yml`.
-- [ ] Keep npm trusted publishing permissions and token handling intact.
-- [ ] Keep GitHub Packages registry and package-name override behavior intact.
+- [x] Move shared release-build logic into `.github/workflows/release.yml`.
+- [x] Add a single `prepare` job that builds and verifies the package once.
+- [x] Add artifact upload and download steps for downstream publish jobs.
+- [x] Move npm publish logic into a `publish_npm` job inside `release.yml`.
+- [x] Move GitHub Packages publish logic into a `publish_github_packages` job inside `release.yml`.
+- [x] Keep npm trusted publishing permissions and token handling intact.
+- [x] Keep GitHub Packages registry and package-name override behavior intact.
 
 ### Phase 3 - Cleanup and Deduplication
 
-- [ ] Remove `.github/workflows/publish-npm-packages.yml` after the consolidated flow is validated.
-- [ ] Remove `.github/workflows/publish-github-packages.yml` after the consolidated flow is validated.
-- [ ] Recheck whether any shared setup should move into a composite action or reusable workflow for readability only.
-- [ ] Recheck whether `ci.yml` and `release.yml` should share any common helper logic for setup or verification.
+- [x] Remove `.github/workflows/publish-npm-packages.yml` after the consolidated flow is validated.
+- [x] Remove `.github/workflows/publish-github-packages.yml` after the consolidated flow is validated.
+- [x] Recheck whether any shared setup should move into a composite action or reusable workflow for readability only.
+- [x] Recheck whether `ci.yml` and `release.yml` should share any common helper logic for setup or verification.
 
 ### Phase 4 - Validation and Rollout
 
@@ -134,7 +135,7 @@ Reduce duplicated Rust/WASM build work across release and publish automation by 
 - [ ] Validate that the built WASM runtime is present in the downloaded release artifact and in final published package contents.
 - [ ] Validate that manual `workflow_dispatch` still supports explicit `tag` and optional `shallow_since`.
 - [ ] Validate rerun behavior for failed publish jobs without requiring a second full build unless the source ref changed.
-- [ ] Add or update documentation for the new workflow responsibilities and trigger model.
+- [x] Add or update documentation for the new workflow responsibilities and trigger model.
 
 ## Design Notes
 
@@ -142,6 +143,8 @@ Reduce duplicated Rust/WASM build work across release and publish automation by 
 - Avoid making `.github/workflows/ci.yml` the producer of release artifacts because CI runs are not release-scoped and are triggered by different events.
 - Favor one authoritative release workflow over three independent tag-triggered workflows.
 - Keep the release artifact narrow and deterministic so registry jobs publish the same build output.
+- Keep tag and branch validation in the `notes` job for now so release-note generation and publish gating continue to share the same resolved tag context.
+- Make the `release` job depend on successful registry jobs so a GitHub Release record is not created for a failed publication run.
 
 ## Success Criteria
 

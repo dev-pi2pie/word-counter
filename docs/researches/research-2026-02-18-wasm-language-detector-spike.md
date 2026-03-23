@@ -1,8 +1,8 @@
 ---
 title: "WASM Language Detector Spike for Ambiguous Script Routes"
 created-date: 2026-02-18
-modified-date: 2026-03-23
-status: draft
+modified-date: 2026-03-24
+status: completed
 agent: Codex
 ---
 
