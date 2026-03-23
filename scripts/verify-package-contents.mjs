@@ -1,16 +1,55 @@
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 const requiredFiles = new Set([
   "dist/esm/index.mjs",
+  "dist/esm/index.d.mts",
   "dist/cjs/index.cjs",
   "dist/esm/detector.mjs",
+  "dist/esm/detector.d.mts",
   "dist/cjs/detector.cjs",
   "dist/wasm-language-detector/language_detector.js",
   "dist/wasm-language-detector/language_detector_bg.wasm",
 ]);
+
+function normalizePackagePath(value) {
+  return typeof value === "string" ? value.replace(/^\.\//u, "") : null;
+}
+
+function collectReferencedPackagePaths() {
+  const packageJsonPath = process.env.npm_package_json ?? join(process.cwd(), "package.json");
+  const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8"));
+  const referencedPaths = new Set();
+
+  const maybeAdd = (value) => {
+    const normalized = normalizePackagePath(value);
+    if (normalized) {
+      referencedPaths.add(normalized);
+    }
+  };
+
+  maybeAdd(packageJson.main);
+  maybeAdd(packageJson.module);
+  maybeAdd(packageJson.types);
+
+  const visitExports = (value) => {
+    if (typeof value === "string") {
+      maybeAdd(value);
+      return;
+    }
+    if (!value || typeof value !== "object") {
+      return;
+    }
+    for (const nested of Object.values(value)) {
+      visitExports(nested);
+    }
+  };
+
+  visitExports(packageJson.exports);
+  return referencedPaths;
+}
 
 const tempCacheDir = mkdtempSync(join(tmpdir(), "word-counter-npm-cache-"));
 
@@ -47,7 +86,8 @@ const presentPaths = new Set(
     .filter((path) => typeof path === "string"),
 );
 
-const missingFiles = [...requiredFiles].filter((path) => !presentPaths.has(path));
+const expectedPaths = new Set([...requiredFiles, ...collectReferencedPackagePaths()]);
+const missingFiles = [...expectedPaths].filter((path) => !presentPaths.has(path));
 
 if (missingFiles.length > 0) {
   console.error("Missing required package contents:");

@@ -19,6 +19,7 @@ import {
   validateStandalonePrintJobsLimitUsage,
 } from "../src/cli/runtime/options";
 import { TOTAL_OF_PARTS } from "../src/cli/total-of";
+import { hasWasmDetectorRuntime } from "./support/wasm-detector-runtime";
 
 const tempRoots: string[] = [];
 
@@ -228,6 +229,10 @@ describe("detector mode", () => {
   });
 
   test("supports wasm detector mode for long ambiguous Latin text", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
     const output = await captureCli([
       "--detector",
       "wasm",

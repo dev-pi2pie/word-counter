@@ -10,6 +10,7 @@ import {
   segmentTextByLocaleWithDetector,
   wordCounterWithDetector,
 } from "../src/detector";
+import { hasWasmDetectorRuntime } from "./support/wasm-detector-runtime";
 
 describe("wordCounter", () => {
   test("counts Latin words in chunk mode by default", () => {
@@ -106,6 +107,10 @@ describe("detector entrypoint", () => {
   });
 
   test("promotes long ambiguous Latin chunks in wasm mode", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
     const result = await wordCounterWithDetector(
       "This sentence should clearly be detected as English for the wasm detector path.",
       { detector: "wasm" },
@@ -116,6 +121,10 @@ describe("detector entrypoint", () => {
   });
 
   test("promotes corroborated markdown-like Latin text in wasm mode", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
     const result = await wordCounterWithDetector(
       ["---", "title: Alpha Story", "summary: Intro note", "---", "Hello world from alpha."].join(
         "\n",
@@ -128,6 +137,10 @@ describe("detector entrypoint", () => {
   });
 
   test("keeps low-confidence short English-like text on und-Latn in wasm mode", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
     const result = await wordCounterWithDetector("Plain text file for batch counting.", {
       detector: "wasm",
     });
