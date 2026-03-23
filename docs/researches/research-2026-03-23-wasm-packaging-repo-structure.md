@@ -18,6 +18,7 @@ Choose a packaging direction for the WASM spike that preserves the current Node.
 
 - The current repo publishes exactly one package from the repository root via `package.json`, `tsdown.config.ts`, `.github/workflows/publish-npm-packages.yml`, and `.github/workflows/publish-github-packages.yml`.
 - The current public library path is synchronous from `src/index.ts` into `src/wc/wc.ts` and `src/wc/segment.ts`. Any WASM design that forces async initialization is a larger contract change than the file-structure refactor itself.
+- The current build and publish workflows only prepare Bun and Node before running the root build, so a Rust/WASM route requires an explicit toolchain plan for local build, CI, and publish flows.
 - The existing WASM spike in `docs/researches/research-2026-02-18-wasm-language-detector-spike.md` is about detector feasibility and routing. It is not the right place to absorb package-boundary, build, and release-process decisions.
 - A `packages/cli` + `packages/core-wasm` split would require more than moving files:
   - a new workspace layout
@@ -94,6 +95,11 @@ Choose a packaging direction for the WASM spike that preserves the current Node.
 - Prefer dual entrypoints instead of forcing a single migration path:
   - keep the current default library API unchanged
   - add explicit detector-enabled entrypoints for both CLI and library usage
+- Any detector-enabled library entrypoint must be planned as a package-surface change:
+  - update the root `exports` map
+  - decide the ESM entry location
+  - decide the CJS entry or compatibility strategy
+  - extend interop tests so the new surface is reachable for supported consumers
 - If the generated Node-target WASM wrapper can be loaded synchronously in practice, confirm that in the spike before promising sync library support.
 
 ## When `packages/` Becomes Worth It
@@ -113,6 +119,7 @@ Choose a packaging direction for the WASM spike that preserves the current Node.
 ## Resolution Notes
 
 - Generated WASM artifacts should not be committed. They should be produced during build and publish flows.
+- Because generated WASM artifacts are produced during build and publish, the implementation must explicitly provision Rust and `wasm-pack` anywhere `bun run build` is expected to create publishable outputs.
 - Prefer a Node-based build helper such as `scripts/build-wasm.mjs` over adding `shx` by default.
 - Add `shx` only if the implementation later needs cross-platform shell-style file operations that are materially simpler than using Node standard library calls.
 - The first detector rollout should support both surfaces:

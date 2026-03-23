@@ -42,6 +42,12 @@ Implement an optional WASM-backed language detector for ambiguous script routes 
   - confidence and reliability fields
 - [ ] Preserve the existing default library API behavior.
 - [ ] Add an explicit detector-enabled library entrypoint instead of silently mutating the current sync API contract.
+- [ ] Plan the package-surface changes required for the detector-enabled library entrypoint:
+  - update the root `package.json` `exports` map
+  - decide the ESM entry file shape
+  - decide the CJS entry or compatibility strategy
+  - preserve or intentionally revise the current CJS interop contract
+- [ ] Add or extend package-surface tests so the detector-enabled entrypoint is reachable for supported ESM and CJS consumers.
 
 ### Phase 2 - Internal Detector Boundary
 
@@ -77,6 +83,13 @@ Implement an optional WASM-backed language detector for ambiguous script routes 
 - [ ] Do not commit generated WASM artifacts.
 - [ ] Copy or stage the runtime files into `dist/` as part of build/publish so the root npm package ships the generated wrapper and `.wasm` artifact.
 - [ ] Keep the root single-package publish model intact.
+- [ ] Make the Rust + `wasm-pack` toolchain an explicit build prerequisite wherever publishable artifacts are produced:
+  - local build workflow
+  - CI validation workflow
+  - npm publish workflow
+  - GitHub Packages publish workflow
+- [ ] Update automation or workflow setup so those environments provision Rust and `wasm-pack` before invoking the build that generates publishable outputs.
+- [ ] If any workflow intentionally avoids Rust/WASM setup, define the fallback behavior explicitly rather than assuming the root build can still produce publishable detector-enabled outputs.
 
 ### Phase 4 - Detector Remap Contract
 
@@ -102,7 +115,12 @@ Implement an optional WASM-backed language detector for ambiguous script routes 
   - `--detector wasm`
   - invalid detector values
   - detector fallback behavior in JSON output
+- [ ] Add package-surface tests covering:
+  - detector-enabled ESM export reachability
+  - detector-enabled CJS reachability or documented non-support
+  - current CJS wrapper compatibility remains correct for the existing root surface
 - [ ] Add build verification for generated runtime artifacts being present in the published package surface.
+- [ ] Add workflow verification for the Rust/`wasm-pack` toolchain path used by publishable builds.
 - [ ] Update `README.md` and any locale-detection docs with:
   - default regex behavior
   - `--detector <mode>`
