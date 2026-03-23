@@ -211,6 +211,29 @@ describe("batch path resolution", () => {
   });
 });
 
+describe("detector mode", () => {
+  test("keeps regex as the default detector mode", async () => {
+    const output = await captureCli(["--format", "json", "Hello world"]);
+
+    expect(output.exitCode).toBe(0);
+    expect(JSON.parse(output.stdout[0] ?? "{}")).toMatchObject({ total: 2 });
+  });
+
+  test("accepts explicit regex detector mode", async () => {
+    const output = await captureCli(["--detector", "regex", "--format", "json", "Hello world"]);
+
+    expect(output.exitCode).toBe(0);
+    expect(JSON.parse(output.stdout[0] ?? "{}")).toMatchObject({ total: 2 });
+  });
+
+  test("reports wasm detector mode as not implemented yet", async () => {
+    const output = await captureCli(["--detector", "wasm", "Hello world"]);
+
+    expect(output.exitCode).toBe(1);
+    expect(output.stderr.join("")).toContain("Detector mode `wasm` is not implemented yet.");
+  });
+});
+
 describe("batch aggregation", () => {
   test("keeps merged breakdown order deterministic across files", async () => {
     const root = await makeTempFixture("batch-aggregate-order");

@@ -5,6 +5,11 @@ import wordCounter, {
   countWordsForLocale,
   segmentTextByLocale,
 } from "../src/wc";
+import {
+  countSectionsWithDetector,
+  segmentTextByLocaleWithDetector,
+  wordCounterWithDetector,
+} from "../src/detector";
 
 describe("wordCounter", () => {
   test("counts Latin words in chunk mode by default", () => {
@@ -77,6 +82,38 @@ describe("wordCounter", () => {
       expect(first.nonWords?.counts.whitespace).toBe(3);
     }
     expect(result.counts).toEqual({ words: 2, nonWords: 3, total: 5 });
+  });
+});
+
+describe("detector entrypoint", () => {
+  test("uses regex detector mode by default", async () => {
+    const result = await wordCounterWithDetector("Hello world");
+
+    expect(result.total).toBe(2);
+  });
+
+  test("supports explicit regex detector mode", async () => {
+    const result = await wordCounterWithDetector("Hello world", { detector: "regex" });
+
+    expect(result.total).toBe(2);
+  });
+
+  test("rejects wasm detector mode until implemented", async () => {
+    await expect(
+      wordCounterWithDetector("Hello world", { detector: "wasm" }),
+    ).rejects.toThrow("Detector mode `wasm` is not implemented yet.");
+  });
+
+  test("segments text through detector entrypoint", async () => {
+    const chunks = await segmentTextByLocaleWithDetector("Hello 世界", { detector: "regex" });
+
+    expect(chunks.map((chunk) => chunk.locale)).toEqual(["und-Latn", "und-Hani"]);
+  });
+
+  test("counts sections through detector entrypoint", async () => {
+    const result = await countSectionsWithDetector("Hello world", "all", { detector: "regex" });
+
+    expect(result.total).toBe(2);
   });
 });
 

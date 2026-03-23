@@ -181,6 +181,7 @@ function resolveLatinHintRules(options: CliActionOptions): LatinHintRule[] | und
 
 export function resolveCountRunOptions(options: CliActionOptions): ResolvedCountRunOptions {
   const useSection = options.section !== "all";
+  const detectorMode = options.detector ?? "regex";
   const totalOfParts = options.totalOf;
   const requestedNonWords = Boolean(options.nonWords || options.includeWhitespace || options.misc);
   const collectNonWordsForOverride = requiresNonWordCollection(totalOfParts);
@@ -195,6 +196,7 @@ export function resolveCountRunOptions(options: CliActionOptions): ResolvedCount
 
   return {
     useSection,
+    detectorMode,
     totalOfParts,
     requestedNonWords,
     shouldNormalizeBaseOutput,

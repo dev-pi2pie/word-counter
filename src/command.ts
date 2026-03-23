@@ -5,6 +5,7 @@ import { configureProgramOptions } from "./cli/program/options";
 import { getFormattedVersionLabel } from "./cli/program/version";
 import { resolveBatchJobsLimit } from "./cli/batch/jobs/limits";
 import { executeBatchCount } from "./cli/runtime/batch";
+import { WASM_DETECTOR_NOT_IMPLEMENTED_MESSAGE } from "./detector/wasm";
 import {
   hasPathInput,
   resolveCountRunOptions,
@@ -140,6 +141,11 @@ export async function runCli(
           program.error(pc.red(message));
           return;
         }
+        if (message === WASM_DETECTOR_NOT_IMPLEMENTED_MESSAGE) {
+          console.error(pc.red(message));
+          process.exitCode = 1;
+          return;
+        }
         program.error(message);
       } finally {
         await debug.close();
@@ -148,6 +154,9 @@ export async function runCli(
   );
 
   await program.parseAsync(argv);
+  if (process.exitCode === undefined) {
+    process.exitCode = 0;
+  }
 }
 
 export { buildBatchSummary } from "./cli/batch/aggregate";

@@ -35,6 +35,11 @@
       "import": "./dist/esm/index.mjs",
       "require": "./dist/cjs/index.cjs"
     },
+    "./detector": {
+      "types": "./dist/esm/detector.d.ts",
+      "import": "./dist/esm/detector.mjs",
+      "require": "./dist/cjs/detector.cjs"
+    },
     "./package.json": "./package.json"
   },
   "scripts": {

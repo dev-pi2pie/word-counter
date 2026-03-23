@@ -29,25 +29,25 @@ Implement an optional WASM-backed language detector for ambiguous script routes 
 
 ### Phase 1 - Public Contract and Runtime Shape
 
-- [ ] Add a detector mode contract that keeps regex/script detection as the default.
-- [ ] Add CLI support for `--detector <mode>` with:
+- [x] Add a detector mode contract that keeps regex/script detection as the default.
+- [x] Add CLI support for `--detector <mode>` with:
   - `regex` as the default
   - `wasm` as the opt-in route
-- [ ] Keep `--detector-engine <engine>` out of the first public implementation unless a second real engine is added.
-- [ ] Add detector-aware runtime option plumbing from CLI parsing into count execution.
-- [ ] Define detector-facing TypeScript types for:
+- [x] Keep `--detector-engine <engine>` out of the first public implementation unless a second real engine is added.
+- [x] Add detector-aware runtime option plumbing from CLI parsing into count execution.
+- [x] Define detector-facing TypeScript types for:
   - detector mode
   - detector result
   - provenance source
   - confidence and reliability fields
-- [ ] Preserve the existing default library API behavior.
-- [ ] Add an explicit detector-enabled library entrypoint instead of silently mutating the current sync API contract.
-- [ ] Plan the package-surface changes required for the detector-enabled library entrypoint:
+- [x] Preserve the existing default library API behavior.
+- [x] Add an explicit detector-enabled library entrypoint instead of silently mutating the current sync API contract.
+- [x] Plan the package-surface changes required for the detector-enabled library entrypoint:
   - update the root `package.json` `exports` map
   - decide the ESM entry file shape
   - decide the CJS entry or compatibility strategy
   - preserve or intentionally revise the current CJS interop contract
-- [ ] Add or extend package-surface tests so the detector-enabled entrypoint is reachable for supported ESM and CJS consumers.
+- [x] Add or extend package-surface tests so the detector-enabled entrypoint is reachable for supported ESM and CJS consumers.
 
 ### Phase 2 - Internal Detector Boundary
 

@@ -2,7 +2,7 @@ import { defineConfig } from "tsdown";
 
 export default defineConfig([
   {
-    entry: { index: "src/index.ts" },
+    entry: { index: "src/index.ts", detector: "src/detector/index.ts" },
     format: ["esm"],
     dts: true,
     outDir: "dist/esm",
@@ -14,7 +14,7 @@ export default defineConfig([
     fixedExtension: true,
   },
   {
-    entry: { index: "src/index.cjs.ts" },
+    entry: { index: "src/index.cjs.ts", detector: "src/detector/index.cjs.ts" },
     format: ["cjs"],
     dts: false,
     outDir: "dist/cjs",
