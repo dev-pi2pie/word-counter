@@ -8,6 +8,7 @@ import {
   DETECTOR_SOURCES,
   resolveDetectorMode,
   segmentTextByLocaleWithDetector,
+  WASM_DETECTOR_RUNTIME_UNAVAILABLE_MESSAGE,
   wordCounterWithDetector,
 } from "./index";
 
@@ -21,6 +22,7 @@ const cjsExports = {
   DETECTOR_SOURCES,
   resolveDetectorMode,
   segmentTextByLocaleWithDetector,
+  WASM_DETECTOR_RUNTIME_UNAVAILABLE_MESSAGE,
   wordCounterWithDetector,
 };
 
