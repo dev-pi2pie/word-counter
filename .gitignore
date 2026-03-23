@@ -5,6 +5,7 @@ node_modules
 out
 dist
 *.tgz
+generated/
 
 # code coverage
 coverage
@@ -26,6 +27,10 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 .eslintcache
 .cache
 *.tsbuildinfo
+
+# Rust / Cargo
+target/
+Cargo.lock
 
 # IntelliJ based IDEs
 .idea

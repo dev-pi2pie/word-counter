@@ -8,7 +8,7 @@ import {
 import {
   countSectionsWithWasmDetector,
   segmentTextByLocaleWithWasmDetector,
-  WASM_DETECTOR_NOT_IMPLEMENTED_MESSAGE,
+  WASM_DETECTOR_RUNTIME_UNAVAILABLE_MESSAGE,
   wordCounterWithWasmDetector,
 } from "./wasm";
 import type {
@@ -40,9 +40,7 @@ export function resolveDetectorMode(mode?: DetectorMode): DetectorMode {
 }
 
 export function assertDetectorModeImplemented(mode?: DetectorMode): void {
-  if (resolveDetectorMode(mode) === "wasm") {
-    throw new Error(WASM_DETECTOR_NOT_IMPLEMENTED_MESSAGE);
-  }
+  void mode;
 }
 
 export async function segmentTextByLocaleWithDetector(
@@ -81,6 +79,7 @@ export async function countSectionsWithDetector(
 
 export const DETECTOR_SOURCES: DetectorSource[] = ["script", "hint", "wasm"];
 export const DEFAULT_DETECTOR_RESULT_SOURCE: DetectorSource = "script";
+export { WASM_DETECTOR_RUNTIME_UNAVAILABLE_MESSAGE };
 
 export function createDetectorResult(
   tag: string,

@@ -3,7 +3,7 @@ import type { ProgressOutputStream } from "../progress/reporter";
 import type { TotalOfPart } from "../total-of";
 import type { PathMode } from "../types";
 import type { DoctorRuntimeOverrides } from "../doctor/types";
-import type { DetectorMode } from "../../detector";
+import type { DetectorMode, DetectorWordCounterOptions } from "../../detector";
 import type { WordCounterMode, WordCounterOptions, WordCounterResult } from "../../wc";
 
 export type OutputFormat = "standard" | "raw" | "json";
@@ -56,7 +56,7 @@ export type ResolvedCountRunOptions = {
   totalOfParts: TotalOfPart[] | undefined;
   requestedNonWords: boolean;
   shouldNormalizeBaseOutput: boolean;
-  wcOptions: WordCounterOptions;
+  wcOptions: DetectorWordCounterOptions;
 };
 
 export type CountResult = WordCounterResult | SectionedResult;

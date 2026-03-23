@@ -119,6 +119,14 @@ jobs:
           node-version: 22.14.0
           registry-url: https://registry.npmjs.org
 
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Install wasm-pack
+        run: cargo install wasm-pack --locked
+
       - name: Update npm for trusted publishing
         run: npm install -g npm@latest
 

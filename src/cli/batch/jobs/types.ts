@@ -1,4 +1,5 @@
 import type { SectionMode } from "../../../markdown";
+import type { DetectorMode } from "../../../detector";
 import type wordCounter from "../../../wc";
 import type { BatchFileResult, BatchSkip } from "../../types";
 import type { BatchProgressSnapshot } from "../../progress/reporter";
@@ -15,6 +16,7 @@ export type BatchJobsLimit = {
 export type CountBatchWithJobsOptions = {
   jobs: number;
   section: SectionMode;
+  detectorMode?: DetectorMode;
   wcOptions: Parameters<typeof wordCounter>[1];
   preserveCollectorSegments: boolean;
   onFileProcessed?: (snapshot: BatchProgressSnapshot) => void;

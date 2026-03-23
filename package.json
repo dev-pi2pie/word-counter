@@ -43,7 +43,8 @@
     "./package.json": "./package.json"
   },
   "scripts": {
-    "build": "node scripts/generate-embedded-version.mjs && tsdown",
+    "build": "node scripts/generate-embedded-version.mjs && tsdown && node scripts/build-wasm.mjs",
+    "build:wasm": "node scripts/build-wasm.mjs",
     "type-check": "tsc -p tsconfig.json",
     "test": "bun test",
     "test:ci": "bun run build && bun test",

@@ -2,6 +2,7 @@ import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { Worker } from "node:worker_threads";
 import type { SectionMode } from "../../../markdown";
+import type { DetectorMode } from "../../../detector";
 import type wordCounter from "../../../wc";
 import type { BatchProgressSnapshot } from "../../progress/reporter";
 import type { BatchFileResult, BatchSkip } from "../../types";
@@ -15,6 +16,7 @@ type CountBatchInputsWithWorkerPoolOptions = {
   filePaths: string[];
   jobs: number;
   section: SectionMode;
+  detectorMode: DetectorMode;
   wcOptions: Parameters<typeof wordCounter>[1];
   preserveCollectorSegments: boolean;
   onFileProcessed?: (snapshot: BatchProgressSnapshot) => void;
@@ -183,6 +185,7 @@ export async function countBatchInputsWithWorkerPool(
         worker = new Worker(workerEntryUrl, {
           workerData: {
             section: options.section,
+            detectorMode: options.detectorMode,
             wcOptions: options.wcOptions,
             preserveCollectorSegments: options.preserveCollectorSegments,
           },

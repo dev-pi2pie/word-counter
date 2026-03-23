@@ -122,6 +122,14 @@ jobs:
           registry-url: https://npm.pkg.github.com
           scope: "@${{ github.repository_owner }}"
 
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Install wasm-pack
+        run: cargo install wasm-pack --locked
+
       - name: Install dependencies
         run: bun install --frozen-lockfile
 

@@ -1,4 +1,5 @@
 import type { SectionMode } from "../../markdown";
+import type { DetectorWordCounterOptions } from "../../detector";
 import { appendAll } from "../../utils/append-all";
 import type wordCounter from "../../wc";
 import type { DebugChannel } from "../debug/channel";
@@ -19,7 +20,7 @@ type RunBatchCountOptions = {
   batchOptions: BatchOptions;
   extensionFilter: DirectoryExtensionFilter;
   section: SectionMode;
-  wcOptions: Parameters<typeof wordCounter>[1];
+  wcOptions: DetectorWordCounterOptions;
   preserveCollectorSegments: boolean;
   debug: DebugChannel;
   progressReporter: BatchProgressReporter;
@@ -99,6 +100,7 @@ export async function runBatchCount(options: RunBatchCountOptions): Promise<Batc
         counted = await countBatchInputsWithWorkerJobs(resolved.files, {
           jobs: options.jobs,
           section: options.section,
+          detectorMode: options.wcOptions.detector ?? "regex",
           wcOptions: options.wcOptions,
           preserveCollectorSegments: options.preserveCollectorSegments,
           onFileProcessed: (snapshot) => {
@@ -129,6 +131,7 @@ export async function runBatchCount(options: RunBatchCountOptions): Promise<Batc
         counted = await countBatchInputsWithJobs(resolved.files, {
           jobs: options.jobs,
           section: options.section,
+          detectorMode: options.wcOptions.detector ?? "regex",
           wcOptions: options.wcOptions,
           preserveCollectorSegments: options.preserveCollectorSegments,
           onFileProcessed: (snapshot) => {
@@ -142,6 +145,7 @@ export async function runBatchCount(options: RunBatchCountOptions): Promise<Batc
       counted = await countBatchInputsWithJobs(resolved.files, {
         jobs: options.jobs,
         section: options.section,
+        detectorMode: options.wcOptions.detector ?? "regex",
         wcOptions: options.wcOptions,
         preserveCollectorSegments: options.preserveCollectorSegments,
         onFileProcessed: (snapshot) => {

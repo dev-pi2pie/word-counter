@@ -91,6 +91,7 @@ export async function countBatchInputsWithWorkerJobs(
       filePaths,
       jobs: options.jobs,
       section: options.section,
+      detectorMode: options.detectorMode ?? "regex",
       wcOptions: options.wcOptions,
       preserveCollectorSegments: options.preserveCollectorSegments,
       onFileProcessed: options.onFileProcessed,

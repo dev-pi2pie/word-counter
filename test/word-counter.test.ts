@@ -98,10 +98,21 @@ describe("detector entrypoint", () => {
     expect(result.total).toBe(2);
   });
 
-  test("rejects wasm detector mode until implemented", async () => {
-    await expect(
-      wordCounterWithDetector("Hello world", { detector: "wasm" }),
-    ).rejects.toThrow("Detector mode `wasm` is not implemented yet.");
+  test("keeps short ambiguous Latin chunks on und-Latn in wasm mode", async () => {
+    const result = await wordCounterWithDetector("Hello world", { detector: "wasm" });
+
+    expect(result.breakdown.mode).toBe("chunk");
+    expect(result.breakdown.items[0]?.locale).toBe("und-Latn");
+  });
+
+  test("promotes long ambiguous Latin chunks in wasm mode", async () => {
+    const result = await wordCounterWithDetector(
+      "This sentence should clearly be detected as English for the wasm detector path.",
+      { detector: "wasm" },
+    );
+
+    expect(result.breakdown.mode).toBe("chunk");
+    expect(result.breakdown.items[0]?.locale).toBe("en");
   });
 
   test("segments text through detector entrypoint", async () => {

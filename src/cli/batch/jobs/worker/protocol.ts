@@ -1,9 +1,11 @@
 import type { SectionMode, SectionedResult } from "../../../../markdown";
+import type { DetectorMode } from "../../../../detector";
 import type { WordCounterOptions, WordCounterResult } from "../../../../wc";
 import type { BatchSkip } from "../../../types";
 
 export type WorkerConfig = {
   section: SectionMode;
+  detectorMode: DetectorMode;
   wcOptions: WordCounterOptions;
   preserveCollectorSegments: boolean;
 };

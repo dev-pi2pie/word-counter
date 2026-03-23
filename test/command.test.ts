@@ -226,11 +226,18 @@ describe("detector mode", () => {
     expect(JSON.parse(output.stdout[0] ?? "{}")).toMatchObject({ total: 2 });
   });
 
-  test("reports wasm detector mode as not implemented yet", async () => {
-    const output = await captureCli(["--detector", "wasm", "Hello world"]);
+  test("supports wasm detector mode for long ambiguous Latin text", async () => {
+    const output = await captureCli([
+      "--detector",
+      "wasm",
+      "--format",
+      "json",
+      "This sentence should clearly be detected as English for the wasm detector path.",
+    ]);
 
-    expect(output.exitCode).toBe(1);
-    expect(output.stderr.join("")).toContain("Detector mode `wasm` is not implemented yet.");
+    expect(output.exitCode).toBe(0);
+    const parsed = JSON.parse(output.stdout[0] ?? "{}");
+    expect(parsed.breakdown.items[0]?.locale).toBe("en");
   });
 });
 

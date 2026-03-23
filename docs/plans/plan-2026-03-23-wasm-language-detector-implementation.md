@@ -1,6 +1,7 @@
 ---
 title: "WASM language detector implementation"
 created-date: 2026-03-23
+modified-date: 2026-03-23
 status: draft
 agent: Codex
 ---
@@ -51,75 +52,75 @@ Implement an optional WASM-backed language detector for ambiguous script routes 
 
 ### Phase 2 - Internal Detector Boundary
 
-- [ ] Add a new detector module boundary under `src/detector/`, proposed:
+- [x] Add a new detector module boundary under `src/detector/`, proposed:
   - `src/detector/index.ts`
   - `src/detector/types.ts`
   - `src/detector/none.ts`
   - `src/detector/wasm.ts`
-- [ ] Route detector calls only for ambiguous buckets:
+- [x] Route detector calls only for ambiguous buckets:
   - `und-Latn`
   - `und-Hani`
-- [ ] Apply the conservative threshold policy from research:
+- [x] Apply the conservative threshold policy from research:
   - count script-bearing characters only
   - `und-Latn >= 24`
   - `und-Hani >= 12`
-- [ ] Fall back to the original `und-*` tag when:
+- [x] Fall back to the original `und-*` tag when:
   - chunk length is below threshold
   - detector output is unsupported
   - detector confidence is low
   - detector reliability is false or otherwise unacceptable
-- [ ] Keep the default regex/script path unchanged when detector mode is not enabled.
+- [x] Keep the default regex/script path unchanged when detector mode is not enabled.
 
 ### Phase 3 - Rust Crate and WASM Build Flow
 
-- [ ] Create the Rust crate at `crates/language-detector/`.
-- [ ] Start with `whatlang` as the first detector engine behind the WASM route.
-- [ ] Export a minimal Rust API that accepts:
+- [x] Create the Rust crate at `crates/language-detector/`.
+- [x] Start with `whatlang` as the first detector engine behind the WASM route.
+- [x] Export a minimal Rust API that accepts:
   - text
   - coarse route or original ambiguous tag
   - returns normalized detector fields needed by TypeScript
-- [ ] Add a build helper such as `scripts/build-wasm.mjs`.
-- [ ] Build WASM artifacts with `wasm-pack --target nodejs` into `generated/wasm-language-detector/`.
-- [ ] Do not commit generated WASM artifacts.
-- [ ] Copy or stage the runtime files into `dist/` as part of build/publish so the root npm package ships the generated wrapper and `.wasm` artifact.
-- [ ] Keep the root single-package publish model intact.
-- [ ] Make the Rust + `wasm-pack` toolchain an explicit build prerequisite wherever publishable artifacts are produced:
+- [x] Add a build helper such as `scripts/build-wasm.mjs`.
+- [x] Build WASM artifacts with `wasm-pack --target nodejs` into `generated/wasm-language-detector/`.
+- [x] Do not commit generated WASM artifacts.
+- [x] Copy or stage the runtime files into `dist/` as part of build/publish so the root npm package ships the generated wrapper and `.wasm` artifact.
+- [x] Keep the root single-package publish model intact.
+- [x] Make the Rust + `wasm-pack` toolchain an explicit build prerequisite wherever publishable artifacts are produced:
   - local build workflow
   - CI validation workflow
   - npm publish workflow
   - GitHub Packages publish workflow
-- [ ] Update automation or workflow setup so those environments provision Rust and `wasm-pack` before invoking the build that generates publishable outputs.
+- [x] Update automation or workflow setup so those environments provision Rust and `wasm-pack` before invoking the build that generates publishable outputs.
 - [ ] If any workflow intentionally avoids Rust/WASM setup, define the fallback behavior explicitly rather than assuming the root build can still produce publishable detector-enabled outputs.
 
 ### Phase 4 - Detector Remap Contract
 
-- [ ] Draft a detector remap schema or guide document under `docs/schemas/` or another stable docs location during implementation.
-- [ ] Define how `whatlang` outputs map into public language tags used by this package.
-- [ ] Define unsupported-language fallback rules back to `und-*`.
-- [ ] Define low-confidence and low-reliability fallback behavior.
-- [ ] Define Han-route policy explicitly:
+- [x] Draft a detector remap schema or guide document under `docs/schemas/` or another stable docs location during implementation.
+- [x] Define how `whatlang` outputs map into public language tags used by this package.
+- [x] Define unsupported-language fallback rules back to `und-*`.
+- [x] Define low-confidence and low-reliability fallback behavior.
+- [x] Define Han-route policy explicitly:
   - allow conservative remaps such as `cmn -> zh` only when accepted by the public contract
   - do not auto-emit `zh-Hans` or `zh-Hant`
 - [ ] Define JSON provenance metadata for detector-assisted assignments.
 
 ### Phase 5 - Integration, Tests, and Documentation
 
-- [ ] Integrate detector-aware routing into the relevant locale segmentation and counting flow without regressing current behavior.
-- [ ] Add library tests covering:
+- [x] Integrate detector-aware routing into the relevant locale segmentation and counting flow without regressing current behavior.
+- [x] Add library tests covering:
   - default regex behavior remains unchanged
   - detector thresholds
   - fallback to `und-*`
   - detector-enabled library entrypoint behavior
-- [ ] Add CLI tests covering:
+- [x] Add CLI tests covering:
   - `--detector regex`
   - `--detector wasm`
-  - invalid detector values
   - detector fallback behavior in JSON output
-- [ ] Add package-surface tests covering:
+- [ ] Add CLI validation coverage for invalid detector values.
+- [x] Add package-surface tests covering:
   - detector-enabled ESM export reachability
   - detector-enabled CJS reachability or documented non-support
   - current CJS wrapper compatibility remains correct for the existing root surface
-- [ ] Add build verification for generated runtime artifacts being present in the published package surface.
+- [x] Add build verification for generated runtime artifacts being present in the published package surface.
 - [ ] Add workflow verification for the Rust/`wasm-pack` toolchain path used by publishable builds.
 - [ ] Update `README.md` and any locale-detection docs with:
   - default regex behavior

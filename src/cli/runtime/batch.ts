@@ -19,7 +19,6 @@ import { normalizeBatchSummaryBase } from "../output/normalize-base";
 import { buildDirectoryExtensionFilter } from "../path/filter";
 import { createBatchProgressReporter } from "../progress/reporter";
 import { resolveTotalOfOverride, type TotalOfOverride } from "../total-of";
-import { assertDetectorModeImplemented } from "../../detector";
 import type { BatchOptions } from "../types";
 import type { WordCounterResult } from "../../wc";
 import { resolveBatchScope } from "./options";
@@ -43,8 +42,6 @@ export async function executeBatchCount({
   debug,
   teeEnabled,
 }: ExecuteBatchCountOptions): Promise<void> {
-  assertDetectorModeImplemented(resolved.detectorMode);
-
   const warningsEnabled = !Boolean(options.quietWarnings);
   const emitWarning = (message: string): void => {
     if (!warningsEnabled) {

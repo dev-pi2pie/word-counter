@@ -201,6 +201,7 @@ export function resolveCountRunOptions(options: CliActionOptions): ResolvedCount
     requestedNonWords,
     shouldNormalizeBaseOutput,
     wcOptions: {
+      detector: detectorMode,
       mode: options.mode,
       latinLanguageHint: options.latinLanguage,
       latinTagHint: options.latinTag,

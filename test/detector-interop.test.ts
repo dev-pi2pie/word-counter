@@ -12,8 +12,11 @@ describe("detector subpath interop", () => {
       detector.wordCounterWithDetector("Hello world", { detector: "regex" }),
     ).resolves.toMatchObject({ total: 2 });
     await expect(
-      detector.wordCounterWithDetector("Hello world", { detector: "wasm" }),
-    ).rejects.toThrow("Detector mode `wasm` is not implemented yet.");
+      detector.wordCounterWithDetector(
+        "This sentence should clearly be detected as English for the wasm detector path.",
+        { detector: "wasm" },
+      ),
+    ).resolves.toMatchObject({ total: 13 });
   });
 
   test("CJS detector entry is reachable", async () => {

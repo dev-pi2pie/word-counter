@@ -5,7 +5,7 @@ import { configureProgramOptions } from "./cli/program/options";
 import { getFormattedVersionLabel } from "./cli/program/version";
 import { resolveBatchJobsLimit } from "./cli/batch/jobs/limits";
 import { executeBatchCount } from "./cli/runtime/batch";
-import { WASM_DETECTOR_NOT_IMPLEMENTED_MESSAGE } from "./detector/wasm";
+import { WASM_DETECTOR_RUNTIME_UNAVAILABLE_MESSAGE } from "./detector";
 import {
   hasPathInput,
   resolveCountRunOptions,
@@ -141,7 +141,7 @@ export async function runCli(
           program.error(pc.red(message));
           return;
         }
-        if (message === WASM_DETECTOR_NOT_IMPLEMENTED_MESSAGE) {
+        if (message === WASM_DETECTOR_RUNTIME_UNAVAILABLE_MESSAGE) {
           console.error(pc.red(message));
           process.exitCode = 1;
           return;
