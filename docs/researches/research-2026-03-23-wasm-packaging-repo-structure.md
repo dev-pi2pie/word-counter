@@ -83,9 +83,9 @@ Choose a packaging direction for the WASM spike that preserves the current Node.
 ## API Guidance
 
 - Do not let the WASM spike silently turn `wordCounter()` into an async API.
-- Prefer one of these two paths:
-  - keep WASM usage CLI-only and experimental at first
-  - add a new explicit experimental async API instead of mutating the current sync one
+- Prefer dual entrypoints instead of forcing a single migration path:
+  - keep the current default library API unchanged
+  - add explicit detector-enabled entrypoints for both CLI and library usage
 - If the generated Node-target WASM wrapper can be loaded synchronously in practice, confirm that in the spike before promising sync library support.
 
 ## When `packages/` Becomes Worth It
@@ -102,11 +102,15 @@ Choose a packaging direction for the WASM spike that preserves the current Node.
 - Keep `docs/researches/research-2026-02-18-wasm-language-detector-spike.md` focused on detector feasibility, routing, and candidate engines.
 - Use this research as the decision record for repository shape, build flow, and API-risk boundaries.
 
-## Open Questions
+## Resolution Notes
 
-- Should generated WASM artifacts be committed, or only produced during build/publish?
-- Do we want the first detector consumer to be CLI-only, or should the library expose an experimental detector entrypoint as well?
-- If workspace extraction happens later, should the split be `packages/core` + `packages/cli` rather than `packages/cli` + `packages/core-wasm`?
+- Generated WASM artifacts should not be committed. They should be produced during build and publish flows.
+- Prefer a Node-based build helper such as `scripts/build-wasm.mjs` over adding `shx` by default.
+- Add `shx` only if the implementation later needs cross-platform shell-style file operations that are materially simpler than using Node standard library calls.
+- The first detector rollout should support both surfaces:
+  - CLI via detector-specific options
+  - library via an explicit detector-enabled entrypoint
+- Do not plan a workspace extraction now. If package splitting ever becomes necessary later, reevaluate it then instead of treating it as an active design target in this phase.
 
 ## Related Plans
 
