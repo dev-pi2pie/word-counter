@@ -1,0 +1,61 @@
+import { afterEach, describe, expect, test } from "bun:test";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { join } from "node:path";
+import { spawnSync } from "node:child_process";
+
+const tempRoots: string[] = [];
+
+afterEach(async () => {
+  await Promise.all(
+    tempRoots.splice(0).map((path) => rm(path, { recursive: true, force: true })),
+  );
+});
+
+async function makeTypecheckFixture(): Promise<string> {
+  const generatedRoot = join(process.cwd(), "generated");
+  await mkdir(generatedRoot, { recursive: true });
+  const root = await mkdtemp(join(generatedRoot, "typecheck-"));
+  tempRoots.push(root);
+  return root;
+}
+
+describe("published package types", () => {
+  test("root package supports default and named imports", async () => {
+    const fixtureRoot = await makeTypecheckFixture();
+    const entryPath = join(fixtureRoot, "root-imports.mts");
+
+    await writeFile(
+      entryPath,
+      [
+        "import wc, { wordCounter, countSections } from '@dev-pi2pie/word-counter';",
+        "wc('Hello world');",
+        "wordCounter('Hello world');",
+        "countSections('Hello world', 'all');",
+      ].join("\n"),
+    );
+
+    const result = spawnSync(
+      "./node_modules/.bin/tsc",
+      [
+        "--noEmit",
+        "--pretty",
+        "false",
+        "--module",
+        "NodeNext",
+        "--moduleResolution",
+        "NodeNext",
+        "--target",
+        "ES2022",
+        "--skipLibCheck",
+        entryPath,
+      ],
+      {
+        cwd: process.cwd(),
+        encoding: "utf8",
+      },
+    );
+
+    expect(result.status).toBe(0);
+    expect(result.stderr).toBe("");
+  });
+});
