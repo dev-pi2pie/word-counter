@@ -80,6 +80,14 @@ Choose a packaging direction for the WASM spike that preserves the current Node.
 4. Add a TypeScript adapter in `src/detector/wasm.ts` that loads the generated wrapper only when detector mode is enabled.
 5. Keep the existing default path unchanged; only ambiguous buckets should call the detector adapter.
 
+## NPM Distribution Model
+
+- Cross-platform packaging is not the main concern for the current WASM direction.
+- For the planned `wasm-pack --target nodejs` flow, the npm package should ship one generated JS wrapper plus one `.wasm` artifact as part of the published package contents.
+- Users should install one npm package regardless of OS. This is different from native addon distribution, which often requires per-platform binaries or optional platform packages.
+- The application should load the packaged local WASM artifact at runtime through the generated Node-target wrapper instead of selecting among OS-specific builds.
+- The practical packaging requirement is to ensure the generated runtime files are included in the published package, either by copying them into `dist/` or by explicitly including the generated output path in `package.json`.
+
 ## API Guidance
 
 - Do not let the WASM spike silently turn `wordCounter()` into an async API.
