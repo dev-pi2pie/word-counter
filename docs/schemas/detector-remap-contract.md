@@ -47,6 +47,9 @@ If a chunk is below the threshold, it stays on the original `und-*` route.
 - Current draft thresholds:
   - `und-Latn`: confidence `>= 0.75` and `reliable = true`
   - `und-Hani`: confidence `>= 0.90` and `reliable = true`
+- Current Latin corroboration rule:
+  - if the raw detector sample and the normalized script-bearing detector sample agree on the same remapped Latin tag, accept at confidence `>= 0.70`
+  - this corroboration path exists to improve noisy markdown-like Latin text without broadly lowering the default Latin threshold
 
 If the detector result does not satisfy the route policy, the result falls back to the original ambiguous `und-*` tag.
 

@@ -17,6 +17,8 @@ Document current locale-tag detection behavior, known limits, and override flags
 - Han-script fallback uses `und-Hani` by default because regex script checks cannot natively distinguish `zh-Hans` vs `zh-Hant`.
 - `--detector wasm` is an optional detector-assisted route for ambiguous chunks only.
 - The first WASM detector engine is `whatlang`, remapped into this package's public tag contract.
+- `--detector regex` keeps the existing chunk-first detection behavior.
+- `--detector wasm` keeps the counting chunk model but uses a detector-oriented ambiguous-window scoring pass before relabeling those chunks.
 
 ## Built-in Latin Diacritic Heuristics
 
@@ -49,6 +51,7 @@ Document current locale-tag detection behavior, known limits, and override flags
 - WASM detection is conservative:
   - `und-Latn` requires at least 24 script-bearing Latin characters
   - `und-Hani` requires at least 12 script-bearing Han characters
+- For ambiguous Latin text, the detector can also use a corroborated script-bearing sample path before accepting a tag.
 - Low-confidence or unreliable WASM detector results fall back to the original `und-*` tag.
 - `whatlang`-backed Han detection does not auto-emit `zh-Hans` or `zh-Hant`.
 - 100% certainty requires explicit metadata (document language tags, user-provided locale, headers) or a language-ID model.

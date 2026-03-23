@@ -115,6 +115,27 @@ describe("detector entrypoint", () => {
     expect(result.breakdown.items[0]?.locale).toBe("en");
   });
 
+  test("promotes corroborated markdown-like Latin text in wasm mode", async () => {
+    const result = await wordCounterWithDetector(
+      ["---", "title: Alpha Story", "summary: Intro note", "---", "Hello world from alpha."].join(
+        "\n",
+      ),
+      { detector: "wasm" },
+    );
+
+    expect(result.breakdown.mode).toBe("chunk");
+    expect(result.breakdown.items[0]?.locale).toBe("en");
+  });
+
+  test("keeps low-confidence short English-like text on und-Latn in wasm mode", async () => {
+    const result = await wordCounterWithDetector("Plain text file for batch counting.", {
+      detector: "wasm",
+    });
+
+    expect(result.breakdown.mode).toBe("chunk");
+    expect(result.breakdown.items[0]?.locale).toBe("und-Latn");
+  });
+
   test("segments text through detector entrypoint", async () => {
     const chunks = await segmentTextByLocaleWithDetector("Hello 世界", { detector: "regex" });
 

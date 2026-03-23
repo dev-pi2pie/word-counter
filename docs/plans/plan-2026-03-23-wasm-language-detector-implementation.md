@@ -131,12 +131,12 @@ Implement an optional WASM-backed language detector for ambiguous script routes 
 
 ### Phase 6 - Detector Windowing Refinement
 
-- [ ] Evaluate detector scoring on larger ambiguous spans instead of already-split counting chunks.
-- [ ] Define a merge policy for nearby `und-Latn` and `und-Hani` chunks across punctuation and whitespace boundaries when detector mode is enabled.
-- [ ] Run WASM detection on the merged span and compare the result against the current chunk-first detector behavior.
-- [ ] Define how an accepted detector result is projected back onto the underlying counting chunks without regressing current output semantics.
-- [ ] Add representative regression samples for short English-like text, frontmatter-heavy markdown, and punctuation-separated ambiguous Latin spans.
-- [ ] Reassess current confidence and reliability thresholds only after merged-window behavior is measured.
+- [x] Evaluate detector scoring on larger ambiguous spans instead of already-split counting chunks.
+- [x] Define a merge policy for nearby `und-Latn` and `und-Hani` chunks across punctuation and whitespace boundaries when detector mode is enabled.
+- [x] Run WASM detection on the merged span and compare the result against the current chunk-first detector behavior.
+- [x] Define how an accepted detector result is projected back onto the underlying counting chunks without regressing current output semantics.
+- [x] Add representative regression samples for short English-like text, frontmatter-heavy markdown, and punctuation-separated ambiguous Latin spans.
+- [x] Reassess current confidence and reliability thresholds only after merged-window behavior is measured.
 
 ### Phase 7 - CI/CD Follow-up
 

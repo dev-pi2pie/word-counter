@@ -4,6 +4,7 @@ export const LATIN_WASM_MIN_SCRIPT_CHARS = 24;
 export const HANI_WASM_MIN_SCRIPT_CHARS = 12;
 export const LATIN_WASM_MIN_CONFIDENCE = 0.75;
 export const HANI_WASM_MIN_CONFIDENCE = 0.9;
+export const LATIN_WASM_CORROBORATED_MIN_CONFIDENCE = 0.7;
 
 const LATIN_SCRIPT_REGEX = /\p{Script=Latin}/u;
 const HAN_SCRIPT_REGEX = /\p{Script=Han}/u;
@@ -53,4 +54,24 @@ export function countScriptBearingCharsForRoute(
 export function shouldRunWasmDetector(text: string, routeTag: DetectorRouteTag): boolean {
   const policy = DETECTOR_ROUTE_POLICIES[routeTag];
   return countScriptBearingCharsForRoute(text, routeTag) >= policy.minScriptChars;
+}
+
+export function normalizeDetectorSampleForRoute(
+  text: string,
+  routeTag: DetectorRouteTag,
+): string {
+  const matcher = routeTag === DEFAULT_HAN_TAG ? HAN_SCRIPT_REGEX : LATIN_SCRIPT_REGEX;
+  return [...text]
+    .map((char) => {
+      if (matcher.test(char)) {
+        return char;
+      }
+      if (/\s/u.test(char)) {
+        return " ";
+      }
+      return " ";
+    })
+    .join("")
+    .replace(/\s+/g, " ")
+    .trim();
 }

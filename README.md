@@ -107,6 +107,8 @@ Detector mode notes:
 
 - `--detector regex` is the default behavior.
 - `--detector wasm` only runs for ambiguous `und-Latn` and `und-Hani` chunks.
+- `--detector regex` keeps the original script/regex chunk-first detection path.
+- `--detector wasm` uses a detector-oriented ambiguous-window scoring pass before accepted tags are projected back onto the counting chunks.
 - Very short chunks stay on the original `und-*` fallback.
 - Low-confidence or unsupported detector results fall back to `und-*`.
 

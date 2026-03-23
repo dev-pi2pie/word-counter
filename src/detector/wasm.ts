@@ -5,7 +5,9 @@ import { buildWordCounterResultFromChunks } from "./result-builder";
 import { countSectionsWithResolvedDetector } from "./sections";
 import {
   DETECTOR_ROUTE_POLICIES,
+  LATIN_WASM_CORROBORATED_MIN_CONFIDENCE,
   isAmbiguousDetectorRoute,
+  normalizeDetectorSampleForRoute,
   shouldRunWasmDetector,
   type DetectorRouteTag,
 } from "./policy";
@@ -34,42 +36,100 @@ function shouldAcceptDetectorTag(
   return confidence >= policy.minConfidence;
 }
 
-async function resolveChunkWithWasmDetector(chunk: LocaleChunk): Promise<LocaleChunk> {
-  if (!isAmbiguousDetectorRoute(chunk.locale)) {
-    return chunk;
+type DetectorWindow = {
+  routeTag: DetectorRouteTag;
+  startIndex: number;
+  endIndex: number;
+  text: string;
+};
+
+function buildDetectorWindows(chunks: LocaleChunk[]): DetectorWindow[] {
+  const windows: DetectorWindow[] = [];
+
+  for (let index = 0; index < chunks.length; index += 1) {
+    const chunk = chunks[index];
+    if (!chunk || !isAmbiguousDetectorRoute(chunk.locale)) {
+      continue;
+    }
+
+    const previousWindow = windows[windows.length - 1];
+    if (
+      previousWindow &&
+      previousWindow.routeTag === chunk.locale &&
+      previousWindow.endIndex === index - 1
+    ) {
+      previousWindow.endIndex = index;
+      previousWindow.text += chunk.text;
+      continue;
+    }
+
+    windows.push({
+      routeTag: chunk.locale,
+      startIndex: index,
+      endIndex: index,
+      text: chunk.text,
+    });
   }
 
-  if (!shouldRunWasmDetector(chunk.text, chunk.locale)) {
-    return chunk;
+  return windows;
+}
+
+async function resolveWindowLocale(window: DetectorWindow): Promise<string> {
+  if (!shouldRunWasmDetector(window.text, window.routeTag)) {
+    return window.routeTag;
   }
 
-  const rawResult = await detectWithWhatlangWasm(chunk.text, chunk.locale);
-  if (!rawResult) {
-    return {
-      ...chunk,
-      locale: getDetectorFallbackTag(chunk.locale),
-    };
+  const rawResult = await detectWithWhatlangWasm(window.text, window.routeTag);
+  const rawRemapped = rawResult ? remapWhatlangResult(rawResult, window.routeTag) : null;
+
+  const normalizedSample = normalizeDetectorSampleForRoute(window.text, window.routeTag);
+  const normalizedResult =
+    normalizedSample.length > 0 && normalizedSample !== window.text
+      ? await detectWithWhatlangWasm(normalizedSample, window.routeTag)
+      : null;
+  const normalizedRemapped = normalizedResult
+    ? remapWhatlangResult(normalizedResult, window.routeTag)
+    : null;
+
+  const candidates = [rawRemapped, normalizedRemapped].filter((value) => value !== null);
+  if (candidates.length === 0) {
+    return getDetectorFallbackTag(window.routeTag);
   }
 
-  const remapped = remapWhatlangResult(rawResult, chunk.locale);
-  if (!remapped) {
-    return {
-      ...chunk,
-      locale: getDetectorFallbackTag(chunk.locale),
-    };
+  const strongestCandidate = candidates.reduce((best, current) => {
+    if (!best) {
+      return current;
+    }
+    return (current.confidence ?? 0) > (best.confidence ?? 0) ? current : best;
+  }, candidates[0]);
+
+  if (
+    strongestCandidate &&
+    shouldAcceptDetectorTag(
+      window.routeTag,
+      strongestCandidate.confidence,
+      strongestCandidate.reliable,
+    )
+  ) {
+    return strongestCandidate.tag;
   }
 
-  if (!shouldAcceptDetectorTag(chunk.locale, remapped.confidence, remapped.reliable)) {
-    return {
-      ...chunk,
-      locale: getDetectorFallbackTag(chunk.locale),
-    };
+  if (
+    window.routeTag === DEFAULT_LOCALE &&
+    rawRemapped &&
+    normalizedRemapped &&
+    rawRemapped.tag === normalizedRemapped.tag
+  ) {
+    const corroboratedConfidence = Math.max(
+      rawRemapped.confidence ?? 0,
+      normalizedRemapped.confidence ?? 0,
+    );
+    if (corroboratedConfidence >= LATIN_WASM_CORROBORATED_MIN_CONFIDENCE) {
+      return rawRemapped.tag;
+    }
   }
 
-  return {
-    ...chunk,
-    locale: remapped.tag,
-  };
+  return getDetectorFallbackTag(window.routeTag);
 }
 
 export { WASM_DETECTOR_RUNTIME_UNAVAILABLE_MESSAGE };
@@ -79,7 +139,23 @@ export async function segmentTextByLocaleWithWasmDetector(
   options: DetectorLocaleOptions = {},
 ) {
   const chunks = segmentTextByLocale(text, options);
-  const resolved = await Promise.all(chunks.map((chunk) => resolveChunkWithWasmDetector(chunk)));
+  const resolved = [...chunks];
+  const windows = buildDetectorWindows(chunks);
+
+  for (const window of windows) {
+    const resolvedLocale = await resolveWindowLocale(window);
+    for (let index = window.startIndex; index <= window.endIndex; index += 1) {
+      const chunk = resolved[index];
+      if (!chunk) {
+        continue;
+      }
+      resolved[index] = {
+        ...chunk,
+        locale: resolvedLocale,
+      };
+    }
+  }
+
   return resolved;
 }
 
