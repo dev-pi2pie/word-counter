@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, test } from "bun:test";
+import { spawnSync } from "node:child_process";
 import { mkdtemp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, join } from "node:path";
@@ -238,6 +239,20 @@ describe("detector mode", () => {
     expect(output.exitCode).toBe(0);
     const parsed = JSON.parse(output.stdout[0] ?? "{}");
     expect(parsed.breakdown.items[0]?.locale).toBe("en");
+  });
+
+  test("rejects invalid detector mode values", () => {
+    const result = spawnSync(
+      process.execPath,
+      ["run", "src/bin.ts", "--detector", "invalid", "Hello world"],
+      {
+        cwd: process.cwd(),
+        encoding: "utf8",
+      },
+    );
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("option '--detector <mode>' argument 'invalid' is invalid");
   });
 });
 

@@ -101,7 +101,7 @@ Implement an optional WASM-backed language detector for ambiguous script routes 
 - [x] Define Han-route policy explicitly:
   - allow conservative remaps such as `cmn -> zh` only when accepted by the public contract
   - do not auto-emit `zh-Hans` or `zh-Hant`
-- [ ] Define JSON provenance metadata for detector-assisted assignments.
+- [x] Define JSON provenance metadata for detector-assisted assignments.
 
 ### Phase 5 - Integration, Tests, and Documentation
 
@@ -115,19 +115,36 @@ Implement an optional WASM-backed language detector for ambiguous script routes 
   - `--detector regex`
   - `--detector wasm`
   - detector fallback behavior in JSON output
-- [ ] Add CLI validation coverage for invalid detector values.
+- [x] Add CLI validation coverage for invalid detector values.
 - [x] Add package-surface tests covering:
   - detector-enabled ESM export reachability
   - detector-enabled CJS reachability or documented non-support
   - current CJS wrapper compatibility remains correct for the existing root surface
 - [x] Add build verification for generated runtime artifacts being present in the published package surface.
-- [ ] Add workflow verification for the Rust/`wasm-pack` toolchain path used by publishable builds.
-- [ ] Update `README.md` and any locale-detection docs with:
+- [x] Add workflow verification for the Rust/`wasm-pack` toolchain path used by publishable builds.
+- [x] Update `README.md` and any locale-detection docs with:
   - default regex behavior
   - `--detector <mode>`
   - detector limitations
   - fallback semantics
   - explicit note that the npm package ships one portable WASM artifact rather than per-OS detector packages
+
+### Phase 6 - Detector Windowing Refinement
+
+- [ ] Evaluate detector scoring on larger ambiguous spans instead of already-split counting chunks.
+- [ ] Define a merge policy for nearby `und-Latn` and `und-Hani` chunks across punctuation and whitespace boundaries when detector mode is enabled.
+- [ ] Run WASM detection on the merged span and compare the result against the current chunk-first detector behavior.
+- [ ] Define how an accepted detector result is projected back onto the underlying counting chunks without regressing current output semantics.
+- [ ] Add representative regression samples for short English-like text, frontmatter-heavy markdown, and punctuation-separated ambiguous Latin spans.
+- [ ] Reassess current confidence and reliability thresholds only after merged-window behavior is measured.
+
+### Phase 7 - CI/CD Follow-up
+
+- [ ] Review whether `cargo install wasm-pack --locked` should remain the long-term workflow choice or be replaced with a faster cached setup approach.
+- [ ] Recheck release, publish, and CI workflow duplication now that Rust/WASM setup exists in multiple workflows.
+- [ ] Decide whether detector-aware validation should be split into separate workflow jobs for faster feedback.
+- [ ] Decide whether non-publish workflows need artifact caching for Rust and generated WASM outputs.
+- [ ] Add any additional release verification needed for npm package contents that include the staged WASM runtime.
 
 ## Execution Notes
 

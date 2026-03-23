@@ -1,7 +1,7 @@
 ---
 title: "JSON Output Contract"
 created-date: 2026-02-17
-modified-date: 2026-02-17
+modified-date: 2026-03-23
 status: completed
 agent: Codex
 ---
@@ -140,6 +140,56 @@ When skip diagnostics are enabled (debug + not quiet skips), per-file payloads i
 
 When non-word collection is enabled, `counts` and non-word breakdown fields are present.
 Whitespace details appear when whitespace collection is enabled.
+
+### Detector Metadata (`--detector`)
+
+Detector-aware runs reserve `meta.detector` for detector-related metadata.
+
+Draft shape:
+
+```json
+{
+  "meta": {
+    "detector": {
+      "mode": "wasm",
+      "provenance": "per-item"
+    }
+  }
+}
+```
+
+Draft per-item provenance:
+
+- chunk-style items may include `source`
+- allowed source values:
+  - `script`
+  - `hint`
+  - `wasm`
+
+Example (draft shape):
+
+```json
+{
+  "total": 13,
+  "breakdown": {
+    "mode": "chunk",
+    "items": [
+      { "locale": "en", "source": "wasm", "words": 13 }
+    ]
+  },
+  "meta": {
+    "detector": {
+      "mode": "wasm",
+      "provenance": "per-item"
+    }
+  }
+}
+```
+
+Notes:
+
+- Detector provenance is relevant only when detector-aware routes are enabled.
+- Aggregated collector-style outputs do not guarantee per-assignment provenance.
 
 ## Contract Rules
 

@@ -1,6 +1,7 @@
 ---
 title: "Detector Remap Contract (Draft)"
 created-date: 2026-03-23
+modified-date: 2026-03-23
 status: draft
 agent: Codex
 ---
@@ -98,7 +99,7 @@ Allowed remaps:
 
 Rules:
 
-- The detector result must report `Han` script.
+- The detector result must report `Mandarin` script from `whatlang`.
 - Do not auto-emit `zh-Hans` or `zh-Hant`.
 - Unsupported languages fall back to `und-Hani`.
 
@@ -123,8 +124,14 @@ Draft source values:
 - `hint`
 - `wasm`
 
+Defined draft placement:
+
+- top-level `meta.detector.mode`
+- top-level `meta.detector.provenance = "per-item"`
+- chunk-style detector-assisted items may include `source`
+
 This document defines the allowed provenance values and remap behavior.
-The exact JSON placement is a separate output-schema concern.
+The broader JSON contract is documented in `docs/schemas/json-output-contract.md`.
 
 ## Related Docs
 
