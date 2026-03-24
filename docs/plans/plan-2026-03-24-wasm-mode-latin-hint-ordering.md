@@ -104,3 +104,7 @@ Issue linkage:
 
 - `docs/researches/research-2026-03-24-wasm-latin-tag-interaction.md`
 - `docs/researches/research-2026-02-18-wasm-language-detector-spike.md`
+
+## Related Jobs
+
+- `docs/plans/jobs/2026-03-24-wasm-mode-latin-hint-ordering-implementation.md`

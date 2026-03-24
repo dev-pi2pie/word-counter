@@ -2,7 +2,7 @@
 title: "wasm detector and latin-tag interaction"
 created-date: 2026-03-24
 modified-date: 2026-03-24
-status: draft
+status: completed
 agent: codex
 ---
 
@@ -13,8 +13,8 @@ Document the unexpected interaction where `--detector wasm` plus `--latin-tag <t
 ## Key Context
 
 - Reported against `0.1.5-canary.2`.
-- Scope here is investigation and issue framing only.
-- This note does not propose or record an implementation yet.
+- This note began as investigation and issue framing for the ordering bug.
+- The ordering fix has since been implemented and closed through the related plan and job record.
 
 ## Reproduction
 
@@ -95,6 +95,16 @@ Locale zh: 8 words
     - explicit fallback precedence `latinTagHint` > `latinLanguageHint` > `latinLocaleHint`
     - default `und-Latn` fallback when no rule or explicit hint applies
 
+## Resolution Notes
+
+- The ordering issue described here has been fixed.
+- `--detector wasm` now keeps ambiguous Latin detector-eligible during the initial segmentation pass and reapplies Latin fallback hints only after detector evaluation for unresolved `und-Latn` output.
+- Follow-up detector quality concerns, such as false-positive `fr` assignment on noisy English technical text, are tracked separately and are not part of this resolved ordering bug.
+
 ## Related Plans
 
 - `docs/plans/plan-2026-03-24-wasm-mode-latin-hint-ordering.md`
+
+## Related Jobs
+
+- `docs/plans/jobs/2026-03-24-wasm-mode-latin-hint-ordering-implementation.md`
