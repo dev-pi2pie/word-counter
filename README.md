@@ -109,6 +109,7 @@ Detector mode notes:
 - `--detector wasm` only runs for ambiguous `und-Latn` and `und-Hani` chunks.
 - `--detector regex` keeps the original script/regex chunk-first detection path.
 - `--detector wasm` uses a detector-oriented ambiguous-window scoring pass before accepted tags are projected back onto the counting chunks.
+- In `--detector wasm` mode, Latin hint rules and explicit Latin hint flags are deferred until after detector evaluation and only relabel unresolved `und-Latn` output.
 - Very short chunks stay on the original `und-*` fallback.
 - Low-confidence or unsupported detector results fall back to `und-*`.
 
@@ -311,7 +312,7 @@ Skip details stay debug-gated and can be suppressed with `--quiet-skips`.
 - Adjacent characters that share the same locale tag are grouped into a chunk.
 - Each chunk is counted with `Intl.Segmenter` at `granularity: "word"`, caching segmenters to avoid re-instantiation.
 - Per-locale counts are summed into an overall total and printed to stdout.
-- With `--detector wasm`, ambiguous `und-Latn` and `und-Hani` chunks can be relabeled through the optional WASM detector before counting.
+- With `--detector wasm`, ambiguous `und-Latn` and `und-Hani` chunks can be relabeled through the optional WASM detector before counting; unresolved `und-Latn` chunks then fall back to the existing Latin hint rules and explicit Latin hint precedence.
 
 ## Locale vs Language Code
 
@@ -696,6 +697,7 @@ Example JSON (trimmed):
 - Detection is regex/script based, not statistical language-ID.
 - Ambiguous Latin defaults to `und-Latn`; Han fallback defaults to `und-Hani`.
 - `--detector wasm` is optional and conservative; it only runs for ambiguous chunks that meet minimum script-bearing length thresholds.
+- In `--detector wasm` mode, ambiguous Latin stays on `und-Latn` for detector eligibility first, then built-in/custom Latin rules and explicit Latin hints are applied only if the detector leaves that chunk unresolved.
 - The current first WASM engine is `whatlang`, remapped into this package's public tags.
 - The npm package ships one portable WASM artifact; users do not install per-OS detector packages.
 - Use explicit tag and hint flags when you need deterministic tagging.
