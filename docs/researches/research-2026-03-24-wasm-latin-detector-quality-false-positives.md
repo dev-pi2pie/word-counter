@@ -1,6 +1,7 @@
 ---
 title: "wasm latin detector quality false positives"
 created-date: 2026-03-24
+modified-date: 2026-03-24
 status: draft
 agent: Codex
 ---
@@ -31,9 +32,19 @@ Document the follow-up quality issue where `--detector wasm` can still relabel o
 - Most likely improvement areas are:
   - tighten Latin acceptance thresholds, especially the corroborated path
   - reduce eligibility or acceptance for markdown/CLI/docs-noise windows
-  - add detector-debug visibility for raw tag, confidence, reliability, normalized sample, and acceptance reason
   - add regression fixtures for English technical prose that must stay `und-Latn` or resolve to `en`, not `fr`
 - Prefer conservative fallback to `und-Latn` over confident-but-wrong language projection for noisy technical text.
+
+## Research Priorities
+
+- Build a narrow corpus of false-positive English technical fixtures before touching thresholds.
+- Compare acceptance behavior across:
+  - current reliable-path thresholds
+  - corroborated-path thresholds
+  - stronger reliability requirements
+  - technical-noise rejection heuristics
+- Use the global observability research to decide how detector decision data should be surfaced during this investigation.
+- Defer a dedicated implementation plan until the open questions below are answered well enough to choose one guardrail direction.
 
 ## Open Questions
 
@@ -43,10 +54,11 @@ Document the follow-up quality issue where `--detector wasm` can still relabel o
 
 ## Related Plans
 
-- `docs/plans/plan-2026-03-24-wasm-latin-detector-quality-guardrails.md`
 - `docs/plans/plan-2026-03-24-wasm-mode-latin-hint-ordering.md`
 
 ## Related Research
 
 - `docs/researches/research-2026-03-24-wasm-latin-tag-interaction.md`
 - `docs/researches/research-2026-02-18-wasm-language-detector-spike.md`
+- `docs/researches/research-2026-02-17-json-output-schema-contract.md`
+- `docs/researches/research-2026-03-24-global-debug-observability-model.md`
