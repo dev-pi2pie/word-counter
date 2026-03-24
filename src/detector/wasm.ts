@@ -9,6 +9,7 @@ import {
   LATIN_WASM_CORROBORATED_MIN_CONFIDENCE,
   isAmbiguousDetectorRoute,
   normalizeDetectorSampleForRoute,
+  shouldAcceptLatinDetectorWindow,
   shouldRunWasmDetector,
   type DetectorRouteTag,
 } from "./policy";
@@ -140,6 +141,8 @@ async function resolveWindowLocale(window: DetectorWindow): Promise<string> {
   const rawRemapped = rawResult ? remapWhatlangResult(rawResult, window.routeTag) : null;
 
   const normalizedSample = normalizeDetectorSampleForRoute(window.text, window.routeTag);
+  const passesLatinQualityGate =
+    window.routeTag !== DEFAULT_LOCALE || shouldAcceptLatinDetectorWindow(window.text, normalizedSample);
   const normalizedResult =
     normalizedSample.length > 0 && normalizedSample !== window.text
       ? await detectWithWhatlangWasm(normalizedSample, window.routeTag)
@@ -162,6 +165,7 @@ async function resolveWindowLocale(window: DetectorWindow): Promise<string> {
 
   if (
     strongestCandidate &&
+    passesLatinQualityGate &&
     shouldAcceptDetectorTag(
       window.routeTag,
       strongestCandidate.confidence,
@@ -173,6 +177,7 @@ async function resolveWindowLocale(window: DetectorWindow): Promise<string> {
 
   if (
     window.routeTag === DEFAULT_LOCALE &&
+    passesLatinQualityGate &&
     rawRemapped &&
     normalizedRemapped &&
     rawRemapped.tag === normalizedRemapped.tag
@@ -181,7 +186,12 @@ async function resolveWindowLocale(window: DetectorWindow): Promise<string> {
       rawRemapped.confidence ?? 0,
       normalizedRemapped.confidence ?? 0,
     );
-    if (corroboratedConfidence >= LATIN_WASM_CORROBORATED_MIN_CONFIDENCE) {
+    const hasReliableCorroboration =
+      rawRemapped.reliable === true || normalizedRemapped.reliable === true;
+    if (
+      hasReliableCorroboration &&
+      corroboratedConfidence >= LATIN_WASM_CORROBORATED_MIN_CONFIDENCE
+    ) {
       return rawRemapped.tag;
     }
   }

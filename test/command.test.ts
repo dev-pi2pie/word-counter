@@ -1375,6 +1375,17 @@ describe("CLI debug diagnostics", () => {
     expect(stageTimingNames.includes("load")).toBeTrue();
     expect(stageTimingNames.includes("count")).toBeTrue();
     expect(stageTimingNames.includes("finalize")).toBeTrue();
+    expect(events.every((item) => item.schemaVersion === 1)).toBeTrue();
+    expect(
+      events.every((item) => typeof item.timestamp === "string" && !Number.isNaN(Date.parse(String(item.timestamp)))),
+    ).toBeTrue();
+    expect(
+      events.every((item) => typeof item.runId === "string" && String(item.runId).startsWith("wc-debug-")),
+    ).toBeTrue();
+    expect(
+      events.every((item) => item.topic === "batch" || item.topic === "path"),
+    ).toBeTrue();
+    expect(events.every((item) => item.scope === "run" || item.scope === "file")).toBeTrue();
     expect(output.stdout).toEqual(["2"]);
   });
 
@@ -1439,6 +1450,8 @@ describe("CLI debug diagnostics", () => {
     expect(eventNames.includes("path.resolve.filter.excluded")).toBeTrue();
     expect(eventNames.includes("path.resolve.dedupe.accept")).toBeTrue();
     expect(eventNames.includes("path.resolve.dedupe.duplicate")).toBeTrue();
+    const events = parseDebugEvents(output.stderr).filter((item) => item.topic === "path");
+    expect(events.some((item) => item.scope === "file")).toBeTrue();
     expect(output.stdout).toEqual(["2"]);
   });
 
@@ -1596,6 +1609,35 @@ describe("CLI debug diagnostics", () => {
     expect(entries.includes("diagnostics-1.jsonl")).toBeFalse();
   });
 
+  test("keeps runId stable within a single debug channel", async () => {
+    const root = await makeTempFixture("cli-debug-run-id-stable");
+    const reportPath = join(root, "diagnostics.jsonl");
+    const fixedNow = new Date(Date.UTC(2026, 2, 24, 5, 32, 21, 123));
+    const debug = createDebugChannel({
+      enabled: true,
+      verbosity: "compact",
+      report: { path: reportPath, tee: false, cwd: root },
+      now: () => fixedNow,
+      pid: 55149,
+    });
+
+    debug.emit("batch.resolve.start", { inputs: 1 });
+    debug.emit("batch.resolve.complete", { files: 1 });
+    await debug.close();
+
+    const report = await readFile(reportPath, "utf8");
+    const entries = report
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0)
+      .map((line) => JSON.parse(line) as { runId?: string; timestamp?: string; schemaVersion?: number });
+
+    expect(entries.length).toBe(2);
+    expect(entries.every((entry) => entry.runId === "wc-debug-1774330341123-55149")).toBeTrue();
+    expect(entries.every((entry) => entry.timestamp === "2026-03-24T05:32:21.123Z")).toBeTrue();
+    expect(entries.every((entry) => entry.schemaVersion === 1)).toBeTrue();
+  });
+
   test("creates deterministic default debug report name in cwd", async () => {
     const root = await makeTempFixture("cli-debug-report-default-name");
     const previousCwd = process.cwd();
@@ -1619,15 +1661,15 @@ describe("CLI debug diagnostics", () => {
 
     const entries = await readdir(root);
     const reports = entries.filter((entry) =>
-      /^wc-debug-\d{8}-\d{6}-\d+(-\d+)?\.jsonl$/.test(entry),
+      /^wc-debug-\d{8}-\d{6}-utc-\d+(-\d+)?\.jsonl$/.test(entry),
     );
     expect(reports.length).toBe(1);
   });
 
   test("adds collision suffix for default debug report filenames", async () => {
     const root = await makeTempFixture("cli-debug-report-collision");
-    const fixedNow = new Date(2026, 1, 16, 12, 34, 56);
-    const baseName = "wc-debug-20260216-123456-4321.jsonl";
+    const fixedNow = new Date(Date.UTC(2026, 1, 16, 12, 34, 56));
+    const baseName = "wc-debug-20260216-123456-utc-4321.jsonl";
     await writeFile(join(root, baseName), "existing");
 
     const debug = createDebugChannel({
@@ -1637,7 +1679,7 @@ describe("CLI debug diagnostics", () => {
       now: () => fixedNow,
       pid: 4321,
     });
-    const expectedPath = join(root, "wc-debug-20260216-123456-4321-1.jsonl");
+    const expectedPath = join(root, "wc-debug-20260216-123456-utc-4321-1.jsonl");
 
     expect(debug.reportPath).toBe(expectedPath);
     debug.emit("batch.resolve.start", { files: 1 });

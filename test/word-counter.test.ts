@@ -12,6 +12,99 @@ import {
 } from "../src/detector";
 import { hasWasmDetectorRuntime } from "./support/wasm-detector-runtime";
 
+const WASM_LATIN_QUALITY_FIXTURES = [
+  {
+    id: "latin-prose-en-paragraph",
+    text: "This sentence should clearly be detected as English for the wasm detector path.",
+    expectedLocale: "en",
+  },
+  {
+    id: "latin-prose-fr-paragraph",
+    text: "Ceci est une phrase francaise suffisamment longue pour que le detecteur identifie correctement la langue.",
+    expectedLocale: "fr",
+  },
+  {
+    id: "latin-prose-en-short-reliable-line",
+    text: "The repository documentation explains expected behavior.",
+    expectedLocale: "en",
+  },
+  {
+    id: "latin-prose-fr-short-reliable-line",
+    text: "Cette documentation explique clairement le comportement attendu.",
+    expectedLocale: "fr",
+  },
+  {
+    id: "latin-prose-en-multiline-without-punctuation",
+    text: [
+      "Internationalization requires thoughtful language detection",
+      "Repository documentation explains expected behavior",
+    ].join("\n"),
+    expectedLocale: "en",
+  },
+  {
+    id: "latin-tech-cli-help",
+    text: [
+      "Usage: word-counter --path docs --format json --debug",
+      "",
+      "Options:",
+      "  --debug enable structured diagnostics",
+      "  --debug-report [path] write diagnostics to a report file",
+      "  --debug-tee mirror diagnostics to stderr",
+    ].join("\n"),
+    expectedLocale: "und-Latn",
+  },
+  {
+    id: "latin-tech-readme-commands",
+    text: [
+      "`bun install`",
+      "`bun test`",
+      "`word-counter --path docs --format json`",
+      "`word-counter --debug-report report.jsonl --debug-tee`",
+    ].join("\n"),
+    expectedLocale: "und-Latn",
+  },
+  {
+    id: "latin-mixed-frontmatter-short-prose",
+    text: [
+      "---",
+      "title: Alpha Story",
+      "summary: Intro note",
+      "---",
+      "Hello world from alpha. This guide explains the feature clearly for readers.",
+    ].join("\n"),
+    expectedLocale: "en",
+  },
+  {
+    id: "latin-mixed-prose-then-command-block",
+    text: [
+      "This guide explains how to count words in a repository without changing the default output behavior.",
+      "```sh",
+      "word-counter --path docs --format json",
+      "```",
+    ].join("\n"),
+    expectedLocale: "en",
+  },
+  {
+    id: "latin-mixed-bullets-with-sentences",
+    text: [
+      "- This option keeps normal JSON output stable for downstream consumers.",
+      "- This command writes detailed diagnostics only when debug mode is enabled.",
+    ].join("\n"),
+    expectedLocale: "en",
+  },
+  {
+    id: "latin-mixed-config-heavy-with-brief-explanation",
+    text: [
+      "mode: debug",
+      "verbosity: compact",
+      "report_path: diagnostics.jsonl",
+      "tee: true",
+      "Use this for local testing.",
+    ].join("\n"),
+    expectedLocale: "und-Latn",
+  },
+] as const;
+
 describe("wordCounter", () => {
   test("counts Latin words in chunk mode by default", () => {
     const result = wordCounter("Hello world");
@@ -126,15 +219,31 @@ describe("detector entrypoint", () => {
     }
 
     const result = await wordCounterWithDetector(
-      ["---", "title: Alpha Story", "summary: Intro note", "---", "Hello world from alpha."].join(
-        "\n",
-      ),
+      [
+        "---",
+        "title: Alpha Story",
+        "summary: Intro note",
+        "---",
+        "Hello world from alpha. This guide explains the feature clearly for readers.",
+      ].join("\n"),
       { detector: "wasm" },
     );
 
     expect(result.breakdown.mode).toBe("chunk");
     expect(result.breakdown.items[0]?.locale).toBe("en");
   });
+
+  for (const fixture of WASM_LATIN_QUALITY_FIXTURES) {
+    test(`applies approved Latin quality policy for ${fixture.id}`, async () => {
+      if (!hasWasmDetectorRuntime()) {
+        return;
+      }
+
+      const result = await wordCounterWithDetector(fixture.text, { detector: "wasm" });
+      expect(result.breakdown.mode).toBe("chunk");
+      expect(result.breakdown.items[0]?.locale).toBe(fixture.expectedLocale);
+    });
+  }
 
   test("keeps low-confidence short English-like text on und-Latn in wasm mode", async () => {
     if (!hasWasmDetectorRuntime()) {

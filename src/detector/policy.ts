@@ -8,6 +8,7 @@ export const LATIN_WASM_CORROBORATED_MIN_CONFIDENCE = 0.7;
 
 const LATIN_SCRIPT_REGEX = /\p{Script=Latin}/u;
 const HAN_SCRIPT_REGEX = /\p{Script=Han}/u;
+const LATIN_WORD_REGEX = /\p{Script=Latin}+/gu;
 
 export type DetectorRouteTag = typeof DEFAULT_LOCALE | typeof DEFAULT_HAN_TAG;
 
@@ -74,4 +75,91 @@ export function normalizeDetectorSampleForRoute(
     .join("")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function countLatinWords(text: string): number {
+  return text.match(LATIN_WORD_REGEX)?.length ?? 0;
+}
+
+function isSentenceLikeLatinLine(
+  line: string,
+  latinWords: number,
+  technicalLike: boolean,
+): boolean {
+  if (latinWords < 4) {
+    return false;
+  }
+
+  if (/[.!?]/u.test(line)) {
+    return true;
+  }
+
+  return !technicalLike && latinWords >= 5;
+}
+
+function isTechnicalLikeLatinLine(line: string, latinWords: number): boolean {
+  const trimmed = line.trim();
+  if (!trimmed) {
+    return false;
+  }
+
+  if (/^[>#$]/u.test(trimmed)) {
+    return true;
+  }
+
+  if (/(^|\s)--[a-z0-9][a-z0-9-]*/iu.test(trimmed)) {
+    return true;
+  }
+
+  if (/`[^`]+`/u.test(trimmed)) {
+    return true;
+  }
+
+  if (/(^|[\s"'`])(?:\.{0,2}\/|\/)?[\w./-]+\.[a-z0-9]{1,6}(?=$|[\s"'`])/iu.test(trimmed)) {
+    return true;
+  }
+
+  if (/^[\-\*\d.)\s]*[\p{L}\p{N}_.-]+:\s+\S/iu.test(trimmed) && latinWords <= 8) {
+    return true;
+  }
+
+  return false;
+}
+
+export function shouldAcceptLatinDetectorWindow(
+  text: string,
+  normalizedSample: string,
+): boolean {
+  const normalizedLatinWords = countLatinWords(normalizedSample);
+  if (normalizedLatinWords < 4) {
+    return false;
+  }
+
+  let proseWords = 0;
+  let technicalWords = 0;
+
+  for (const rawLine of text.split(/\r?\n/u)) {
+    const line = rawLine.trim();
+    if (!line || line === "---" || line === "```") {
+      continue;
+    }
+
+    const latinWords = countLatinWords(line);
+    if (latinWords === 0) {
+      continue;
+    }
+
+    const technicalLike = isTechnicalLikeLatinLine(line, latinWords);
+    const sentenceLike = isSentenceLikeLatinLine(line, latinWords, technicalLike);
+
+    if (sentenceLike) {
+      proseWords += latinWords;
+    }
+
+    if (technicalLike) {
+      technicalWords += latinWords;
+    }
+  }
+
+  return proseWords >= 4 && proseWords >= technicalWords;
 }
