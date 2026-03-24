@@ -41,6 +41,17 @@ function createDeferredLatinPreSegmentOptions(
   };
 }
 
+function createRuleOnlyLatinOptions(
+  options: DetectorLocaleOptions,
+): DetectorLocaleOptions {
+  return {
+    ...options,
+    latinLanguageHint: undefined,
+    latinTagHint: undefined,
+    latinLocaleHint: undefined,
+  };
+}
+
 function mergeAdjacentChunks(chunks: LocaleChunk[]): LocaleChunk[] {
   if (chunks.length === 0) {
     return chunks;
@@ -79,6 +90,36 @@ function reapplyDeferredLatinFallback(
     }
 
     relabeled.push(...segmentTextByLocale(chunk.text, options));
+  }
+
+  return mergeAdjacentChunks(relabeled);
+}
+
+function reapplyResolvedLatinHintRules(
+  resolvedChunks: LocaleChunk[],
+  originalChunks: LocaleChunk[],
+  options: DetectorLocaleOptions,
+): LocaleChunk[] {
+  const relabeled: LocaleChunk[] = [];
+  const ruleOnlyOptions = createRuleOnlyLatinOptions(options);
+
+  for (let index = 0; index < resolvedChunks.length; index += 1) {
+    const chunk = resolvedChunks[index];
+    const originalChunk = originalChunks[index];
+    if (!chunk || !originalChunk) {
+      continue;
+    }
+
+    if (originalChunk.locale !== DEFAULT_LOCALE || chunk.locale === DEFAULT_LOCALE) {
+      relabeled.push(chunk);
+      continue;
+    }
+
+    const hintedChunks = segmentTextByLocale(chunk.text, ruleOnlyOptions).map((hintedChunk) => ({
+      locale: hintedChunk.locale === DEFAULT_LOCALE ? chunk.locale : hintedChunk.locale,
+      text: hintedChunk.text,
+    }));
+    relabeled.push(...hintedChunks);
   }
 
   return mergeAdjacentChunks(relabeled);
@@ -597,7 +638,8 @@ export async function segmentTextByLocaleWithWasmDetector(
   options.detectorDebug?.emit?.("detector.summary", options.detectorDebug.summary, {
     verbosity: "compact",
   });
-  return reapplyDeferredLatinFallback(resolved, options);
+  const hintRelabeled = reapplyResolvedLatinHintRules(resolved, chunks, options);
+  return reapplyDeferredLatinFallback(hintRelabeled, options);
 }
 
 export async function wordCounterWithWasmDetector(

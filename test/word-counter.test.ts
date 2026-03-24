@@ -42,6 +42,16 @@ const WASM_LATIN_QUALITY_FIXTURES = [
     expectedLocale: "en",
   },
   {
+    id: "latin-prose-en-hard-wrapped-short-lines",
+    text: [
+      "This guide explains",
+      "expected behavior clearly",
+      "for detector quality",
+      "checks in docs",
+    ].join("\n"),
+    expectedLocale: "en",
+  },
+  {
     id: "latin-tech-cli-help",
     text: [
       "Usage: word-counter --path docs --format json --debug",
@@ -307,6 +317,24 @@ describe("detector entrypoint", () => {
     expect(chunks.map((chunk) => chunk.text)).toEqual(["el ", "niño"]);
   });
 
+  test("preserves built-in Latin hint rules inside accepted wasm detector windows", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const chunks = await segmentTextByLocaleWithDetector(
+      [
+        "This guide explains the feature clearly for readers and keeps the paragraph long enough for reliable English detection.",
+        "It also includes a borrowed word niño inside the same detector window to check hint preservation.",
+      ].join(" "),
+      { detector: "wasm" },
+    );
+
+    expect(chunks.map((chunk) => chunk.locale)).toEqual(["en", "es"]);
+    expect(chunks[0]?.text).toContain("borrowed word ");
+    expect(chunks[1]?.text).toBe("niño inside the same detector window to check hint preservation.");
+  });
+
   test("reapplies custom Latin hint rules after unresolved wasm detector evaluation", async () => {
     const chunks = await segmentTextByLocaleWithDetector("Zażółć gęślą jaźń", {
       detector: "wasm",
@@ -315,6 +343,29 @@ describe("detector entrypoint", () => {
     });
 
     expect(chunks.map((chunk) => chunk.locale)).toEqual(["pl"]);
+  });
+
+  test("preserves custom Latin hint rules inside accepted wasm detector windows", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const chunks = await segmentTextByLocaleWithDetector(
+      [
+        "This guide explains the feature clearly for readers and keeps the paragraph long enough for reliable English detection.",
+        "A custom hinted term Zażółć should remain Polish inside the accepted detector window.",
+      ].join(" "),
+      {
+        detector: "wasm",
+        latinHintRules: [{ tag: "pl", pattern: "[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]" }],
+        useDefaultLatinHints: false,
+      },
+    );
+
+    expect(chunks.map((chunk) => chunk.locale)).toEqual(["en", "pl"]);
+    expect(chunks[1]?.text).toBe(
+      "Zażółć should remain Polish inside the accepted detector window.",
+    );
   });
 
   test("segments text through detector entrypoint", async () => {

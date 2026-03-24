@@ -81,22 +81,6 @@ function countLatinWords(text: string): number {
   return text.match(LATIN_WORD_REGEX)?.length ?? 0;
 }
 
-function isSentenceLikeLatinLine(
-  line: string,
-  latinWords: number,
-  technicalLike: boolean,
-): boolean {
-  if (latinWords < 4) {
-    return false;
-  }
-
-  if (/[.!?]/u.test(line)) {
-    return true;
-  }
-
-  return !technicalLike && latinWords >= 5;
-}
-
 function isTechnicalLikeLatinLine(line: string, latinWords: number): boolean {
   const trimmed = line.trim();
   if (!trimmed) {
@@ -126,6 +110,22 @@ function isTechnicalLikeLatinLine(line: string, latinWords: number): boolean {
   return false;
 }
 
+function shouldTreatLatinProseBlockAsSentenceLike(
+  latinWords: number,
+  lineCount: number,
+  hasSentencePunctuation: boolean,
+): boolean {
+  if (latinWords < 4) {
+    return false;
+  }
+
+  if (hasSentencePunctuation) {
+    return true;
+  }
+
+  return lineCount <= 1 ? latinWords >= 5 : latinWords >= 8;
+}
+
 export function shouldAcceptLatinDetectorWindow(
   text: string,
   normalizedSample: string,
@@ -137,10 +137,30 @@ export function shouldAcceptLatinDetectorWindow(
 
   let proseWords = 0;
   let technicalWords = 0;
+  let proseBlockWords = 0;
+  let proseBlockLines = 0;
+  let proseBlockHasSentencePunctuation = false;
+
+  const flushProseBlock = () => {
+    if (
+      shouldTreatLatinProseBlockAsSentenceLike(
+        proseBlockWords,
+        proseBlockLines,
+        proseBlockHasSentencePunctuation,
+      )
+    ) {
+      proseWords += proseBlockWords;
+    }
+
+    proseBlockWords = 0;
+    proseBlockLines = 0;
+    proseBlockHasSentencePunctuation = false;
+  };
 
   for (const rawLine of text.split(/\r?\n/u)) {
     const line = rawLine.trim();
     if (!line || line === "---" || line === "```") {
+      flushProseBlock();
       continue;
     }
 
@@ -150,16 +170,17 @@ export function shouldAcceptLatinDetectorWindow(
     }
 
     const technicalLike = isTechnicalLikeLatinLine(line, latinWords);
-    const sentenceLike = isSentenceLikeLatinLine(line, latinWords, technicalLike);
-
-    if (sentenceLike) {
-      proseWords += latinWords;
-    }
-
     if (technicalLike) {
+      flushProseBlock();
       technicalWords += latinWords;
+      continue;
     }
+
+    proseBlockWords += latinWords;
+    proseBlockLines += 1;
+    proseBlockHasSentencePunctuation ||= /[.!?]/u.test(line);
   }
 
+  flushProseBlock();
   return proseWords >= 4 && proseWords >= technicalWords;
 }
