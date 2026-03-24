@@ -64,6 +64,92 @@ Document the follow-up quality issue where `--detector wasm` can still relabel o
     - English README/CLI/docs-noise fixtures that must remain `und-Latn` or resolve to `en`
     - known non-English Latin fixtures that should still upgrade correctly
 
+## Scenario Comparison Matrix
+
+The next research step should compare policy candidates against concrete scenario classes before implementing the token-quality gate.
+
+| Scenario class | Typical example shape | Current policy risk | Corroboration hardening only | Token-quality gate target |
+| --- | --- | --- | --- | --- |
+| Clear English prose | sentence-heavy paragraph with normal punctuation | low | still acceptable | accept detector result when confidence/reliability are strong |
+| Clear non-English Latin prose | sentence-heavy French, German, Spanish, etc. | low | still acceptable | accept detector result when confidence/reliability are strong |
+| Markdown prose with light frontmatter | short frontmatter plus mostly prose body | medium | usually acceptable | allow if prose signal dominates technical framing |
+| README command/list heavy English | bullets, commands, filenames, flags, short imperative phrases | high false-positive risk | reduced only for unreliable corroboration | prefer fallback to `und-Latn` unless prose signal is clearly dominant |
+| CLI help or shell transcript | `--flags`, paths, commands, option descriptions | high false-positive risk | reduced only for unreliable corroboration | fallback to `und-Latn` |
+| Short ambiguous English-like text | short plain text sentence | already conservative | unchanged | keep conservative fallback unless other acceptance signals are strong |
+
+Implications from the comparison:
+
+- corroboration hardening is necessary but not sufficient
+- threshold tuning alone cannot separate prose from command/list noise
+- the core missing decision is a prose-vs-technical-noise contract, not only a confidence number
+
+## Draft Research Spec for Token-Quality Comparison
+
+### Technical-Noise-Likely Windows
+
+Treat a Latin detector window as technical-noise-likely when most of its visible signal comes from repository/docs mechanics rather than sentence-like prose.
+
+Common indicators:
+
+- dense command or flag tokens such as `--flag`, subcommands, filenames, extensions, or path fragments
+- line-oriented list structure with many short fragments rather than sentence-like spans
+- frontmatter keys, option labels, config keys, or repeated colon-separated labels
+- lexical signal that remains weak even after normalization because the surviving Latin text is mostly nouns, commands, and labels
+
+Expected policy direction:
+
+- do not confidently upgrade these windows based only on detector confidence
+- prefer fallback to `und-Latn`
+
+### Clear-Prose-Likely Windows
+
+Treat a Latin detector window as clear-prose-likely when the surviving text reads like ordinary language rather than repository mechanics.
+
+Common indicators:
+
+- sentence-like spans with verbs, function words, and normal clause structure
+- punctuation serving sentences rather than mostly delimiters
+- enough contiguous prose that normalization still leaves a coherent paragraph
+
+Expected policy direction:
+
+- allow current reliable-path detector acceptance
+- allow corroborated acceptance only when at least one corroborating sample is reliable
+
+### Borderline Mixed Windows
+
+These windows contain both prose and technical framing.
+
+Examples:
+
+- README opening blocks with frontmatter plus one short paragraph
+- documentation snippets where prose surrounds command examples
+- option lists with one explanatory sentence after each flag
+
+Expected research task:
+
+- compare whether the first gate version should:
+  - preserve detector acceptance when prose spans dominate
+  - or fallback conservatively whenever command/list density crosses a simple threshold
+- record this as fixture-backed behavior before implementation
+
+## Focused Regression Corpus Draft
+
+The next research pass should add fixture candidates in three buckets:
+
+- Must fallback conservatively:
+  - README command lists
+  - CLI help blocks
+  - config-like key/value docs fragments
+- Must still upgrade correctly:
+  - ordinary English prose
+  - ordinary non-English Latin prose
+  - prose-heavy markdown with light formatting noise
+- Borderline cases requiring an explicit decision:
+  - frontmatter plus short prose body
+  - prose interleaved with shell snippets
+  - bullet lists with one full sentence per item
+
 ## Recommended Policy Direction
 
 - Keep the main reliable-path rule conservative and unchanged unless corpus results show a clear need for threshold retuning.
@@ -72,6 +158,8 @@ Document the follow-up quality issue where `--detector wasm` can still relabel o
 - Accept that some borderline markdown/frontmatter-like Latin windows may fall back to `und-Latn` under the tighter policy.
   - That tradeoff is preferable to emitting confident-but-wrong language tags for technical English.
   - Users still retain explicit hint flags when deterministic relabeling is required.
+- Treat the first token-quality gate as a fixture-backed contract, not a hand-wavy heuristic.
+  - The comparison matrix above should be turned into tests before final policy code lands.
 
 ## Related Plans
 
