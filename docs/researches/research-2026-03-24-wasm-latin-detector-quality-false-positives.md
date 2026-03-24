@@ -46,11 +46,32 @@ Document the follow-up quality issue where `--detector wasm` can still relabel o
 - Use the global observability research to decide how detector decision data should be surfaced during this investigation.
 - Defer a dedicated implementation plan until the open questions below are answered well enough to choose one guardrail direction.
 
-## Open Questions
+## Recommended Resolution of Open Questions
 
-- Should README-like technical English prefer staying on `und-Latn` unless confidence is very strong, even if that reduces some true-positive non-English upgrades?
-- Should corroborated acceptance for Latin require `reliable = true`, not just matching raw/normalized tags?
-- Should the Latin route add a token-quality gate before the detector result can be accepted?
+- README-like technical English should prefer staying on `und-Latn` unless the Latin window clears a stronger acceptance policy than the current detector-only thresholds.
+  - Confidence alone is not enough.
+  - Local detector checks show command-heavy English token lists can still receive high-confidence, `reliable = true` false-positive French labels from Whatlang.
+  - The safer default is to preserve `und-Latn` when the window looks more like technical noise than prose.
+- Latin corroborated acceptance should stop upgrading `und-Latn` when both corroborating samples are unreliable.
+  - Recommended rule: require at least one corroborating sample to report `reliable = true` before the corroborated path can accept a tag.
+  - Matching raw/normalized tags by itself is too weak for a conservative contract.
+- Add a narrow Latin token-quality gate before final detector acceptance.
+  - This should be the primary follow-up recommendation, because threshold tuning and corroboration hardening alone do not address reliable false positives on command/list-like English windows.
+  - The gate should be lightweight and explicit:
+    - reject command/list-like technical windows back to `und-Latn`
+    - preserve clear prose-like windows for detector acceptance
+  - Validate the gate with a focused regression corpus:
+    - English README/CLI/docs-noise fixtures that must remain `und-Latn` or resolve to `en`
+    - known non-English Latin fixtures that should still upgrade correctly
+
+## Recommended Policy Direction
+
+- Keep the main reliable-path rule conservative and unchanged unless corpus results show a clear need for threshold retuning.
+- Harden the corroborated path first, because it currently creates an avoidable low-signal acceptance route.
+- Add the Latin token-quality gate before attempting broad threshold increases.
+- Accept that some borderline markdown/frontmatter-like Latin windows may fall back to `und-Latn` under the tighter policy.
+  - That tradeoff is preferable to emitting confident-but-wrong language tags for technical English.
+  - Users still retain explicit hint flags when deterministic relabeling is required.
 
 ## Related Plans
 
