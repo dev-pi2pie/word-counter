@@ -23,6 +23,7 @@ type RunBatchCountOptions = {
   section: SectionMode;
   wcOptions: DetectorWordCounterOptions;
   preserveCollectorSegments: boolean;
+  detectorEvidence: boolean;
   debug: DebugChannel;
   progressReporter: BatchProgressReporter;
   jobs: number;
@@ -31,6 +32,14 @@ type RunBatchCountOptions = {
 };
 
 export async function runBatchCount(options: RunBatchCountOptions): Promise<BatchSummary> {
+  const detectorEvidence =
+    options.detectorEvidence
+      ? {
+          verbosity: options.debug.verbosity,
+          mode: options.wcOptions.mode ?? "chunk",
+          section: options.section,
+        }
+      : undefined;
   const createFileDetectorDebugContext = ({ path }: { path: string }) =>
     options.debug.enabled && options.wcOptions.detector === "wasm"
       ? {
@@ -51,6 +60,7 @@ export async function runBatchCount(options: RunBatchCountOptions): Promise<Batc
               },
             ),
           summary: createDetectorDebugSummary("wasm"),
+          ...(detectorEvidence ? { evidence: detectorEvidence } : {}),
         }
       : undefined;
   const emitWorkerDetectorDebugEvent =
@@ -139,6 +149,8 @@ export async function runBatchCount(options: RunBatchCountOptions): Promise<Batc
           detectorMode: options.wcOptions.detector ?? "regex",
           wcOptions: options.wcOptions,
           preserveCollectorSegments: options.preserveCollectorSegments,
+          detectorEvidence: options.detectorEvidence,
+          debugVerbosity: options.debug.verbosity,
           onDetectorDebugEvent: emitWorkerDetectorDebugEvent,
           onFileProcessed: (snapshot) => {
             if (progressEnabled) {
@@ -171,6 +183,8 @@ export async function runBatchCount(options: RunBatchCountOptions): Promise<Batc
           detectorMode: options.wcOptions.detector ?? "regex",
           wcOptions: options.wcOptions,
           preserveCollectorSegments: options.preserveCollectorSegments,
+          detectorEvidence: options.detectorEvidence,
+          debugVerbosity: options.debug.verbosity,
           createDetectorDebugContext: createFileDetectorDebugContext,
           onFileProcessed: (snapshot) => {
             if (progressEnabled) {
@@ -186,6 +200,8 @@ export async function runBatchCount(options: RunBatchCountOptions): Promise<Batc
         detectorMode: options.wcOptions.detector ?? "regex",
         wcOptions: options.wcOptions,
         preserveCollectorSegments: options.preserveCollectorSegments,
+        detectorEvidence: options.detectorEvidence,
+        debugVerbosity: options.debug.verbosity,
         createDetectorDebugContext: createFileDetectorDebugContext,
         onFileProcessed: (snapshot) => {
           if (progressEnabled) {

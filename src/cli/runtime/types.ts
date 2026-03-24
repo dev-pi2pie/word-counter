@@ -37,6 +37,7 @@ export type CliActionOptions = {
   quietSkips?: boolean;
   debug?: boolean;
   verbose?: boolean;
+  detectorEvidence?: boolean;
   debugReport?: string | boolean;
   debugReportTee?: boolean;
   debugTee?: boolean;

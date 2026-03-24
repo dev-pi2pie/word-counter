@@ -79,6 +79,7 @@ export async function executeBatchCount({
     section: options.section,
     wcOptions: resolved.wcOptions,
     preserveCollectorSegments: options.format === "json",
+    detectorEvidence: Boolean(options.detectorEvidence),
     debug,
     progressReporter: createBatchProgressReporter({
       enabled: options.format === "standard" && options.progress,

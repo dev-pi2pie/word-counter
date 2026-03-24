@@ -126,6 +126,13 @@ function listDebugEventNames(stderr: string[]): string[] {
     .filter((event): event is string => typeof event === "string");
 }
 
+function findDebugEvents(
+  stderr: string[],
+  eventName: string,
+): Array<Record<string, unknown>> {
+  return parseDebugEvents(stderr).filter((item) => item.event === eventName);
+}
+
 describe("batch path resolution", () => {
   test("expands directory recursively with deterministic ordering", async () => {
     const root = await makeTempFixture("batch-order");
@@ -288,6 +295,180 @@ describe("detector mode", () => {
     expect(eventNames.includes("detector.window.start")).toBeTrue();
     expect(eventNames.includes("detector.window.accepted")).toBeTrue();
     expect(eventNames.includes("detector.summary")).toBeTrue();
+  });
+
+  test("rejects --detector-evidence without --debug", async () => {
+    const result = spawnSync(
+      process.execPath,
+      [
+        "run",
+        "src/bin.ts",
+        "--detector",
+        "wasm",
+        "--detector-evidence",
+        "This sentence should clearly be detected as English for the wasm detector path.",
+      ],
+      {
+        cwd: process.cwd(),
+        encoding: "utf8",
+      },
+    );
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("`--detector-evidence` requires `--debug`.");
+  });
+
+  test("rejects --detector-evidence without --detector wasm", async () => {
+    const result = spawnSync(
+      process.execPath,
+      [
+        "run",
+        "src/bin.ts",
+        "--debug",
+        "--detector-evidence",
+        "This sentence should clearly be detected as English for the wasm detector path.",
+      ],
+      {
+        cwd: process.cwd(),
+        encoding: "utf8",
+      },
+    );
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("`--detector-evidence` requires `--detector wasm`.");
+  });
+
+  test("emits compact detector evidence previews without verbose mode", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const sample = [
+      "This sentence should clearly be detected as English for the wasm detector path.",
+      "",
+      "This second sentence adds enough length to force compact preview truncation while remaining strong prose for the detector quality gate.",
+      "This third sentence keeps the sample comfortably above the preview cap and introduces extra spacing.",
+    ].join("\n");
+
+    const output = await captureCli([
+      "--detector",
+      "wasm",
+      "--format",
+      "raw",
+      "--debug",
+      "--detector-evidence",
+      sample,
+    ]);
+
+    const evidenceEvents = findDebugEvents(output.stderr, "detector.window.evidence");
+    expect(evidenceEvents.length).toBe(1);
+    const evidence = evidenceEvents[0]!;
+    expect(evidence.verbosity).toBe("compact");
+    expect(evidence.mode).toBe("chunk");
+    expect(evidence.section).toBe("all");
+    expect(typeof evidence.textPreview).toBe("string");
+    expect(typeof evidence.normalizedPreview).toBe("string");
+    expect(evidence.textPreviewTruncated).toBeTrue();
+    expect(evidence.text).toBeUndefined();
+    expect(evidence.normalizedText).toBeUndefined();
+    expect(String(evidence.textPreview)).not.toContain("\n");
+    expect(String(evidence.textPreview)).not.toContain("  ");
+  });
+
+  test("reports hinted Latin fallback tags in detector evidence", async () => {
+    const output = await captureCli([
+      "--detector",
+      "wasm",
+      "--format",
+      "raw",
+      "--debug",
+      "--detector-evidence",
+      "--latin-language",
+      "de",
+      "Über",
+    ]);
+
+    const evidenceEvents = findDebugEvents(output.stderr, "detector.window.evidence");
+    expect(evidenceEvents.length).toBe(1);
+    const evidenceDecision = evidenceEvents[0]?.decision as Record<string, unknown> | undefined;
+    expect(evidenceDecision?.finalTag).toBe("de");
+
+    const fallbackEvents = findDebugEvents(output.stderr, "detector.window.fallback");
+    expect(fallbackEvents.length).toBe(1);
+    expect(fallbackEvents[0]?.finalTag).toBe("de");
+  });
+
+  test("emits full detector evidence text in verbose mode", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const sample = [
+      "This sentence should clearly be detected as English for the wasm detector path.",
+      "",
+      "This second sentence adds enough length to make the verbose detector evidence payload interesting.",
+    ].join("\n");
+
+    const output = await captureCli([
+      "--detector",
+      "wasm",
+      "--format",
+      "raw",
+      "--debug",
+      "--verbose",
+      "--detector-evidence",
+      sample,
+    ]);
+
+    const evidenceEvents = findDebugEvents(output.stderr, "detector.window.evidence");
+    expect(evidenceEvents.length).toBe(1);
+    const evidence = evidenceEvents[0]!;
+    expect(evidence.verbosity).toBe("verbose");
+    expect(evidence.text).toBe(sample);
+    expect(typeof evidence.normalizedText).toBe("string");
+    expect(String(evidence.text)).toContain("\n\n");
+    expect(evidence.textPreview).toBeUndefined();
+    expect(evidence.normalizedPreview).toBeUndefined();
+  });
+
+  test("keeps detector evidence window counts stable across output modes", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const sample =
+      "This sentence should clearly be detected as English for the wasm detector path. This follow-up sentence keeps the window long enough for detector evidence regardless of output mode.";
+
+    const collectorOutput = await captureCli([
+      "--detector",
+      "wasm",
+      "--mode",
+      "collector",
+      "--format",
+      "raw",
+      "--debug",
+      "--detector-evidence",
+      sample,
+    ]);
+    const charOutput = await captureCli([
+      "--detector",
+      "wasm",
+      "--mode",
+      "char",
+      "--format",
+      "raw",
+      "--debug",
+      "--detector-evidence",
+      sample,
+    ]);
+
+    const collectorEvidence = findDebugEvents(collectorOutput.stderr, "detector.window.evidence");
+    const charEvidence = findDebugEvents(charOutput.stderr, "detector.window.evidence");
+
+    expect(collectorEvidence.length).toBeGreaterThan(0);
+    expect(collectorEvidence.length).toBe(charEvidence.length);
+    expect(collectorEvidence[0]?.mode).toBe("collector");
+    expect(charEvidence[0]?.mode).toBe("char");
   });
 
   test("adds debug detector summary to single-input json only when --debug is enabled", async () => {
@@ -704,6 +885,86 @@ describe("CLI batch output", () => {
         detectorEvents.every((item) => item.scope === "file" && typeof item.path === "string"),
       ).toBeTrue();
     }
+  });
+
+  test("emits file-scoped compact detector evidence events in async batch runs", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const root = await makeTempFixture("cli-batch-detector-evidence-async");
+    await writeFile(
+      join(root, "a.txt"),
+      "This sentence should clearly be detected as English for the wasm detector path. This second sentence keeps the detector window long enough for evidence output.",
+    );
+    await writeFile(
+      join(root, "b.txt"),
+      "Ceci est une phrase francaise suffisamment longue pour que le detecteur identifie correctement la langue et emette une preuve utile.",
+    );
+
+    const output = await captureCli([
+      "--path",
+      root,
+      "--format",
+      "raw",
+      "--debug",
+      "--detector",
+      "wasm",
+      "--detector-evidence",
+    ]);
+
+    const evidenceEvents = findDebugEvents(output.stderr, "detector.window.evidence");
+    expect(evidenceEvents.length).toBeGreaterThanOrEqual(2);
+    expect(
+      evidenceEvents.every(
+        (item) =>
+          item.scope === "file" &&
+          item.verbosity === "compact" &&
+          typeof item.path === "string" &&
+          typeof item.textPreview === "string",
+      ),
+    ).toBeTrue();
+  });
+
+  test("forwards file-scoped detector evidence events from worker batch runs", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const root = await makeTempFixture("cli-batch-detector-evidence-worker");
+    await writeFile(
+      join(root, "a.txt"),
+      "This sentence should clearly be detected as English for the wasm detector path. This second sentence keeps the detector window long enough for evidence output.",
+    );
+    await writeFile(
+      join(root, "b.txt"),
+      "Ceci est une phrase francaise suffisamment longue pour que le detecteur identifie correctement la langue et emette une preuve utile.",
+    );
+
+    const output = await captureCli([
+      "--path",
+      root,
+      "--format",
+      "raw",
+      "--debug",
+      "--detector",
+      "wasm",
+      "--detector-evidence",
+      "--jobs",
+      "4",
+    ]);
+
+    const evidenceEvents = findDebugEvents(output.stderr, "detector.window.evidence");
+    expect(evidenceEvents.length).toBeGreaterThanOrEqual(2);
+    expect(
+      evidenceEvents.every(
+        (item) =>
+          item.scope === "file" &&
+          item.verbosity === "compact" &&
+          typeof item.path === "string" &&
+          typeof item.textPreview === "string",
+      ),
+    ).toBeTrue();
   });
 
   test("does not double count overlapping path inputs", async () => {
@@ -1886,6 +2147,35 @@ describe("CLI debug diagnostics", () => {
     expect(reports.length).toBe(1);
   });
 
+  test("creates deterministic detector evidence debug report name in cwd", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const root = await makeTempFixture("cli-detector-evidence-report-default-name");
+    const previousCwd = process.cwd();
+
+    process.chdir(root);
+    try {
+      await captureCli([
+        "--debug",
+        "--debug-report",
+        "--detector",
+        "wasm",
+        "--detector-evidence",
+        "This sentence should clearly be detected as English for the wasm detector path.",
+      ]);
+    } finally {
+      process.chdir(previousCwd);
+    }
+
+    const entries = await readdir(root);
+    const reports = entries.filter((entry) =>
+      /^wc-detector-evidence-\d{8}-\d{6}-utc-\d+(-\d+)?\.jsonl$/.test(entry),
+    );
+    expect(reports.length).toBe(1);
+  });
+
   test("adds collision suffix for default debug report filenames", async () => {
     const root = await makeTempFixture("cli-debug-report-collision");
     const fixedNow = new Date(Date.UTC(2026, 1, 16, 12, 34, 56));
@@ -1907,6 +2197,33 @@ describe("CLI debug diagnostics", () => {
 
     const report = await readFile(expectedPath, "utf8");
     expect(report.includes('"event":"batch.resolve.start"')).toBeTrue();
+  });
+
+  test("adds collision suffix for default detector evidence report filenames", async () => {
+    const root = await makeTempFixture("cli-detector-evidence-report-collision");
+    const fixedNow = new Date(Date.UTC(2026, 1, 16, 12, 34, 56));
+    const baseName = "wc-detector-evidence-20260216-123456-utc-4321.jsonl";
+    await writeFile(join(root, baseName), "existing");
+
+    const debug = createDebugChannel({
+      enabled: true,
+      verbosity: "compact",
+      report: {
+        tee: false,
+        cwd: root,
+        autogeneratedNamePrefix: "wc-detector-evidence",
+      },
+      now: () => fixedNow,
+      pid: 4321,
+    });
+    const expectedPath = join(root, "wc-detector-evidence-20260216-123456-utc-4321-1.jsonl");
+
+    expect(debug.reportPath).toBe(expectedPath);
+    debug.emit("detector.window.evidence", { windowIndex: 0 });
+    await debug.close();
+
+    const report = await readFile(expectedPath, "utf8");
+    expect(report.includes('"event":"detector.window.evidence"')).toBeTrue();
   });
 });
 

@@ -97,6 +97,15 @@ parentPort.on("message", async (message: WorkerRequestMessage) => {
               parentPort?.postMessage(debugEvent);
             },
             summary: createDetectorDebugSummary(config.detectorMode),
+            ...(config.detectorEvidence
+              ? {
+                  evidence: {
+                    verbosity: config.debugVerbosity ?? "compact",
+                    mode: config.wcOptions.mode ?? "chunk",
+                    section: config.section,
+                  },
+                }
+              : {}),
           }
         : undefined;
     const result =

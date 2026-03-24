@@ -102,6 +102,10 @@ export function configureProgramOptions(
     .option("--pretty", "pretty print JSON output", false)
     .option("--debug", "enable debug diagnostics on stderr")
     .option("--verbose", "emit verbose per-file debug diagnostics (requires --debug)")
+    .option(
+      "--detector-evidence",
+      "emit per-window detector evidence on the debug stream (requires --debug and --detector wasm)",
+    )
     .option("--debug-report [path]", "write debug diagnostics to a report file")
     .option("--debug-report-tee", "mirror debug diagnostics to both report file and stderr")
     .option("--debug-tee", "alias of --debug-report-tee")

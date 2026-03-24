@@ -1,5 +1,5 @@
 import type { SectionMode, SectionedResult } from "../../../../markdown";
-import type { DetectorDebugSummary } from "../../../../detector/debug";
+import type { DetectorDebugSummary, DetectorDebugVerbosity } from "../../../../detector/debug";
 import type { DetectorMode } from "../../../../detector";
 import type { WordCounterOptions, WordCounterResult } from "../../../../wc";
 import type { BatchSkip } from "../../../types";
@@ -9,6 +9,8 @@ export type WorkerConfig = {
   detectorMode: DetectorMode;
   wcOptions: WordCounterOptions;
   preserveCollectorSegments: boolean;
+  detectorEvidence?: boolean;
+  debugVerbosity?: DetectorDebugVerbosity;
   debugEnabled?: boolean;
 };
 

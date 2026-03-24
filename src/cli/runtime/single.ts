@@ -58,6 +58,15 @@ export async function executeSingleCount({
       ? {
           emit: debug.emit,
           summary: detectorDebugSummary,
+          ...(options.detectorEvidence
+            ? {
+                evidence: {
+                  verbosity: debug.verbosity,
+                  mode: resolved.wcOptions.mode ?? "chunk",
+                  section: options.section,
+                },
+              }
+            : {}),
         }
       : undefined;
 

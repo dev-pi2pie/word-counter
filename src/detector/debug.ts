@@ -1,8 +1,17 @@
+import type { SectionMode } from "../markdown";
 import { DEFAULT_HAN_TAG, DEFAULT_LOCALE } from "../wc/locale-detect";
+import type { WordCounterMode } from "../wc/types";
 import type { DetectorRouteTag } from "./policy";
 import type { DetectorMode } from "./types";
 
 export type DetectorDebugVerbosity = "compact" | "verbose";
+export const DETECTOR_EVIDENCE_PREVIEW_LIMIT = 160;
+
+export type DetectorEvidenceConfig = {
+  verbosity: DetectorDebugVerbosity;
+  mode: WordCounterMode;
+  section: SectionMode;
+};
 
 export type DetectorDebugSummary = {
   mode: DetectorMode;
@@ -34,6 +43,7 @@ export type DetectorDebugContext = {
     options?: { verbosity?: DetectorDebugVerbosity },
   ) => void;
   summary?: DetectorDebugSummary;
+  evidence?: DetectorEvidenceConfig;
 };
 
 export type DetectorFallbackReason =
@@ -145,4 +155,23 @@ export function recordDetectorFallback(
 
   summary.fallback += 1;
   summary.fallbackReasons[reason] += 1;
+}
+
+export function createDetectorEvidencePreview(text: string): {
+  preview: string;
+  truncated: boolean;
+} {
+  const collapsed = text.replace(/\s+/gu, " ").trim();
+  const codePoints = Array.from(collapsed);
+  if (codePoints.length <= DETECTOR_EVIDENCE_PREVIEW_LIMIT) {
+    return {
+      preview: collapsed,
+      truncated: false,
+    };
+  }
+
+  return {
+    preview: codePoints.slice(0, DETECTOR_EVIDENCE_PREVIEW_LIMIT).join(""),
+    truncated: true,
+  };
 }

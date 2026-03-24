@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 import { Worker } from "node:worker_threads";
 import type { SectionMode } from "../../../markdown";
 import type { DetectorMode } from "../../../detector";
+import type { DetectorDebugVerbosity } from "../../../detector/debug";
 import type wordCounter from "../../../wc";
 import type { BatchProgressSnapshot } from "../../progress/reporter";
 import type { BatchFileResult, BatchSkip } from "../../types";
@@ -19,6 +20,8 @@ type CountBatchInputsWithWorkerPoolOptions = {
   detectorMode: DetectorMode;
   wcOptions: Parameters<typeof wordCounter>[1];
   preserveCollectorSegments: boolean;
+  detectorEvidence?: boolean;
+  debugVerbosity?: DetectorDebugVerbosity;
   onFileProcessed?: (snapshot: BatchProgressSnapshot) => void;
   onDetectorDebugEvent?: (
     event: string,
@@ -194,6 +197,8 @@ export async function countBatchInputsWithWorkerPool(
             detectorMode: options.detectorMode,
             wcOptions: options.wcOptions,
             preserveCollectorSegments: options.preserveCollectorSegments,
+            detectorEvidence: options.detectorEvidence,
+            debugVerbosity: options.debugVerbosity,
             debugEnabled: options.debugEnabled,
           },
         });
