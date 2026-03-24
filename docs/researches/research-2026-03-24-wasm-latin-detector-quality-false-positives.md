@@ -2,7 +2,7 @@
 title: "wasm latin detector quality false positives"
 created-date: 2026-03-24
 modified-date: 2026-03-24
-status: in-progress
+status: completed
 agent: Codex
 ---
 
