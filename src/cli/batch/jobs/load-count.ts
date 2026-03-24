@@ -40,6 +40,10 @@ export async function countBatchInputsWithJobs(
       } satisfies CountBatchEntry;
     }
 
+    const detectorDebug =
+      detectorMode === "wasm"
+        ? options.createDetectorDebugContext?.({ path: loaded.path })
+        : undefined;
     const result =
       detectorMode === "regex"
         ? options.section === "all"
@@ -49,10 +53,12 @@ export async function countBatchInputsWithJobs(
           ? await wordCounterWithDetector(loaded.content, {
               ...options.wcOptions,
               detector: detectorMode,
+              detectorDebug,
             })
           : await countSectionsWithDetector(loaded.content, options.section, {
               ...options.wcOptions,
               detector: detectorMode,
+              detectorDebug,
             });
 
     if (!options.preserveCollectorSegments) {
@@ -66,6 +72,7 @@ export async function countBatchInputsWithJobs(
       file: {
         path: loaded.path,
         result,
+        ...(detectorDebug?.summary ? { debug: { detector: detectorDebug.summary } } : {}),
       },
     } satisfies CountBatchEntry;
   });

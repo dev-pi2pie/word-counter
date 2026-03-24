@@ -1,8 +1,9 @@
 import type { SectionMode } from "../../markdown";
 import type { DetectorWordCounterOptions } from "../../detector";
+import { createDetectorDebugSummary } from "../../detector/debug";
 import { appendAll } from "../../utils/append-all";
 import type wordCounter from "../../wc";
-import type { DebugChannel } from "../debug/channel";
+import type { DebugChannel, DebugEventOptions } from "../debug/channel";
 import { countBatchInputsWithJobs } from "./jobs/load-count";
 import {
   WorkerRouteUnavailableError,
@@ -22,6 +23,7 @@ type RunBatchCountOptions = {
   section: SectionMode;
   wcOptions: DetectorWordCounterOptions;
   preserveCollectorSegments: boolean;
+  detectorEvidence: boolean;
   debug: DebugChannel;
   progressReporter: BatchProgressReporter;
   jobs: number;
@@ -30,6 +32,50 @@ type RunBatchCountOptions = {
 };
 
 export async function runBatchCount(options: RunBatchCountOptions): Promise<BatchSummary> {
+  const detectorEvidence =
+    options.detectorEvidence
+      ? {
+          verbosity: options.debug.verbosity,
+          mode: options.wcOptions.mode ?? "chunk",
+          section: options.section,
+        }
+      : undefined;
+  const createFileDetectorDebugContext = ({ path }: { path: string }) =>
+    options.debug.enabled && options.wcOptions.detector === "wasm"
+      ? {
+          emit: (
+            event: string,
+            details?: Record<string, unknown>,
+            eventOptions?: DebugEventOptions,
+          ) =>
+            options.debug.emit(
+              event,
+              {
+                path,
+                ...details,
+              },
+              {
+                ...eventOptions,
+                scope: "file",
+              },
+            ),
+          summary: createDetectorDebugSummary("wasm"),
+          ...(detectorEvidence ? { evidence: detectorEvidence } : {}),
+        }
+      : undefined;
+  const emitWorkerDetectorDebugEvent =
+    options.debug.enabled
+      ? (
+          event: string,
+          details?: Record<string, unknown>,
+          eventOptions?: DebugEventOptions,
+        ) => {
+          options.debug.emit(event, details, {
+            ...eventOptions,
+            scope: "file",
+          });
+        }
+      : undefined;
   const batchStartedAtMs = Date.now();
   const resolveStartedAtMs = Date.now();
 
@@ -103,6 +149,9 @@ export async function runBatchCount(options: RunBatchCountOptions): Promise<Batc
           detectorMode: options.wcOptions.detector ?? "regex",
           wcOptions: options.wcOptions,
           preserveCollectorSegments: options.preserveCollectorSegments,
+          detectorEvidence: options.detectorEvidence,
+          debugVerbosity: options.debug.verbosity,
+          onDetectorDebugEvent: emitWorkerDetectorDebugEvent,
           onFileProcessed: (snapshot) => {
             if (progressEnabled) {
               options.progressReporter.advance(snapshot);
@@ -134,6 +183,9 @@ export async function runBatchCount(options: RunBatchCountOptions): Promise<Batc
           detectorMode: options.wcOptions.detector ?? "regex",
           wcOptions: options.wcOptions,
           preserveCollectorSegments: options.preserveCollectorSegments,
+          detectorEvidence: options.detectorEvidence,
+          debugVerbosity: options.debug.verbosity,
+          createDetectorDebugContext: createFileDetectorDebugContext,
           onFileProcessed: (snapshot) => {
             if (progressEnabled) {
               options.progressReporter.advance(snapshot);
@@ -148,6 +200,9 @@ export async function runBatchCount(options: RunBatchCountOptions): Promise<Batc
         detectorMode: options.wcOptions.detector ?? "regex",
         wcOptions: options.wcOptions,
         preserveCollectorSegments: options.preserveCollectorSegments,
+        detectorEvidence: options.detectorEvidence,
+        debugVerbosity: options.debug.verbosity,
+        createDetectorDebugContext: createFileDetectorDebugContext,
         onFileProcessed: (snapshot) => {
           if (progressEnabled) {
             options.progressReporter.advance(snapshot);

@@ -1,4 +1,5 @@
 import type { SectionedResult } from "../../markdown";
+import { mergeDetectorDebugSummaries } from "../../detector/debug";
 import { runBatchCount } from "../batch/run";
 import {
   clampRequestedJobs,
@@ -7,6 +8,7 @@ import {
 } from "../batch/jobs/limits";
 import { resolveBatchJobsStrategy } from "../batch/jobs/strategy";
 import type { DebugChannel } from "../debug/channel";
+import { buildDebugSection } from "../output/debug-json";
 import {
   getTotalLabels,
   isSectionedResult,
@@ -77,6 +79,7 @@ export async function executeBatchCount({
     section: options.section,
     wcOptions: resolved.wcOptions,
     preserveCollectorSegments: options.format === "json",
+    detectorEvidence: Boolean(options.detectorEvidence),
     debug,
     progressReporter: createBatchProgressReporter({
       enabled: options.format === "standard" && options.progress,
@@ -157,6 +160,9 @@ export async function executeBatchCount({
 
   if (options.format === "json") {
     const spacing = options.pretty ? 2 : 0;
+    const aggregateDetectorDebug = mergeDetectorDebugSummaries(
+      summary.files.map((file) => file.debug?.detector),
+    );
 
     if (batchOptions.scope === "per-file") {
       const skipped = showSkipDiagnostics ? summary.skipped : undefined;
@@ -164,6 +170,9 @@ export async function executeBatchCount({
         const base = {
           path: file.path,
           result: file.result,
+          ...(options.debug && file.debug
+            ? { debug: buildDebugSection({ detector: file.debug.detector }) }
+            : {}),
         };
 
         if (!resolved.totalOfParts || resolved.totalOfParts.length === 0) {
@@ -196,6 +205,14 @@ export async function executeBatchCount({
         scope: "per-file",
         files: fileEntries,
         ...(skipped ? { skipped } : {}),
+        ...(options.debug
+          ? {
+              debug: buildDebugSection({
+                skipped,
+                detector: aggregateDetectorDebug,
+              }),
+            }
+          : {}),
         aggregate: summary.aggregate,
         ...(meta ? { meta } : {}),
       };
@@ -204,7 +221,22 @@ export async function executeBatchCount({
     }
 
     if (!aggregateTotalOfOverride) {
-      console.log(JSON.stringify(summary.aggregate, null, spacing));
+      console.log(
+        JSON.stringify(
+          {
+            ...summary.aggregate,
+            ...(options.debug
+              ? {
+                  debug: buildDebugSection({
+                    detector: aggregateDetectorDebug,
+                  }),
+                }
+              : {}),
+          },
+          null,
+          spacing,
+        ),
+      );
       return;
     }
     console.log(
@@ -215,6 +247,13 @@ export async function executeBatchCount({
             totalOf: aggregateTotalOfOverride.parts,
             totalOfOverride: aggregateTotalOfOverride.total,
           },
+          ...(options.debug
+            ? {
+                debug: buildDebugSection({
+                  detector: aggregateDetectorDebug,
+                }),
+              }
+            : {}),
         },
         null,
         spacing,

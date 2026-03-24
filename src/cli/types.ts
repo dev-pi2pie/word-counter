@@ -1,4 +1,5 @@
 import type { SectionedResult } from "../markdown";
+import type { DetectorDebugSummary } from "../detector/debug";
 import type { WordCounterResult } from "../wc";
 
 export type BatchScope = "merged" | "per-file";
@@ -17,6 +18,9 @@ export type BatchFileInput = {
 export type BatchFileResult = {
   path: string;
   result: WordCounterResult | SectionedResult;
+  debug?: {
+    detector?: DetectorDebugSummary;
+  };
 };
 
 export type BatchOptions = {

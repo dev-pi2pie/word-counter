@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 import { Worker } from "node:worker_threads";
 import type { SectionMode } from "../../../markdown";
 import type { DetectorMode } from "../../../detector";
+import type { DetectorDebugVerbosity } from "../../../detector/debug";
 import type wordCounter from "../../../wc";
 import type { BatchProgressSnapshot } from "../../progress/reporter";
 import type { BatchFileResult, BatchSkip } from "../../types";
@@ -19,7 +20,15 @@ type CountBatchInputsWithWorkerPoolOptions = {
   detectorMode: DetectorMode;
   wcOptions: Parameters<typeof wordCounter>[1];
   preserveCollectorSegments: boolean;
+  detectorEvidence?: boolean;
+  debugVerbosity?: DetectorDebugVerbosity;
   onFileProcessed?: (snapshot: BatchProgressSnapshot) => void;
+  onDetectorDebugEvent?: (
+    event: string,
+    details?: Record<string, unknown>,
+    options?: { verbosity?: "compact" | "verbose" },
+  ) => void;
+  debugEnabled?: boolean;
 };
 
 export class WorkerPoolUnavailableError extends Error {}
@@ -80,7 +89,7 @@ function isWorkerResponseMessage(value: unknown): value is WorkerResponseMessage
   }
 
   const type = (value as { type?: unknown }).type;
-  return type === "result" || type === "fatal";
+  return type === "result" || type === "fatal" || type === "debug-event";
 }
 
 export async function countBatchInputsWithWorkerPool(
@@ -188,6 +197,9 @@ export async function countBatchInputsWithWorkerPool(
             detectorMode: options.detectorMode,
             wcOptions: options.wcOptions,
             preserveCollectorSegments: options.preserveCollectorSegments,
+            detectorEvidence: options.detectorEvidence,
+            debugVerbosity: options.debugVerbosity,
+            debugEnabled: options.debugEnabled,
           },
         });
       } catch (error) {
@@ -207,6 +219,28 @@ export async function countBatchInputsWithWorkerPool(
         const pending = pendingTasks.get(value.taskId);
         if (!pending) {
           void fail(new Error(`Worker protocol mismatch: unknown task id ${value.taskId}.`));
+          return;
+        }
+
+        if (value.type === "debug-event") {
+          if (value.index !== pending.index) {
+            void fail(
+              new Error(
+                `Worker protocol mismatch: task index mismatch for ${value.taskId} (expected ${pending.index}, got ${value.index}).`,
+              ),
+            );
+            return;
+          }
+          options.onDetectorDebugEvent?.(
+            value.event,
+            {
+              path: pending.path,
+              ...(value.details ?? {}),
+            },
+            {
+              verbosity: value.verbosity,
+            },
+          );
           return;
         }
 

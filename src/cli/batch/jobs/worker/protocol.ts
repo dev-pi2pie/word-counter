@@ -1,4 +1,5 @@
 import type { SectionMode, SectionedResult } from "../../../../markdown";
+import type { DetectorDebugSummary, DetectorDebugVerbosity } from "../../../../detector/debug";
 import type { DetectorMode } from "../../../../detector";
 import type { WordCounterOptions, WordCounterResult } from "../../../../wc";
 import type { BatchSkip } from "../../../types";
@@ -8,6 +9,9 @@ export type WorkerConfig = {
   detectorMode: DetectorMode;
   wcOptions: WordCounterOptions;
   preserveCollectorSegments: boolean;
+  detectorEvidence?: boolean;
+  debugVerbosity?: DetectorDebugVerbosity;
+  debugEnabled?: boolean;
 };
 
 export type WorkerTaskMessage = {
@@ -26,6 +30,9 @@ export type WorkerRequestMessage = WorkerTaskMessage | WorkerShutdownMessage;
 export type WorkerFileResultPayload = {
   path: string;
   result: WordCounterResult | SectionedResult;
+  debug?: {
+    detector?: DetectorDebugSummary;
+  };
 };
 
 export type WorkerTaskResultMessage = {
@@ -52,4 +59,16 @@ export type WorkerTaskFatalMessage = {
   message: string;
 };
 
-export type WorkerResponseMessage = WorkerTaskResultMessage | WorkerTaskFatalMessage;
+export type WorkerTaskDebugEventMessage = {
+  type: "debug-event";
+  taskId: number;
+  index: number;
+  event: string;
+  details?: Record<string, unknown>;
+  verbosity?: "compact" | "verbose";
+};
+
+export type WorkerResponseMessage =
+  | WorkerTaskResultMessage
+  | WorkerTaskFatalMessage
+  | WorkerTaskDebugEventMessage;
