@@ -2,7 +2,7 @@
 title: "wasm latin detector quality false positives"
 created-date: 2026-03-24
 modified-date: 2026-03-24
-status: draft
+status: in-progress
 agent: Codex
 ---
 
@@ -44,7 +44,7 @@ Document the follow-up quality issue where `--detector wasm` can still relabel o
   - stronger reliability requirements
   - technical-noise rejection heuristics
 - Use the global observability research to decide how detector decision data should be surfaced during this investigation.
-- Defer a dedicated implementation plan until the open questions below are answered well enough to choose one guardrail direction.
+- The follow-up implementation can now proceed through the combined phased plan in `docs/plans/plan-2026-03-24-debug-observability-and-wasm-latin-quality.md`.
 
 ## Recommended Resolution of Open Questions
 
@@ -76,6 +76,7 @@ Document the follow-up quality issue where `--detector wasm` can still relabel o
 ## Related Plans
 
 - `docs/plans/plan-2026-03-24-wasm-mode-latin-hint-ordering.md`
+- `docs/plans/plan-2026-03-24-debug-observability-and-wasm-latin-quality.md`
 
 ## Related Research
 

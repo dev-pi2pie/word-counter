@@ -2,7 +2,7 @@
 title: "global debug observability model"
 created-date: 2026-03-24
 modified-date: 2026-03-24
-status: draft
+status: in-progress
 agent: Codex
 ---
 
@@ -169,11 +169,8 @@ This model should not replace or duplicate the following:
 
 ## Research Sequencing
 
-- Keep this work in research mode until the contract questions are answered:
-  - whether debug-gated JSON should hang off `--debug --format json`
-  - whether per-file `skipped` should remain as-is or migrate behind a general `debug.*` shape
-  - what minimum event envelope fields are mandatory for all runtime traces
-- Once those questions are resolved, draft implementation plans as separate slices instead of one large umbrella plan:
+- The contract questions are now resolved well enough to move this work into implementation planning.
+- Once those questions are resolved, the implementation plan should still keep the work sliced into clear phases:
   - event-envelope normalization
   - single-input debug parity
   - detector observability adoption
@@ -200,17 +197,20 @@ This model should not replace or duplicate the following:
   - Adding schema versioning before more topics land is lower-risk than retrofitting many one-off event shapes later.
 - Treat top-level per-file `skipped` as a compatibility legacy shape, not the long-term debug JSON model.
   - Future normalized debug-gated JSON should hang off `debug.*`.
-  - Recommended future target shape is `debug.skipped` or `debug.batch.skipped`.
+  - Recommended future target shape is `debug.skipped`.
   - A later implementation plan can decide whether the migration uses dual-emission, deprecation notes, or a major contract transition.
 
 ## Future Schema Documentation Notes
 
 - Future implementation planning should include follow-up schema documentation work under `docs/schemas/`.
 - Recommended documentation split:
-  - one schema doc for JSONL runtime event-stream records
-  - one schema surface for debug-gated JSON result diagnostics
-- The JSON result diagnostics contract can either extend `docs/schemas/json-output-contract.md` or live in a companion schema doc if the material becomes too large.
+  - one dedicated schema doc for JSONL runtime event-stream records: `docs/schemas/debug-event-stream-contract.md`
+  - extend `docs/schemas/json-output-contract.md` for debug-gated JSON result diagnostics
 - Each future schema doc should include a short `Version History` section that records contract changes by version/date and compatibility notes, instead of relying only on front-matter `modified-date`.
+
+## Related Plans
+
+- `docs/plans/plan-2026-03-24-debug-observability-and-wasm-latin-quality.md`
 
 ## Related Research
 
