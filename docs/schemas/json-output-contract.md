@@ -1,7 +1,7 @@
 ---
 title: "JSON Output Contract"
 created-date: 2026-02-17
-modified-date: 2026-03-23
+modified-date: 2026-03-24
 status: completed
 agent: Codex
 ---
@@ -123,14 +123,30 @@ Compatibility note:
 - Top-level `meta.aggregateTotalOfOverride` is retained in per-file payloads.
 - Per-file `files[i].meta.totalOfOverride` is additive.
 
-### `--debug` (per-file batch mode)
+### `--debug` (debug-gated result diagnostics)
 
-When skip diagnostics are enabled (debug + not quiet skips), per-file payloads include `skipped`:
+Debug-gated result diagnostics use normalized `debug.*` placement.
+
+- Single input and merged batch may include `debug.detector` when detector summaries are available.
+- Per-file batch may include:
+  - `debug.skipped`
+  - `debug.detector`
+  - per-entry `files[i].debug.detector`
+
+Per-file compatibility behavior:
+
+- top-level `skipped` is retained temporarily for compatibility
+- normalized debug placement is `debug.skipped`
+
+Example:
 
 ```json
 {
   "scope": "per-file",
   "files": [],
+  "debug": {
+    "skipped": [{ "path": "/abs/path/x.bin", "reason": "binary content detected" }]
+  },
   "skipped": [{ "path": "/abs/path/x.bin", "reason": "binary content detected" }],
   "aggregate": { "total": 0 }
 }
@@ -141,55 +157,54 @@ When skip diagnostics are enabled (debug + not quiet skips), per-file payloads i
 When non-word collection is enabled, `counts` and non-word breakdown fields are present.
 Whitespace details appear when whitespace collection is enabled.
 
-### Detector Metadata (`--detector`)
+### Detector Debug Summaries (`--debug --detector wasm`)
 
-Detector-aware runs reserve `meta.detector` for detector-related metadata.
+Detector-aware debug JSON may include `debug.detector` summaries.
 
-Draft shape:
+Current summary shape:
 
 ```json
 {
-  "meta": {
+  "debug": {
     "detector": {
       "mode": "wasm",
-      "provenance": "per-item"
+      "engine": "whatlang-wasm",
+      "windowsTotal": 1,
+      "accepted": 1,
+      "fallback": 0
     }
   }
 }
 ```
 
-Draft per-item provenance:
-
-- chunk-style items may include `source`
-- allowed source values:
-  - `script`
-  - `hint`
-  - `wasm`
-
-Example (draft shape):
+Per-file batch entries may also carry per-file detector summaries:
 
 ```json
 {
-  "total": 13,
-  "breakdown": {
-    "mode": "chunk",
-    "items": [
-      { "locale": "en", "source": "wasm", "words": 13 }
-    ]
-  },
-  "meta": {
-    "detector": {
-      "mode": "wasm",
-      "provenance": "per-item"
+  "scope": "per-file",
+  "files": [
+    {
+      "path": "/abs/path/a.txt",
+      "result": { "total": 13 },
+      "debug": {
+        "detector": {
+          "mode": "wasm",
+          "engine": "whatlang-wasm",
+          "windowsTotal": 1,
+          "accepted": 1,
+          "fallback": 0
+        }
+      }
     }
-  }
+  ]
 }
 ```
 
 Notes:
 
-- Detector provenance is relevant only when detector-aware routes are enabled.
-- Aggregated collector-style outputs do not guarantee per-assignment provenance.
+- Detector debug summaries are debug-gated and additive.
+- Default non-debug JSON remains result-oriented.
+- Stable `meta.detector` metadata remains reserved for future additive contract work.
 
 ## Contract Rules
 
@@ -197,7 +212,19 @@ Notes:
 - `files` is present only for per-file batch payloads.
 - `aggregate` is present only for per-file batch payloads.
 - `meta` is optional and appears only when feature-specific metadata exists.
-- `skipped` is optional and debug-gated in per-file batch payloads.
+- `debug` is optional and appears only when debug-gated diagnostics exist.
+- `skipped` is optional and debug-gated in per-file batch payloads as a compatibility legacy field.
+
+## Version History
+
+- After `v0.1.5-canary.2`:
+  - added normalized debug-gated JSON diagnostics under `debug.*`
+  - added `debug.detector` summaries for detector-aware debug JSON
+  - added per-entry `files[i].debug.detector` in per-file batch JSON
+  - retained top-level `skipped` temporarily for compatibility while adding `debug.skipped`
+- `v0.1.5-canary.2` and earlier:
+  - per-file debug JSON used top-level `skipped` only
+  - no normalized `debug.*` contract was documented
 
 ## Related Docs
 

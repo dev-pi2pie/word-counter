@@ -3,6 +3,11 @@ import { segmentTextByLocale } from "../wc";
 import { resolveLocaleDetectContext } from "../wc/locale-detect";
 import type { LocaleChunk } from "../wc/types";
 import { buildWordCounterResultFromChunks } from "./result-builder";
+import {
+  recordDetectorAccepted,
+  recordDetectorFallback,
+  recordDetectorWindow,
+} from "./debug";
 import { countSectionsWithResolvedDetector } from "./sections";
 import {
   DETECTOR_ROUTE_POLICIES,
@@ -132,8 +137,29 @@ function buildDetectorWindows(chunks: LocaleChunk[]): DetectorWindow[] {
   return windows;
 }
 
-async function resolveWindowLocale(window: DetectorWindow): Promise<string> {
+async function resolveWindowLocale(
+  window: DetectorWindow,
+  debug?: DetectorLocaleOptions["detectorDebug"],
+): Promise<string> {
+  recordDetectorWindow(debug?.summary, window.routeTag);
+  debug?.emit?.(
+    "detector.window.start",
+    {
+      routeTag: window.routeTag,
+      startIndex: window.startIndex,
+      endIndex: window.endIndex,
+      textLength: window.text.length,
+    },
+    { verbosity: "verbose" },
+  );
+
   if (!shouldRunWasmDetector(window.text, window.routeTag)) {
+    recordDetectorFallback(debug?.summary, "notEligible");
+    debug?.emit?.("detector.window.fallback", {
+      routeTag: window.routeTag,
+      finalTag: window.routeTag,
+      reason: "notEligible",
+    });
     return window.routeTag;
   }
 
@@ -147,12 +173,41 @@ async function resolveWindowLocale(window: DetectorWindow): Promise<string> {
     normalizedSample.length > 0 && normalizedSample !== window.text
       ? await detectWithWhatlangWasm(normalizedSample, window.routeTag)
       : null;
+  debug?.emit?.(
+    "detector.window.sample",
+    {
+      routeTag: window.routeTag,
+      normalizedApplied: normalizedSample.length > 0 && normalizedSample !== window.text,
+      normalizedLength: normalizedSample.length,
+      qualityGate: passesLatinQualityGate,
+      rawTag: rawRemapped?.tag ?? null,
+      rawConfidence: rawRemapped?.confidence ?? null,
+      rawReliable: rawRemapped?.reliable ?? null,
+    },
+    { verbosity: "verbose" },
+  );
   const normalizedRemapped = normalizedResult
     ? remapWhatlangResult(normalizedResult, window.routeTag)
     : null;
+  debug?.emit?.(
+    "detector.window.candidates",
+    {
+      routeTag: window.routeTag,
+      normalizedTag: normalizedRemapped?.tag ?? null,
+      normalizedConfidence: normalizedRemapped?.confidence ?? null,
+      normalizedReliable: normalizedRemapped?.reliable ?? null,
+    },
+    { verbosity: "verbose" },
+  );
 
   const candidates = [rawRemapped, normalizedRemapped].filter((value) => value !== null);
   if (candidates.length === 0) {
+    recordDetectorFallback(debug?.summary, "noCandidate");
+    debug?.emit?.("detector.window.fallback", {
+      routeTag: window.routeTag,
+      finalTag: getDetectorFallbackTag(window.routeTag),
+      reason: "noCandidate",
+    });
     return getDetectorFallbackTag(window.routeTag);
   }
 
@@ -172,6 +227,14 @@ async function resolveWindowLocale(window: DetectorWindow): Promise<string> {
       strongestCandidate.reliable,
     )
   ) {
+    recordDetectorAccepted(debug?.summary, "reliable");
+    debug?.emit?.("detector.window.accepted", {
+      routeTag: window.routeTag,
+      finalTag: strongestCandidate.tag,
+      acceptancePath: "reliable",
+      confidence: strongestCandidate.confidence ?? null,
+      reliable: strongestCandidate.reliable ?? null,
+    });
     return strongestCandidate.tag;
   }
 
@@ -192,10 +255,34 @@ async function resolveWindowLocale(window: DetectorWindow): Promise<string> {
       hasReliableCorroboration &&
       corroboratedConfidence >= LATIN_WASM_CORROBORATED_MIN_CONFIDENCE
     ) {
+      recordDetectorAccepted(debug?.summary, "corroborated");
+      debug?.emit?.("detector.window.accepted", {
+        routeTag: window.routeTag,
+        finalTag: rawRemapped.tag,
+        acceptancePath: "corroborated",
+        confidence: corroboratedConfidence,
+        reliable: hasReliableCorroboration,
+      });
       return rawRemapped.tag;
+    }
+
+    if (!hasReliableCorroboration && corroboratedConfidence >= LATIN_WASM_CORROBORATED_MIN_CONFIDENCE) {
+      recordDetectorFallback(debug?.summary, "corroborationUnreliable");
+      debug?.emit?.("detector.window.fallback", {
+        routeTag: window.routeTag,
+        finalTag: getDetectorFallbackTag(window.routeTag),
+        reason: "corroborationUnreliable",
+      });
+      return getDetectorFallbackTag(window.routeTag);
     }
   }
 
+  recordDetectorFallback(debug?.summary, passesLatinQualityGate ? "belowThreshold" : "qualityGate");
+  debug?.emit?.("detector.window.fallback", {
+    routeTag: window.routeTag,
+    finalTag: getDetectorFallbackTag(window.routeTag),
+    reason: passesLatinQualityGate ? "belowThreshold" : "qualityGate",
+  });
   return getDetectorFallbackTag(window.routeTag);
 }
 
@@ -214,7 +301,7 @@ export async function segmentTextByLocaleWithWasmDetector(
   const windows = buildDetectorWindows(chunks);
 
   for (const window of windows) {
-    const resolvedLocale = await resolveWindowLocale(window);
+    const resolvedLocale = await resolveWindowLocale(window, options.detectorDebug);
     for (let index = window.startIndex; index <= window.endIndex; index += 1) {
       const chunk = resolved[index];
       if (!chunk) {
@@ -227,6 +314,9 @@ export async function segmentTextByLocaleWithWasmDetector(
     }
   }
 
+  options.detectorDebug?.emit?.("detector.summary", options.detectorDebug.summary, {
+    verbosity: "compact",
+  });
   return reapplyDeferredLatinFallback(resolved, options);
 }
 

@@ -3,10 +3,12 @@ import { basename, dirname, extname, join, resolve as resolvePath } from "node:p
 
 type DebugDetails = Record<string, unknown>;
 export type DebugVerbosity = "compact" | "verbose";
+export type DebugEventScope = "run" | "file";
 const DEBUG_EVENT_SCHEMA_VERSION = 1;
 
-type DebugEventOptions = {
+export type DebugEventOptions = {
   verbosity?: DebugVerbosity;
+  scope?: DebugEventScope;
 };
 
 type DebugReportOptions = {
@@ -76,7 +78,7 @@ const FILE_SCOPED_EVENT_PATTERNS = [
   /^path\.resolve\.dedupe\.(accept|duplicate)$/,
 ];
 
-function inferEventScope(event: string): string {
+function inferEventScope(event: string): DebugEventScope {
   return FILE_SCOPED_EVENT_PATTERNS.some((pattern) => pattern.test(event)) ? "file" : "run";
 }
 
@@ -207,7 +209,7 @@ export function createDebugChannel(options: CreateDebugChannelOptions): DebugCha
         timestamp,
         runId,
         topic: inferEventTopic(event),
-        scope: inferEventScope(event),
+        scope: eventOptions.scope ?? inferEventScope(event),
         event,
         verbosity: eventVerbosity,
         ...details,

@@ -130,6 +130,7 @@ export async function runCli(
           textTokens,
           options,
           resolved,
+          debug,
         });
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);

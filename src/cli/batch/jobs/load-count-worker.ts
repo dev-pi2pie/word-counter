@@ -95,6 +95,8 @@ export async function countBatchInputsWithWorkerJobs(
       wcOptions: options.wcOptions,
       preserveCollectorSegments: options.preserveCollectorSegments,
       onFileProcessed: options.onFileProcessed,
+      onDetectorDebugEvent: options.onDetectorDebugEvent,
+      debugEnabled: options.onDetectorDebugEvent !== undefined,
     });
   } catch (error) {
     if (error instanceof workerPoolModule.WorkerPoolTaskFatalError) {

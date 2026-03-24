@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import { parentPort, workerData } from "node:worker_threads";
 import { countSections } from "../../../../markdown";
 import { countSectionsWithDetector, wordCounterWithDetector } from "../../../../detector";
+import { createDetectorDebugSummary } from "../../../../detector/debug";
 import wordCounter from "../../../../wc";
 import { compactCollectorSegmentsInCountResult } from "../../aggregate";
 import { isProbablyBinary } from "../../../path/load";
@@ -77,6 +78,27 @@ parentPort.on("message", async (message: WorkerRequestMessage) => {
 
   try {
     const content = buffer.toString("utf8");
+    const detectorDebug =
+      config.detectorMode === "wasm" && config.debugEnabled
+        ? {
+            emit: (
+              event: string,
+              details?: Record<string, unknown>,
+              options?: { verbosity?: "compact" | "verbose" },
+            ) => {
+              const debugEvent: WorkerResponseMessage = {
+                type: "debug-event",
+                taskId: message.taskId,
+                index: message.index,
+                event,
+                details,
+                verbosity: options?.verbosity,
+              };
+              parentPort?.postMessage(debugEvent);
+            },
+            summary: createDetectorDebugSummary(config.detectorMode),
+          }
+        : undefined;
     const result =
       config.detectorMode === "regex"
         ? config.section === "all"
@@ -86,10 +108,12 @@ parentPort.on("message", async (message: WorkerRequestMessage) => {
           ? await wordCounterWithDetector(content, {
               ...config.wcOptions,
               detector: config.detectorMode,
+              detectorDebug,
             })
           : await countSectionsWithDetector(content, config.section, {
               ...config.wcOptions,
               detector: config.detectorMode,
+              detectorDebug,
             });
 
     if (!config.preserveCollectorSegments) {
@@ -105,6 +129,7 @@ parentPort.on("message", async (message: WorkerRequestMessage) => {
         file: {
           path,
           result,
+          ...(detectorDebug?.summary ? { debug: { detector: detectorDebug.summary } } : {}),
         },
       },
     };

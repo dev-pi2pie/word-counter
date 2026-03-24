@@ -20,6 +20,12 @@ type CountBatchInputsWithWorkerPoolOptions = {
   wcOptions: Parameters<typeof wordCounter>[1];
   preserveCollectorSegments: boolean;
   onFileProcessed?: (snapshot: BatchProgressSnapshot) => void;
+  onDetectorDebugEvent?: (
+    event: string,
+    details?: Record<string, unknown>,
+    options?: { verbosity?: "compact" | "verbose" },
+  ) => void;
+  debugEnabled?: boolean;
 };
 
 export class WorkerPoolUnavailableError extends Error {}
@@ -80,7 +86,7 @@ function isWorkerResponseMessage(value: unknown): value is WorkerResponseMessage
   }
 
   const type = (value as { type?: unknown }).type;
-  return type === "result" || type === "fatal";
+  return type === "result" || type === "fatal" || type === "debug-event";
 }
 
 export async function countBatchInputsWithWorkerPool(
@@ -188,6 +194,7 @@ export async function countBatchInputsWithWorkerPool(
             detectorMode: options.detectorMode,
             wcOptions: options.wcOptions,
             preserveCollectorSegments: options.preserveCollectorSegments,
+            debugEnabled: options.debugEnabled,
           },
         });
       } catch (error) {
@@ -207,6 +214,28 @@ export async function countBatchInputsWithWorkerPool(
         const pending = pendingTasks.get(value.taskId);
         if (!pending) {
           void fail(new Error(`Worker protocol mismatch: unknown task id ${value.taskId}.`));
+          return;
+        }
+
+        if (value.type === "debug-event") {
+          if (value.index !== pending.index) {
+            void fail(
+              new Error(
+                `Worker protocol mismatch: task index mismatch for ${value.taskId} (expected ${pending.index}, got ${value.index}).`,
+              ),
+            );
+            return;
+          }
+          options.onDetectorDebugEvent?.(
+            value.event,
+            {
+              path: pending.path,
+              ...(value.details ?? {}),
+            },
+            {
+              verbosity: value.verbosity,
+            },
+          );
           return;
         }
 

@@ -267,6 +267,58 @@ describe("detector mode", () => {
     expect(parsed.breakdown.items[0]?.locale).toBe("fr");
   });
 
+  test("emits runtime and detector debug events for single-input wasm runs", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const output = await captureCli([
+      "--detector",
+      "wasm",
+      "--format",
+      "raw",
+      "--debug",
+      "--verbose",
+      "This sentence should clearly be detected as English for the wasm detector path.",
+    ]);
+
+    const eventNames = listDebugEventNames(output.stderr);
+    expect(eventNames.includes("runtime.single.start")).toBeTrue();
+    expect(eventNames.includes("runtime.single.complete")).toBeTrue();
+    expect(eventNames.includes("detector.window.start")).toBeTrue();
+    expect(eventNames.includes("detector.window.accepted")).toBeTrue();
+    expect(eventNames.includes("detector.summary")).toBeTrue();
+  });
+
+  test("adds debug detector summary to single-input json only when --debug is enabled", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const baseOutput = await captureCli([
+      "--detector",
+      "wasm",
+      "--format",
+      "json",
+      "This sentence should clearly be detected as English for the wasm detector path.",
+    ]);
+    const baseParsed = JSON.parse(baseOutput.stdout[0] ?? "{}");
+    expect(baseParsed.debug).toBeUndefined();
+
+    const debugOutput = await captureCli([
+      "--detector",
+      "wasm",
+      "--format",
+      "json",
+      "--debug",
+      "This sentence should clearly be detected as English for the wasm detector path.",
+    ]);
+    const debugParsed = JSON.parse(debugOutput.stdout[0] ?? "{}");
+    expect(debugParsed.debug?.detector?.mode).toBe("wasm");
+    expect(debugParsed.debug?.detector?.engine).toBe("whatlang-wasm");
+    expect(debugParsed.debug?.detector?.windowsTotal).toBeGreaterThanOrEqual(1);
+  });
+
   test("rejects invalid detector mode values", () => {
     const result = spawnSync(
       process.execPath,
@@ -519,6 +571,139 @@ describe("CLI batch output", () => {
     ]);
     const debugParsed = JSON.parse(debugOutput.stdout[0] ?? "{}");
     expect(Array.isArray(debugParsed.skipped)).toBeTrue();
+    expect(Array.isArray(debugParsed.debug?.skipped)).toBeTrue();
+    expect(debugParsed.debug?.skipped).toEqual(debugParsed.skipped);
+  });
+
+  test("adds detector debug summaries to per-file json and keeps parity across jobs routes", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const root = await makeTempFixture("cli-json-detector-debug-summaries");
+    await writeFile(
+      join(root, "a.txt"),
+      "This sentence should clearly be detected as English for the wasm detector path.",
+    );
+    await writeFile(
+      join(root, "b.txt"),
+      "Ceci est une phrase francaise suffisamment longue pour que le detecteur identifie correctement la langue.",
+    );
+
+    const noJobs = await captureCli([
+      "--path",
+      root,
+      "--per-file",
+      "--format",
+      "json",
+      "--debug",
+      "--detector",
+      "wasm",
+    ]);
+    const jobsFour = await captureCli([
+      "--path",
+      root,
+      "--per-file",
+      "--format",
+      "json",
+      "--debug",
+      "--detector",
+      "wasm",
+      "--jobs",
+      "4",
+    ]);
+
+    const noJobsParsed = JSON.parse(noJobs.stdout[0] ?? "{}");
+    const jobsFourParsed = JSON.parse(jobsFour.stdout[0] ?? "{}");
+
+    expect(noJobsParsed.debug?.detector?.mode).toBe("wasm");
+    expect(jobsFourParsed.debug?.detector?.mode).toBe("wasm");
+    expect(noJobsParsed.files.every((file: { debug?: { detector?: { windowsTotal?: number } } }) =>
+      (file.debug?.detector?.windowsTotal ?? 0) >= 1)).toBeTrue();
+    expect(jobsFourParsed.files.every((file: { debug?: { detector?: { windowsTotal?: number } } }) =>
+      (file.debug?.detector?.windowsTotal ?? 0) >= 1)).toBeTrue();
+    expect(noJobsParsed.debug.detector.windowsTotal).toBe(jobsFourParsed.debug.detector.windowsTotal);
+  });
+
+  test("forwards detector debug events from worker batch runs", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const root = await makeTempFixture("cli-worker-detector-debug-events");
+    await writeFile(
+      join(root, "a.txt"),
+      "This sentence should clearly be detected as English for the wasm detector path.",
+    );
+    await writeFile(
+      join(root, "b.txt"),
+      "Ceci est une phrase francaise suffisamment longue pour que le detecteur identifie correctement la langue.",
+    );
+
+    const output = await captureCli([
+      "--path",
+      root,
+      "--format",
+      "raw",
+      "--debug",
+      "--verbose",
+      "--detector",
+      "wasm",
+      "--jobs",
+      "4",
+    ]);
+
+    const eventNames = listDebugEventNames(output.stderr);
+    expect(eventNames.includes("detector.window.start")).toBeTrue();
+    expect(eventNames.includes("detector.window.accepted")).toBeTrue();
+    expect(eventNames.includes("detector.summary")).toBeTrue();
+  });
+
+  test("marks batch detector debug events as file-scoped across executors", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const root = await makeTempFixture("cli-batch-detector-event-scope");
+    await writeFile(
+      join(root, "a.txt"),
+      "This sentence should clearly be detected as English for the wasm detector path.",
+    );
+    await writeFile(
+      join(root, "b.txt"),
+      "Ceci est une phrase francaise suffisamment longue pour que le detecteur identifie correctement la langue.",
+    );
+
+    const asyncOutput = await captureCli([
+      "--path",
+      root,
+      "--format",
+      "raw",
+      "--debug",
+      "--verbose",
+      "--detector",
+      "wasm",
+    ]);
+    const workerOutput = await captureCli([
+      "--path",
+      root,
+      "--format",
+      "raw",
+      "--debug",
+      "--verbose",
+      "--detector",
+      "wasm",
+      "--jobs",
+      "4",
+    ]);
+
+    for (const output of [asyncOutput, workerOutput]) {
+      const detectorEvents = parseDebugEvents(output.stderr).filter((item) => item.topic === "detector");
+      expect(detectorEvents.length > 0).toBeTrue();
+      expect(
+        detectorEvents.every((item) => item.scope === "file" && typeof item.path === "string"),
+      ).toBeTrue();
+    }
   });
 
   test("does not double count overlapping path inputs", async () => {
@@ -865,6 +1050,41 @@ describe("CLI batch output", () => {
     expect(outcome.result.files.length).toBe(0);
     expect(outcome.result.skipped.length).toBe(0);
     throw new Error("Expected worker route to fail for invalid language tag.");
+  });
+
+  test("does not attach detector debug summaries in worker route without debug callback", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const root = await makeTempFixture("cli-jobs-worker-no-detector-debug");
+    const filePath = join(root, "a.txt");
+    await writeFile(
+      filePath,
+      "This sentence should clearly be detected as English for the wasm detector path.",
+    );
+
+    const outcome = await countBatchInputsWithWorkerJobs([filePath], {
+      jobs: 4,
+      section: "all",
+      detectorMode: "wasm",
+      wcOptions: {
+        mode: "chunk",
+      },
+      preserveCollectorSegments: false,
+    })
+      .then((result) => ({ result }))
+      .catch((error: unknown) => ({ error }));
+
+    if ("error" in outcome) {
+      if (outcome.error instanceof WorkerRouteUnavailableError) {
+        return;
+      }
+
+      throw outcome.error;
+    }
+
+    expect(outcome.result.files[0]?.debug).toBeUndefined();
   });
 
   test("emits advisory warning when requested --jobs exceeds suggested limit", async () => {

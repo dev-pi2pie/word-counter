@@ -1,6 +1,7 @@
 import type { SectionedResult, SectionMode } from "../markdown";
 import type { LocaleDetectOptions } from "../wc/locale-detect";
 import type { WordCounterOptions, WordCounterResult } from "../wc/types";
+import type { DetectorDebugContext } from "./debug";
 
 export type DetectorMode = "regex" | "wasm";
 
@@ -15,6 +16,7 @@ export interface DetectorResult {
 
 export interface DetectorRuntimeOptions {
   detector?: DetectorMode;
+  detectorDebug?: DetectorDebugContext;
 }
 
 export interface DetectorLocaleOptions extends LocaleDetectOptions, DetectorRuntimeOptions {}
