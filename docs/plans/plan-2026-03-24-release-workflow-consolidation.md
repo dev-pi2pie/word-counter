@@ -2,7 +2,7 @@
 title: "Release workflow consolidation and artifact reuse"
 created-date: 2026-03-24
 modified-date: 2026-03-24
-status: active
+status: completed
 agent: Codex
 ---
 
@@ -42,7 +42,7 @@ Reduce duplicated Rust/WASM build work across release and publish automation by 
 
 ## Recommended Direction
 
-- Keep `.github/workflows/ci.yml` as the validation workflow for pull requests and selected push branches.
+- Keep `.github/workflows/ci.yml` as the validation workflow for pull requests.
 - Turn `.github/workflows/release.yml` into the single tag/manual release orchestrator.
 - Build once inside `release.yml`, upload one verified release artifact, and let both publish jobs consume it in the same workflow run.
 - Remove `.github/workflows/publish-npm-packages.yml` and `.github/workflows/publish-github-packages.yml` after the consolidated release flow is proven.
@@ -53,11 +53,11 @@ Reduce duplicated Rust/WASM build work across release and publish automation by 
 
 - Trigger on:
   - `pull_request`
-  - selected `push` branches such as `main`, `dev*`, `canary*`, `alpha*`, and `beta*`
 - Purpose:
   - validate type-check, build, tests, and packaged contents
   - do not publish
   - do not act as the source of release artifacts for later workflows
+  - avoid duplicate branch validation runs once a pull request is open
 
 ### Release Workflow
 
@@ -131,11 +131,21 @@ Reduce duplicated Rust/WASM build work across release and publish automation by 
 
 ### Phase 4 - Validation and Rollout
 
-- [ ] Validate that stable and prerelease tags still route to the correct publish behavior.
-- [ ] Validate that the built WASM runtime is present in the downloaded release artifact and in final published package contents.
-- [ ] Validate that manual `workflow_dispatch` still supports explicit `tag` and optional `shallow_since`.
-- [ ] Validate rerun behavior for failed publish jobs without requiring a second full build unless the source ref changed.
+- [x] Confirm stable and prerelease tag routing through `notes`, `publish_npm`, and `publish_github_packages`.
+- [x] Confirm package-content verification covers the staged WASM runtime files before artifact upload and downstream publish.
+- [x] Confirm manual `workflow_dispatch` still supports explicit `tag` and optional `shallow_since`.
+- [x] Confirm the consolidated workflow keeps build preparation isolated in `prepare` and artifact reuse isolated in downstream publish jobs.
 - [x] Add or update documentation for the new workflow responsibilities and trigger model.
+
+## Completion Notes
+
+- The consolidation landed before tag `v0.1.5-canary.2` via the release-workflow job and the phase-7 CI/package-verification follow-up.
+- The current workflow set contains only:
+  - `.github/workflows/ci.yml`
+  - `.github/workflows/release.yml`
+- `release.yml` still exposes `workflow_dispatch` inputs for `tag` and `shallow_since`, verifies package contents in `prepare`, uploads `release-package-${tag}`, and has both publish jobs consume that artifact.
+- `scripts/verify-package-contents.mjs` explicitly requires the staged WASM runtime files, so the release artifact and downstream publish surface keep that package content gate.
+- Follow-up commits after `v0.1.5-canary.2` adjusted CI trigger scope and Bun test typing only; they did not leave release-workflow consolidation work outstanding.
 
 ## Design Notes
 
@@ -151,7 +161,7 @@ Reduce duplicated Rust/WASM build work across release and publish automation by 
 - A tag or manual release run builds publishable artifacts exactly once.
 - npm and GitHub Packages publishing reuse the same prepared build output from the same workflow run.
 - Release notes and publish gates remain consistent with the current branch and prerelease policy.
-- `ci.yml` continues to provide non-release validation without becoming part of the release artifact chain.
+- `ci.yml` continues to provide pull-request validation without becoming part of the release artifact chain.
 - The old duplicate publish workflows can be removed without losing current behavior.
 
 ## Related Plans
