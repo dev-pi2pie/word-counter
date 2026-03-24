@@ -1,5 +1,6 @@
 import { DEFAULT_HAN_TAG, DEFAULT_LOCALE } from "../wc/locale-detect";
 import { segmentTextByLocale } from "../wc";
+import { resolveLocaleDetectContext } from "../wc/locale-detect";
 import type { LocaleChunk } from "../wc/types";
 import { buildWordCounterResultFromChunks } from "./result-builder";
 import { countSectionsWithResolvedDetector } from "./sections";
@@ -18,6 +19,62 @@ import type {
   DetectorLocaleOptions,
   DetectorWordCounterOptions,
 } from "./types";
+
+function createDeferredLatinPreSegmentOptions(
+  options: DetectorLocaleOptions,
+): DetectorLocaleOptions {
+  return {
+    ...options,
+    latinLanguageHint: undefined,
+    latinTagHint: undefined,
+    latinLocaleHint: undefined,
+    latinHintRules: undefined,
+    useDefaultLatinHints: false,
+  };
+}
+
+function mergeAdjacentChunks(chunks: LocaleChunk[]): LocaleChunk[] {
+  if (chunks.length === 0) {
+    return chunks;
+  }
+
+  const merged: LocaleChunk[] = [];
+  let last = chunks[0]!;
+
+  for (let index = 1; index < chunks.length; index += 1) {
+    const chunk = chunks[index]!;
+    if (chunk.locale === last.locale) {
+      last = {
+        locale: last.locale,
+        text: last.text + chunk.text,
+      };
+      continue;
+    }
+    merged.push(last);
+    last = chunk;
+  }
+
+  merged.push(last);
+  return merged;
+}
+
+function reapplyDeferredLatinFallback(
+  chunks: LocaleChunk[],
+  options: DetectorLocaleOptions,
+): LocaleChunk[] {
+  const relabeled: LocaleChunk[] = [];
+
+  for (const chunk of chunks) {
+    if (chunk.locale !== DEFAULT_LOCALE) {
+      relabeled.push(chunk);
+      continue;
+    }
+
+    relabeled.push(...segmentTextByLocale(chunk.text, options));
+  }
+
+  return mergeAdjacentChunks(relabeled);
+}
 
 function shouldAcceptDetectorTag(
   routeTag: DetectorRouteTag,
@@ -138,7 +195,11 @@ export async function segmentTextByLocaleWithWasmDetector(
   text: string,
   options: DetectorLocaleOptions = {},
 ) {
-  const chunks = segmentTextByLocale(text, options);
+  // Validate the original hint configuration up front even though Latin hinting
+  // is deferred until after detector routing in WASM mode.
+  resolveLocaleDetectContext(options);
+
+  const chunks = segmentTextByLocale(text, createDeferredLatinPreSegmentOptions(options));
   const resolved = [...chunks];
   const windows = buildDetectorWindows(chunks);
 
@@ -156,7 +217,7 @@ export async function segmentTextByLocaleWithWasmDetector(
     }
   }
 
-  return resolved;
+  return reapplyDeferredLatinFallback(resolved, options);
 }
 
 export async function wordCounterWithWasmDetector(

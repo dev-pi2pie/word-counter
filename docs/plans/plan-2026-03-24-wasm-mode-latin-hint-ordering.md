@@ -2,7 +2,7 @@
 title: "WASM mode Latin hint ordering fix"
 created-date: 2026-03-24
 modified-date: 2026-03-24
-status: draft
+status: completed
 agent: Codex
 ---
 
@@ -53,45 +53,45 @@ Issue linkage:
 
 ### Phase 1 - WASM Pre-Segmentation Boundary
 
-- [ ] Introduce a WASM-specific locale-detect option path that suppresses explicit and rule-based Latin hint relabeling during the initial `segmentTextByLocale()` pass.
-- [ ] Keep ambiguous Latin text on `und-Latn` during the initial WASM segmentation path so detector eligibility is preserved.
-- [ ] Keep detector window construction and accepted remap behavior unchanged for eligible `und-Latn` and `und-Hani` routes.
+- [x] Introduce a WASM-specific locale-detect option path that suppresses explicit and rule-based Latin hint relabeling during the initial `segmentTextByLocale()` pass.
+- [x] Keep ambiguous Latin text on `und-Latn` during the initial WASM segmentation path so detector eligibility is preserved.
+- [x] Keep detector window construction and accepted remap behavior unchanged for eligible `und-Latn` and `und-Hani` routes.
 
 ### Phase 2 - Post-Detector Fallback Relabeling
 
-- [ ] Add a post-detector fallback pass that relabels only unresolved `und-Latn` chunks using the existing Latin hint semantics.
-- [ ] Ensure custom and built-in Latin hint rules are applied after detector acceptance or rejection, not before detector routing.
-- [ ] Ensure explicit Latin fallback options are applied after detector acceptance or rejection, not before detector routing.
-- [ ] Preserve the existing explicit Latin fallback precedence `latinTagHint` > `latinLanguageHint` > `latinLocaleHint` in the WASM fallback path.
+- [x] Add a post-detector fallback pass that relabels only unresolved `und-Latn` chunks using the existing Latin hint semantics.
+- [x] Ensure custom and built-in Latin hint rules are applied after detector acceptance or rejection, not before detector routing.
+- [x] Ensure explicit Latin fallback options are applied after detector acceptance or rejection, not before detector routing.
+- [x] Preserve the existing explicit Latin fallback precedence `latinTagHint` > `latinLanguageHint` > `latinLocaleHint` in the WASM fallback path.
 
 ### Phase 3 - Compatibility Guards
 
-- [ ] Keep regex mode behavior unchanged.
-- [ ] Keep explicit Han hint behavior unchanged unless the same implementation path proves a correction is required.
-- [ ] Keep public output schemas and detector remap thresholds unchanged.
-- [ ] Keep existing Latin hint rule priority and definition-order semantics unchanged in the fallback path.
+- [x] Keep regex mode behavior unchanged.
+- [x] Keep explicit Han hint behavior unchanged unless the same implementation path proves a correction is required.
+- [x] Keep public output schemas and detector remap thresholds unchanged.
+- [x] Keep existing Latin hint rule priority and definition-order semantics unchanged in the fallback path.
 
 ### Phase 4 - Regression Coverage
 
-- [ ] Add tests proving `--detector wasm --latin-tag en` does not suppress detector-derived locales for otherwise eligible ambiguous Latin text.
-- [ ] Add tests proving unresolved ambiguous Latin still respects `latinTagHint` after detector evaluation.
-- [ ] Add tests proving unresolved ambiguous Latin in WASM mode still preserves explicit hint precedence `latinTagHint` > `latinLanguageHint` > `latinLocaleHint`.
-- [ ] Add tests proving custom and built-in Latin hint rules are deferred until after detector evaluation in WASM mode.
-- [ ] Add a regression test for stable totals using the reported README reproduction or a narrower fixture that captures the same failure mode.
+- [x] Add tests proving `--detector wasm --latin-tag en` does not suppress detector-derived locales for otherwise eligible ambiguous Latin text.
+- [x] Add tests proving unresolved ambiguous Latin still respects `latinTagHint` after detector evaluation.
+- [x] Add tests proving unresolved ambiguous Latin in WASM mode still preserves explicit hint precedence `latinTagHint` > `latinLanguageHint` > `latinLocaleHint`.
+- [x] Add tests proving custom and built-in Latin hint rules are deferred until after detector evaluation in WASM mode.
+- [x] Add a regression test for stable totals using the reported README reproduction or a narrower fixture that captures the same failure mode.
 
 ### Phase 5 - Documentation and Closure
 
-- [ ] Update README detector notes to clarify hint ordering in WASM mode.
-- [ ] Add a completion job record under `docs/plans/jobs/` after implementation lands.
+- [x] Update README detector notes to clarify hint ordering in WASM mode.
+- [x] Add a completion job record under `docs/plans/jobs/` after implementation lands.
 
 ## Compatibility Gates
 
-- [ ] `--detector regex` behavior remains unchanged.
-- [ ] `--latin-tag`, `--latin-language`, and `--latin-locale` remain available in the public API and CLI.
-- [ ] Explicit Latin hint precedence remains `latinTagHint` > `latinLanguageHint` > `latinLocaleHint`.
-- [ ] Existing Latin hint rule priority and definition-order semantics remain unchanged.
-- [ ] `--detector wasm` keeps existing remap thresholds and accepted tag mappings unless a separate change is explicitly planned.
-- [ ] JSON and standard output contracts remain unchanged.
+- [x] `--detector regex` behavior remains unchanged.
+- [x] `--latin-tag`, `--latin-language`, and `--latin-locale` remain available in the public API and CLI.
+- [x] Explicit Latin hint precedence remains `latinTagHint` > `latinLanguageHint` > `latinLocaleHint`.
+- [x] Existing Latin hint rule priority and definition-order semantics remain unchanged.
+- [x] `--detector wasm` keeps existing remap thresholds and accepted tag mappings unless a separate change is explicitly planned.
+- [x] JSON and standard output contracts remain unchanged.
 
 ## Validation
 

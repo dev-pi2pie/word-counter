@@ -149,6 +149,65 @@ describe("detector entrypoint", () => {
     expect(result.breakdown.items[0]?.locale).toBe("und-Latn");
   });
 
+  test("does not let latinTagHint suppress detector-derived locales in wasm mode", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const sample =
+      "Ceci est une phrase francaise suffisamment longue pour que le detecteur identifie correctement la langue.";
+    const baseline = await wordCounterWithDetector(sample, { detector: "wasm" });
+    const hinted = await wordCounterWithDetector(sample, {
+      detector: "wasm",
+      latinTagHint: "en",
+    });
+
+    expect(baseline.breakdown.mode).toBe("chunk");
+    expect(hinted.breakdown.mode).toBe("chunk");
+    expect(baseline.breakdown.items[0]?.locale).toBe("fr");
+    expect(hinted.breakdown.items[0]?.locale).toBe("fr");
+    expect(hinted.total).toBe(baseline.total);
+  });
+
+  test("reapplies latinTagHint after unresolved wasm detector evaluation", async () => {
+    const chunks = await segmentTextByLocaleWithDetector("Hello world", {
+      detector: "wasm",
+      latinTagHint: "en",
+    });
+
+    expect(chunks.map((chunk) => chunk.locale)).toEqual(["en"]);
+  });
+
+  test("preserves explicit Latin hint precedence after unresolved wasm detector evaluation", async () => {
+    const chunks = await segmentTextByLocaleWithDetector("Hello world", {
+      detector: "wasm",
+      latinLocaleHint: "en",
+      latinLanguageHint: "fr",
+      latinTagHint: "de",
+    });
+
+    expect(chunks.map((chunk) => chunk.locale)).toEqual(["de"]);
+  });
+
+  test("reapplies built-in Latin hint rules after unresolved wasm detector evaluation", async () => {
+    const chunks = await segmentTextByLocaleWithDetector("el niño", {
+      detector: "wasm",
+    });
+
+    expect(chunks.map((chunk) => chunk.locale)).toEqual(["und-Latn", "es"]);
+    expect(chunks.map((chunk) => chunk.text)).toEqual(["el ", "niño"]);
+  });
+
+  test("reapplies custom Latin hint rules after unresolved wasm detector evaluation", async () => {
+    const chunks = await segmentTextByLocaleWithDetector("Zażółć gęślą jaźń", {
+      detector: "wasm",
+      latinHintRules: [{ tag: "pl", pattern: "[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]" }],
+      useDefaultLatinHints: false,
+    });
+
+    expect(chunks.map((chunk) => chunk.locale)).toEqual(["pl"]);
+  });
+
   test("segments text through detector entrypoint", async () => {
     const chunks = await segmentTextByLocaleWithDetector("Hello 世界", { detector: "regex" });
 

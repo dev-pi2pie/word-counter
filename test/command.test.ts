@@ -246,6 +246,27 @@ describe("detector mode", () => {
     expect(parsed.breakdown.items[0]?.locale).toBe("en");
   });
 
+  test("keeps detector-derived locale when latin tag hint is set in wasm mode", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const output = await captureCli([
+      "--detector",
+      "wasm",
+      "--latin-tag",
+      "en",
+      "--format",
+      "json",
+      "Ceci est une phrase francaise suffisamment longue pour que le detecteur identifie correctement la langue.",
+    ]);
+
+    expect(output.exitCode).toBe(0);
+    const parsed = JSON.parse(output.stdout[0] ?? "{}");
+    expect(parsed.total).toBe(15);
+    expect(parsed.breakdown.items[0]?.locale).toBe("fr");
+  });
+
   test("rejects invalid detector mode values", () => {
     const result = spawnSync(
       process.execPath,
