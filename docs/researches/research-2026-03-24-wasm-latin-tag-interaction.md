@@ -85,3 +85,7 @@ Locale zh: 8 words
   - keep ambiguous Latin as `und-Latn` for detector eligibility
   - run WASM remap on ambiguous windows
   - apply `latinTagHint` only as a fallback for windows/chunks that remain unresolved after detector evaluation
+
+## Related Plans
+
+- `docs/plans/plan-2026-03-24-wasm-mode-latin-hint-ordering.md`
