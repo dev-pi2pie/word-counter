@@ -288,6 +288,7 @@ word-counter --path ./examples/test-case-multi-files-support --debug --verbose
 Use `--debug-report [path]` to route debug diagnostics to a JSONL report file:
 
 - no path: writes to current working directory with pattern `wc-debug-YYYYMMDD-HHmmss-utc-<pid>.jsonl`
+- no path with `--detector-evidence`: writes with pattern `wc-detector-evidence-YYYYMMDD-HHmmss-utc-<pid>.jsonl`
 - path provided: writes to the specified location
 - default-name collision handling: appends `-<n>` suffix to avoid overwriting existing files
 - explicit path validation: existing directories are rejected (explicit paths are treated as file targets)
@@ -295,7 +296,15 @@ Use `--debug-report [path]` to route debug diagnostics to a JSONL report file:
 
 By default with `--debug-report`, debug lines are file-only (not mirrored to terminal).
 Use `--debug-report-tee` (alias: `--debug-tee`) to mirror to both file and `stderr`.
-Flag dependencies: `--verbose` requires `--debug`; `--debug-report` requires `--debug`; `--debug-report-tee`/`--debug-tee` requires `--debug-report`.
+Flag dependencies: `--verbose` requires `--debug`; `--detector-evidence` requires `--debug` and `--detector wasm`; `--debug-report` requires `--debug`; `--debug-report-tee`/`--debug-tee` requires `--debug-report`.
+
+Use `--detector-evidence` to add per-window detector evidence onto the same debug stream:
+
+- only meaningful with `--detector wasm`
+- compact mode emits bounded single-line previews plus detector decision metadata
+- verbose mode emits full raw detector windows and full normalized samples
+- evidence remains detector-window based even when output mode changes to `collector`, `char`, or another counting mode
+- fallback evidence reports the post-fallback final tag used by downstream counting output; in rare split-relabel cases it may also include `finalLocales`
 
 Examples:
 
@@ -304,6 +313,9 @@ word-counter --path ./examples/test-case-multi-files-support --debug --debug-rep
 word-counter --path ./examples/test-case-multi-files-support --debug --debug-report ./logs/debug.jsonl
 word-counter --path ./examples/test-case-multi-files-support --debug --debug-report ./logs/debug.jsonl --debug-report-tee
 word-counter --path ./examples/test-case-multi-files-support --debug --debug-report ./logs/debug.jsonl --debug-tee
+word-counter --detector wasm --debug --detector-evidence "This sentence should clearly be detected as English for the wasm detector path."
+word-counter --detector wasm --debug --verbose --detector-evidence "This sentence should clearly be detected as English for the wasm detector path."
+word-counter --detector wasm --debug --detector-evidence --debug-report
 ```
 
 Skip details stay debug-gated and can be suppressed with `--quiet-skips`.

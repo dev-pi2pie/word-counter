@@ -2,7 +2,7 @@
 title: "detector evidence debug surface"
 created-date: 2026-03-24
 modified-date: 2026-03-24
-status: draft
+status: completed
 agent: Codex
 ---
 
