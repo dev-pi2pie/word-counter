@@ -150,6 +150,39 @@ The next research pass should add fixture candidates in three buckets:
   - prose interleaved with shell snippets
   - bullet lists with one full sentence per item
 
+## Approved First Fixture Matrix
+
+Use this as the first explicit fixture-backed decision table for the token-quality gate research.
+
+Outcome meanings:
+
+- `accept` means the window may upgrade from `und-Latn` when the detector acceptance path is otherwise satisfied
+- `fallback` means the window should stay conservative and return to `und-Latn`
+
+| Fixture ID | Bucket | Fixture sketch | Expected outcome | Decision basis |
+| --- | --- | --- | --- | --- |
+| `latin-prose-en-paragraph` | clear prose | a normal English paragraph with sentence punctuation and no command/list framing | `accept` | prose signal is dominant and should remain detector-eligible |
+| `latin-prose-fr-paragraph` | clear prose | a normal French paragraph with sentence punctuation and no command/list framing | `accept` | non-English Latin prose must continue to upgrade correctly |
+| `latin-tech-cli-help` | clear technical noise | CLI help style block with many `--flags`, short labels, and option descriptions | `fallback` | command/list density dominates lexical signal |
+| `latin-tech-readme-commands` | clear technical noise | README fragment dominated by commands, filenames, and short imperative fragments | `fallback` | technical framing dominates and false-positive risk is high |
+| `latin-mixed-frontmatter-short-prose` | borderline mixed | short frontmatter block plus one short prose paragraph | `accept` | prose body should remain eligible when it clearly outweighs the framing noise |
+| `latin-mixed-prose-then-command-block` | borderline mixed | one prose paragraph followed by a shell command block | `accept` | one embedded command block should not poison an otherwise prose-like window |
+| `latin-mixed-bullets-with-sentences` | borderline mixed | bullet list where each bullet contains one full explanatory sentence | `accept` | sentence-bearing bullets should count as prose-like in the first policy version |
+| `latin-mixed-config-heavy-with-brief-explanation` | borderline mixed | mostly config keys or colon-separated labels with one short explanatory sentence | `fallback` | technical-noise density still dominates despite the small prose presence |
+
+## Research Outcome for Borderline Cases
+
+The first token-quality gate should use a dominance rule, not an any-signal rejection rule.
+
+Approved direction for the first fixture-backed version:
+
+- accept mixed windows when prose signal clearly dominates technical framing
+- fallback mixed windows when command/list/config density clearly dominates
+- do not let one embedded command block force fallback for an otherwise prose-heavy window
+- do not let one short explanatory sentence rescue an otherwise config/help/list-heavy window
+
+This is intentionally conservative, but it avoids over-rejecting normal markdown prose that happens to include some technical scaffolding.
+
 ## Recommended Policy Direction
 
 - Keep the main reliable-path rule conservative and unchanged unless corpus results show a clear need for threshold retuning.

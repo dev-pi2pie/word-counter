@@ -178,9 +178,9 @@ This transitional mock keeps current consumers working while defining the normal
 - Compare two event-envelope candidates before implementation:
   - flat envelope with top-level payload fields
   - envelope plus nested `payload`
-- Compare two schema-version styles before implementation:
-  - `schemaVersion: 1`
-  - `schemaVersion: "debug-event.v1"`
+- Use `schemaVersion: 1` for the first shared event-envelope contract.
+  - Keep the first version numeric and minimal.
+  - Future schema docs can map version history entries to git tags or release tags.
 - Lock the timestamp mock to UTC ISO-8601 strings in research examples.
   - This is the least ambiguous machine-readable shape.
 - Treat `runId` as an opaque per-run correlation key in the first version.
@@ -317,7 +317,7 @@ This model should not replace or duplicate the following:
   - Keep richer topic-level detail in the JSONL event stream rather than multiplying JSON result flags early.
 - Add explicit event-stream schema versioning now, together with the first shared event envelope.
   - Recommended minimum shared envelope fields:
-    - `schemaVersion`
+    - `schemaVersion` with first value `1`
     - `timestamp`
     - `runId`
     - `topic`

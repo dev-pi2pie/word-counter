@@ -40,7 +40,7 @@ Implement the cross-cutting debug observability contract and the WASM Latin fals
 
 - `--debug --format json` is the first shared gate for debug-gated JSON result diagnostics.
 - Runtime debug events gain a shared envelope now with these minimum fields:
-  - `schemaVersion`
+  - `schemaVersion` with first value `1`
   - `timestamp`
   - `runId`
   - `topic`
@@ -90,6 +90,7 @@ Implement the cross-cutting debug observability contract and the WASM Latin fals
 ### Phase 4 - WASM Latin Quality Guardrails
 
 - [ ] Build a focused regression corpus for noisy English README/CLI/docs windows and known non-English Latin fixtures.
+  - Start with the approved eight-fixture matrix from `docs/researches/research-2026-03-24-wasm-latin-detector-quality-false-positives.md`.
 - [ ] Change Latin corroborated acceptance so matching raw/normalized remaps are not enough on their own; at least one corroborating sample must be `reliable = true`.
 - [ ] Add a Latin token-quality gate ahead of final detector acceptance for ambiguous Latin windows.
 - [ ] Keep the main reliable-path threshold unchanged initially unless the new corpus shows a clear need for targeted retuning.
