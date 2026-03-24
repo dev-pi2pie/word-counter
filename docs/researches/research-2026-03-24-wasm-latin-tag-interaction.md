@@ -71,6 +71,9 @@ Locale zh: 8 words
   - `resolveCountRunOptions()` forwards `options.latinTag` into `wcOptions.latinTagHint`.
   - `segmentTextByLocaleWithWasmDetector()` calls `segmentTextByLocale(text, options)` before any WASM remap work.
   - `detectLocaleForChar()` returns `context.latinHint` for ambiguous Latin characters when `latinTagHint` is present.
+- Explicit Latin fallback hints and rule-based Latin hinting both participate in that same pre-detector segmentation path:
+  - built-in Latin hint rules are resolved in `resolveLocaleDetectContext()`
+  - `detectLatinLocale()` applies custom and built-in Latin hint rules before `context.latinHint`
 - Because of that early hinting, many Latin runs become `en` during base segmentation instead of remaining `und-Latn`.
 - The WASM detector only evaluates ambiguous routes (`und-Latn`, `und-Hani`), so pre-labeled `en` chunks are skipped entirely.
 - Result:
@@ -80,11 +83,17 @@ Locale zh: 8 words
 ## Implications or Recommendations
 
 - Current behavior matches "hint overrides ambiguity before detection", not "run WASM first, then relabel only unresolved `und-Latn` buckets".
-- If the intended contract is that hint-based language tagging belongs to regex mode, `latinTagHint` should not be applied during the pre-detector segmentation pass for WASM mode.
+- If the intended contract is detector-first routing in WASM mode, the initial WASM segmentation pass cannot apply any Latin hint source that upgrades `und-Latn` to a non-default Latin locale:
+  - explicit fallback options (`latinTagHint`, `latinLanguageHint`, `latinLocaleHint`)
+  - custom Latin hint rules
+  - built-in default Latin hint rules
 - One candidate model for WASM mode is:
   - keep ambiguous Latin as `und-Latn` for detector eligibility
   - run WASM remap on ambiguous windows
-  - apply `latinTagHint` only as a fallback for windows/chunks that remain unresolved after detector evaluation
+  - for windows/chunks that remain unresolved after detector evaluation, reapply the existing Latin hint semantics in fallback order:
+    - custom and built-in rule matching
+    - explicit fallback precedence `latinTagHint` > `latinLanguageHint` > `latinLocaleHint`
+    - default `und-Latn` fallback when no rule or explicit hint applies
 
 ## Related Plans
 

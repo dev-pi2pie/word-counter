@@ -12,7 +12,7 @@ Restore detector-first behavior in `--detector wasm` mode so Latin fallback hint
 
 ## Context
 
-Current behavior allows `--latin-tag` to participate in pre-detector segmentation even when `--detector wasm` is selected. That changes chunk routing before detector evaluation, removes detector-derived locale outcomes such as `fr`, and can also change total word counts because final counting uses locale-specific `Intl.Segmenter` instances.
+Current behavior allows explicit Latin fallback hints and rule-based Latin hinting to participate in pre-detector segmentation even when `--detector wasm` is selected. That changes chunk routing before detector evaluation, removes detector-derived locale outcomes such as `fr`, and can also change total word counts because final counting uses locale-specific `Intl.Segmenter` instances.
 
 Issue linkage:
 
@@ -24,7 +24,11 @@ Issue linkage:
 - In scope:
   - Change WASM-mode segmentation flow so Latin hint-based language assignment does not run before ambiguous-window detection.
   - Preserve the current detector remap policy for eligible `und-Latn` and `und-Hani` windows.
-  - Keep a deterministic fallback path so unresolved ambiguous Latin can still be relabeled by explicit Latin fallback options after detector evaluation.
+  - Keep a deterministic fallback path so unresolved ambiguous Latin can still be relabeled after detector evaluation by:
+    - custom Latin hint rules
+    - built-in default Latin hint rules
+    - explicit Latin fallback options
+  - Preserve the existing explicit Latin fallback precedence `latinTagHint` > `latinLanguageHint` > `latinLocaleHint`.
   - Add regression coverage for the interaction between `--detector wasm` and Latin hint options.
   - Update user-facing docs where detector and hint behavior is described.
 - Out of scope:
@@ -34,36 +38,45 @@ Issue linkage:
 
 ## Proposed Decisions
 
-- Treat explicit Latin hint options as regex-mode labeling inputs, not pre-detector routing inputs, when `detector = "wasm"`.
+- Treat all Latin hint inputs that can relabel ambiguous Latin to a non-default Latin locale as post-detector fallback inputs, not pre-detector routing inputs, when `detector = "wasm"`:
+  - explicit fallback options (`latinTagHint`, `latinLanguageHint`, `latinLocaleHint`)
+  - custom Latin hint rules
+  - built-in default Latin hint rules
 - Keep ambiguous Latin text on `und-Latn` during the initial segmentation pass in WASM mode.
 - Run the existing WASM detector flow against those ambiguous windows first.
-- Only after detector evaluation, apply explicit Latin fallback tags to unresolved `und-Latn` output.
-- Preserve built-in script-specific Latin hint rules that already identify non-ambiguous language buckets from distinctive characters unless implementation review shows they must also be deferred for consistency.
+- Only after detector evaluation, reapply Latin fallback semantics to unresolved `und-Latn` output in the current order:
+  - custom and built-in Latin hint rules by existing priority and order semantics
+  - explicit fallback precedence `latinTagHint` > `latinLanguageHint` > `latinLocaleHint`
+  - default `und-Latn` when nothing matches
 
 ## Phase Task Items
 
 ### Phase 1 - WASM Pre-Segmentation Boundary
 
-- [ ] Introduce a WASM-specific locale-detect option path that suppresses explicit Latin fallback hints during the initial `segmentTextByLocale()` pass.
+- [ ] Introduce a WASM-specific locale-detect option path that suppresses explicit and rule-based Latin hint relabeling during the initial `segmentTextByLocale()` pass.
 - [ ] Keep ambiguous Latin text on `und-Latn` during the initial WASM segmentation path so detector eligibility is preserved.
 - [ ] Keep detector window construction and accepted remap behavior unchanged for eligible `und-Latn` and `und-Hani` routes.
 
 ### Phase 2 - Post-Detector Fallback Relabeling
 
-- [ ] Add a post-detector fallback pass that relabels only unresolved `und-Latn` chunks using explicit Latin fallback options.
+- [ ] Add a post-detector fallback pass that relabels only unresolved `und-Latn` chunks using the existing Latin hint semantics.
+- [ ] Ensure custom and built-in Latin hint rules are applied after detector acceptance or rejection, not before detector routing.
 - [ ] Ensure explicit Latin fallback options are applied after detector acceptance or rejection, not before detector routing.
-- [ ] Recheck whether built-in script-specific Latin hint rules should remain in pre-detector routing or also move into the fallback layer, and document the final decision in code comments or docs if needed.
+- [ ] Preserve the existing explicit Latin fallback precedence `latinTagHint` > `latinLanguageHint` > `latinLocaleHint` in the WASM fallback path.
 
 ### Phase 3 - Compatibility Guards
 
 - [ ] Keep regex mode behavior unchanged.
 - [ ] Keep explicit Han hint behavior unchanged unless the same implementation path proves a correction is required.
 - [ ] Keep public output schemas and detector remap thresholds unchanged.
+- [ ] Keep existing Latin hint rule priority and definition-order semantics unchanged in the fallback path.
 
 ### Phase 4 - Regression Coverage
 
 - [ ] Add tests proving `--detector wasm --latin-tag en` does not suppress detector-derived locales for otherwise eligible ambiguous Latin text.
 - [ ] Add tests proving unresolved ambiguous Latin still respects `latinTagHint` after detector evaluation.
+- [ ] Add tests proving unresolved ambiguous Latin in WASM mode still preserves explicit hint precedence `latinTagHint` > `latinLanguageHint` > `latinLocaleHint`.
+- [ ] Add tests proving custom and built-in Latin hint rules are deferred until after detector evaluation in WASM mode.
 - [ ] Add a regression test for stable totals using the reported README reproduction or a narrower fixture that captures the same failure mode.
 
 ### Phase 5 - Documentation and Closure
@@ -75,6 +88,8 @@ Issue linkage:
 
 - [ ] `--detector regex` behavior remains unchanged.
 - [ ] `--latin-tag`, `--latin-language`, and `--latin-locale` remain available in the public API and CLI.
+- [ ] Explicit Latin hint precedence remains `latinTagHint` > `latinLanguageHint` > `latinLocaleHint`.
+- [ ] Existing Latin hint rule priority and definition-order semantics remain unchanged.
 - [ ] `--detector wasm` keeps existing remap thresholds and accepted tag mappings unless a separate change is explicitly planned.
 - [ ] JSON and standard output contracts remain unchanged.
 
