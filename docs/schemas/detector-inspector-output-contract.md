@@ -237,6 +237,16 @@ WASM pipeline windows include:
 - `policy`
 - `mode`
 
+`contentGate` interpretation notes:
+
+- `und-Latn`
+  - `default|strict|loose` may change both `eligibility` and `contentGate`
+- `und-Hani`
+  - `default|strict|loose` may change `eligibility` while `contentGate` still reports:
+    - `applied: false`
+    - `policy: "none"`
+  - `loose` is the short-window Hani path and may admit idiom-length Han-only samples without making borrowed Japanese context alone sufficient
+
 Regex pipeline output:
 
 - requires `chunks`
@@ -382,6 +392,7 @@ Formatting rules:
 - use stable section labels
 - keep previews single-line and bounded to the same `160` code point limit
 - include configured content gate mode wherever standard output already reports `contentGate`
+- keep Hani eligibility-only mode changes visible through `eligibility.scriptChars`, `eligibility.minScriptChars`, and `engine.executed` even when `contentGate.policy = "none"`
 - reserve full exact sampled text for engine-view JSON only
 
 ## Version History

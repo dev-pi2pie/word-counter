@@ -2,7 +2,7 @@
 title: "configurable content gate behavior"
 created-date: 2026-03-25
 modified-date: 2026-03-25
-status: active
+status: completed
 agent: Codex
 ---
 
@@ -27,8 +27,8 @@ Implement first-version user-configurable `contentGate` behavior for both CLI an
   - `segmentTextByLocaleWithDetector`
   - `countSectionsWithDetector`
   - `inspectTextWithDetector`
-- Latin threshold-coupled mode behavior is already implemented.
-- The remaining detector-policy scope in this plan is the Hani-specific mode design plus the final docs/release pass.
+- Latin and Hani threshold-coupled mode behavior are now implemented.
+- Final docs/release verification is complete.
 - The repo now has project-level `oxlint` and `oxfmt` scripts and config.
   - implementation validation should keep changed files lint-clean and format-clean
 
@@ -41,7 +41,7 @@ Implement first-version user-configurable `contentGate` behavior for both CLI an
     - `default`
     - `strict`
     - `loose`
-  - `off`
+    - `off`
   - thread the configured mode through detector-policy evaluation
   - allow `default|strict|loose` to affect eligibility thresholds on applicable routes
   - allow Hani to vary by mode through eligibility even if Hani `contentGate` remains `policy = "none"`
@@ -184,16 +184,11 @@ Validation for this phase:
 
 ### Phase 5 - Docs, Jobs, And Release Readiness
 
-- [ ] Update README usage examples for library and CLI `contentGate` configuration.
-- [ ] Update detector-facing docs and any relevant schema/contract docs to explain configured-mode behavior.
-- [ ] Record implementation progress in job records under `docs/plans/jobs/`.
-- [ ] Add release-note-ready documentation of the new public option and compatibility behavior.
-- [ ] Run final regression, lint, format-check, type-check, and build verification before closing the plan.
-
-Phase note:
-
-- README and other user-facing runtime docs for Hani mode behavior stay deferred until the Hani implementation ships.
-- Internal planning docs, job records, and schema notes can be updated earlier so the implementation contract stays explicit.
+- [x] Update README usage examples for library and CLI `contentGate` configuration.
+- [x] Update detector-facing docs and any relevant schema/contract docs to explain configured-mode behavior.
+- [x] Record implementation progress in job records under `docs/plans/jobs/`.
+- [x] Add release-note-ready documentation of the new public option and compatibility behavior.
+- [x] Run final regression, lint, format-check, type-check, and build verification before closing the plan.
 
 Validation for this phase:
 

@@ -84,9 +84,13 @@ Current ambiguous routes eligible for detector evaluation:
 Current route gating:
 
 - `und-Latn`
-  - requires at least `24` script-bearing Latin characters
+  - `default|off`: requires at least `24` script-bearing Latin characters
+  - `strict`: requires at least `30` script-bearing Latin characters
+  - `loose`: requires at least `20` script-bearing Latin characters
 - `und-Hani`
-  - requires at least `12` script-bearing Han characters
+  - `default|off`: requires at least `12` script-bearing characters from the Hani diagnostic sample
+  - `strict`: requires at least `16` script-bearing characters from the Hani diagnostic sample
+  - `loose`: requires at least `4` Han characters in the Hani focus window
 
 If a window does not meet the route gate, it stays on the original `und-*` route.
 
@@ -107,9 +111,9 @@ Current mode meanings:
 - `default`
   - current fixture-backed project policy
 - `strict`
-  - tightens Latin-route acceptance so more borderline windows fall back
+  - raises detector eligibility thresholds and makes more borderline windows fall back
 - `loose`
-  - relaxes Latin-route acceptance so more borderline windows may upgrade
+  - lowers detector eligibility thresholds and makes more borderline windows eligible or upgradable
 - `off`
   - bypasses `contentGate` evaluation only
 
@@ -117,8 +121,11 @@ Current route behavior:
 
 - `und-Latn`
   - meaningfully applies `contentGate`
+  - `default|strict|loose` affect both eligibility and the Latin prose-style gate
 - `und-Hani`
-  - accepts the configured mode but reports `contentGate` as not applied
+  - uses the configured mode for eligibility
+  - still reports `contentGate` as not applied
+  - `loose` is a short-window Han-focused path so idiom-length samples such as `四字成語` can become eligible without making borrowed Japanese context alone sufficient
 
 Current diagnostic contract:
 
@@ -128,7 +135,7 @@ Current diagnostic contract:
 
 ## Practical Content Gate Verification
 
-`--content-gate` is easiest to verify on borderline Latin-route samples, not on whole documentation files.
+`--content-gate` is easiest to verify on targeted Latin and Hani samples, not on whole documentation files.
 
 Observed practical behavior:
 
@@ -138,10 +145,14 @@ Observed practical behavior:
 
 Recommended verification workflow:
 
-1. Use `inspect` first when the goal is to evaluate the gate itself.
+1. Use `inspect` first when the goal is to evaluate the mode effect directly.
 2. Use `--debug --detector-evidence` when the goal is to inspect counting-flow event payloads or verify legacy `qualityGate` compatibility.
 3. Use short borderline Latin samples that are mixed between config-like lines and real prose.
-4. Use whole-document collector output only as a secondary sanity check.
+4. Use short focused Hani samples for Hani mode checks:
+   - `世界`
+   - `四字成語`
+   - `こんにちは、世界！`
+5. Use whole-document collector output only as a secondary sanity check.
 
 Why `inspect` is the default verification tool:
 
@@ -171,6 +182,12 @@ Use this for testing."
 word-counter inspect --detector wasm --content-gate strict \
   "Readers understand this behavior."
 
+word-counter inspect --detector wasm --content-gate loose \
+  "四字成語"
+
+word-counter inspect --detector wasm --content-gate loose \
+  "こんにちは、世界！"
+
 word-counter --detector wasm --debug --detector-evidence --content-gate off \
   "mode: debug
 tee: true
@@ -190,6 +207,14 @@ What to expect:
     - `policy: "none"`
     - `mode: "off"`
   - legacy debug/evidence payloads still emit `qualityGate: true` as the compatibility alias
+- Hani short-window checks
+  - `世界`
+    - remains ineligible in `default`, `strict`, `loose`, and `off`
+  - `四字成語`
+    - remains ineligible in `default`, `strict`, and `off`
+    - becomes eligible in `loose`
+  - `こんにちは、世界！`
+    - remains ineligible in `loose` because the borrowed context alone does not satisfy the short-window Han-focused threshold
 
 Observed example outcomes with the current implementation:
 

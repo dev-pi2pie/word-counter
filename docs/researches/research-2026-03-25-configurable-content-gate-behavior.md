@@ -2,7 +2,7 @@
 title: "configurable content gate behavior"
 created-date: 2026-03-25
 modified-date: 2026-03-25
-status: draft
+status: completed
 agent: codex
 ---
 

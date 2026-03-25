@@ -19,13 +19,18 @@ Complete Phase 5 of the configurable content gate plan:
   - CLI examples for `--content-gate`
   - inspect examples for configured content gate modes
   - detector-subpath usage showing `contentGate: { mode }`
-  - detector mode notes that explain canonical `contentGate` and legacy `qualityGate`
-- Updated `docs/language-detection-support-guide.md` with the current public content gate surface and route behavior.
+  - detector mode notes that explain:
+    - canonical `contentGate`
+    - legacy `qualityGate`
+    - Latin and Hani mode semantics
+- Updated `docs/language-detection-support-guide.md` with the current public content gate surface, route behavior, and practical verification guidance for both Latin and Hani routes.
 - Updated `docs/schemas/detector-inspector-output-contract.md` to document:
   - `--content-gate` in inspect CLI shape
   - `contentGate.mode` in inspect payloads
+  - Hani eligibility-only mode behavior in inspect payloads
   - standard-output disclosure expectations
-- Updated `docs/schemas/debug-event-stream-contract.md` to document `contentGate.mode` in legacy debug/evidence payloads.
+- Updated `docs/schemas/debug-event-stream-contract.md` to document `contentGate.mode` and Hani eligibility-only mode behavior in legacy debug/evidence payloads.
+- Updated `docs/schemas/detector-remap-contract.md` and `docs/locale-tag-detection-notes.md` so the documented route thresholds match the shipped Latin and Hani mode-aware eligibility rules.
 
 ## Release Notes Draft
 
@@ -33,7 +38,11 @@ Release-ready summary:
 
 - Added user-configurable `contentGate` modes for the WASM detector path in both CLI and detector-subpath APIs.
 - Added `--content-gate default|strict|loose|off` to the CLI and `contentGate: { mode }` to detector-subpath entrypoints.
-- Extended inspect, debug, and detector-evidence disclosure so canonical `contentGate` output reports the configured mode.
+- Extended inspect, debug, and detector-evidence disclosure so canonical `contentGate` output reports the configured mode and truthful eligibility changes.
+- Added Hani mode-aware eligibility so:
+  - `strict` raises the Hani threshold
+  - `loose` admits idiom-length Han-only samples
+  - `off` keeps Hani eligibility aligned with `default`
 - Preserved `qualityGate` only as a compatibility alias in existing debug and detector-evidence payloads.
 
 ## Validation

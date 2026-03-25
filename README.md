@@ -102,6 +102,7 @@ Enable the optional WASM detector for ambiguous Latin and Han routes:
 word-counter --detector wasm "This sentence should clearly be detected as English for the wasm detector path."
 word-counter --detector wasm "漢字測試需要更多內容才能觸發偵測"
 word-counter --detector wasm --content-gate strict "Internationalization documentation remains understandable."
+word-counter --detector wasm --content-gate loose "四字成語"
 word-counter --detector wasm --content-gate off "mode: debug\ntee: true\npath: logs\nUse this for testing."
 ```
 
@@ -122,11 +123,19 @@ Detector mode notes:
 
 - `--detector regex` is the default behavior.
 - `--detector wasm` only runs for ambiguous `und-Latn` and `und-Hani` chunks.
-- `--content-gate default|strict|loose|off` configures the Latin-route content gate used by the WASM detector path.
+- `--content-gate default|strict|loose|off` configures the shared detector policy mode used by the WASM detector path.
   - `default`: current fixture-backed project policy
-  - `strict`: more borderline Latin windows fall back
-  - `loose`: more borderline Latin windows may upgrade
+  - `strict`: raises detector eligibility thresholds and makes more borderline windows fall back
+  - `loose`: lowers detector eligibility thresholds and makes more borderline windows eligible or upgradable
   - `off`: bypasses `contentGate` evaluation only
+- mode behavior differs by route:
+  - `und-Latn`: `default|strict|loose` affect both eligibility and the Latin prose-style `contentGate`
+  - `und-Hani`: `default|strict|loose` affect eligibility only, while `contentGate` still reports `policy=none`
+- current Hani behavior:
+  - `default`: keeps the current Hani diagnostic-sample threshold
+  - `strict`: raises the Hani diagnostic-sample threshold
+  - `loose`: uses a short-window Han-focused threshold so idiom-length samples such as `四字成語` can become eligible
+  - `off`: keeps the same Hani eligibility thresholds as `default`
 - `--detector regex` keeps the original script/regex chunk-first detection path.
 - `--detector wasm` uses a detector-oriented ambiguous-window scoring pass before accepted tags are projected back onto the counting chunks.
 - In `--detector wasm` mode, Latin hint rules and explicit Latin hint flags are deferred until after detector evaluation and only relabel unresolved `und-Latn` output.
@@ -135,7 +144,7 @@ Detector mode notes:
 - Technical-noise-heavy Latin windows stay conservative and may remain `und-Latn` even when the detector produces a wrong-but-confident language guess.
 - inspect/debug disclosure uses `contentGate` as the canonical gate field.
 - legacy debug/evidence payloads still emit `qualityGate` as a compatibility alias derived from `contentGate.passed`.
-- for practical verification, use `inspect` to compare direct gate outcomes across `default`, `strict`, `loose`, and `off`; use `--debug --detector-evidence` when you specifically need counting-flow event details or legacy `qualityGate` compatibility, and use large technical docs mainly to confirm `off`
+- for practical verification, use `inspect` to compare direct mode outcomes across `default`, `strict`, `loose`, and `off`; use `--debug --detector-evidence` when you specifically need counting-flow event details or legacy `qualityGate` compatibility
 - `word-counter inspect` supports:
   - positional text input
   - one direct `-p, --path <file>` input

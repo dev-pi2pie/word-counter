@@ -30,12 +30,16 @@ This document defines how detector-engine output is remapped into the public loc
 The detector only runs for ambiguous script routes.
 
 - `und-Latn`
-  - minimum script-bearing characters: `24`
+  - `default|off`: minimum `24` script-bearing Latin characters
+  - `strict`: minimum `30` script-bearing Latin characters
+  - `loose`: minimum `20` script-bearing Latin characters
 - `und-Hani`
-  - minimum script-bearing characters: `12`
+  - `default|off`: minimum `12` script-bearing characters from the Hani diagnostic sample
+  - `strict`: minimum `16` script-bearing characters from the Hani diagnostic sample
+  - `loose`: minimum `4` Han characters in the focus window
 
 Script-bearing characters mean characters in the relevant script only.
-For `und-Hani`, detector-only borrowed adjacent Japanese context may also contribute `Hiragana` and `Katakana` characters to the eligibility count.
+For `und-Hani`, `default|strict|off` may count borrowed adjacent Japanese `Hiragana` and `Katakana` in the diagnostic sample, while `loose` uses the Hani focus window only so borrowed context alone does not satisfy the short-window threshold.
 Whitespace, punctuation, symbols, and digits do not count toward the threshold.
 
 If a chunk is below the threshold, it stays on the original `und-*` route.

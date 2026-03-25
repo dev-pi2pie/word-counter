@@ -166,6 +166,7 @@ Field notes:
 - verbose evidence replaces preview fields with full `text` and `normalizedText`
 - `contentGate` is the structured detector gate contract for new detector-state payloads
 - `contentGate.mode` reports the configured gate mode applied to the detector decision
+- Hani windows may vary by mode through `eligible`, `scriptChars`, and `minScriptChars` even while `contentGate` still reports `policy: "none"` and `applied: false`
 - `qualityGate` remains as a temporary compatibility alias derived from `contentGate.passed` in existing debug/evidence events
 - `decision.finalTag` reports the post-fallback tag seen by downstream counting output
 - `decision.finalLocales` is optional and only appears when deferred Latin fallback splits a fallback window into multiple relabeled locales instead of one final tag
