@@ -1,6 +1,7 @@
 ---
 title: "Language Detection Support Guide"
 created-date: 2026-03-25
+modified-date: 2026-03-25
 status: active
 agent: Codex
 ---
@@ -88,6 +89,130 @@ Current route gating:
   - requires at least `12` script-bearing Han characters
 
 If a window does not meet the route gate, it stays on the original `und-*` route.
+
+## Current Content Gate Surface
+
+The current public content gate surface is global and mode-based.
+
+CLI:
+
+- `--content-gate default|strict|loose|off`
+
+Detector subpath:
+
+- `contentGate: { mode }`
+
+Current mode meanings:
+
+- `default`
+  - current fixture-backed project policy
+- `strict`
+  - tightens Latin-route acceptance so more borderline windows fall back
+- `loose`
+  - relaxes Latin-route acceptance so more borderline windows may upgrade
+- `off`
+  - bypasses `contentGate` evaluation only
+
+Current route behavior:
+
+- `und-Latn`
+  - meaningfully applies `contentGate`
+- `und-Hani`
+  - accepts the configured mode but reports `contentGate` as not applied
+
+Current diagnostic contract:
+
+- `contentGate` is the canonical inspect/debug field
+- legacy debug/evidence payloads still emit `qualityGate` as a compatibility alias derived from `contentGate.passed`
+- inspect-only payloads do not emit `qualityGate`
+
+## Practical Content Gate Verification
+
+`--content-gate` is easiest to verify on borderline Latin-route samples, not on whole documentation files.
+
+Observed practical behavior:
+
+- `default`, `strict`, and `loose` often look identical on highly technical or highly prose-heavy files.
+- `off` is much easier to notice on large technical documents because it can promote many `und-Latn` windows that normal policy would keep conservative.
+- A file like `README.md` is therefore useful for checking that `off` is active, but it is often a poor calibration sample for checking the difference between `default`, `strict`, and `loose`.
+
+Recommended verification workflow:
+
+1. Use `inspect` first when the goal is to evaluate the gate itself.
+2. Use `--debug --detector-evidence` when the goal is to inspect counting-flow event payloads or verify legacy `qualityGate` compatibility.
+3. Use short borderline Latin samples that are mixed between config-like lines and real prose.
+4. Use whole-document collector output only as a secondary sanity check.
+
+Why `inspect` is the default verification tool:
+
+- `inspect` reports the final canonical gate state directly:
+  - `contentGate.applied`
+  - `contentGate.passed`
+  - `contentGate.policy`
+  - `contentGate.mode`
+- `--debug --detector-evidence` is still valuable, but it is a runtime event stream for counting flows.
+- The debug/evidence path is the right place to verify compatibility behavior such as the legacy `qualityGate` alias.
+
+Suggested commands:
+
+```bash
+word-counter inspect --detector wasm --content-gate default \
+  "mode: debug
+tee: true
+path: logs
+Use this for testing."
+
+word-counter inspect --detector wasm --content-gate loose \
+  "mode: debug
+tee: true
+path: logs
+Use this for testing."
+
+word-counter inspect --detector wasm --content-gate strict \
+  "Readers understand this behavior."
+
+word-counter --detector wasm --debug --detector-evidence --content-gate off \
+  "mode: debug
+tee: true
+path: logs
+Use this for testing."
+```
+
+What to expect:
+
+- `default` vs `loose`
+  - borderline mixed technical/prose text may flip between `passed: false` and `passed: true`
+- `default` vs `strict`
+  - short prose-like lines may flip from accepted gate behavior to conservative fallback behavior
+- `off`
+  - `contentGate` reports:
+    - `applied: false`
+    - `policy: "none"`
+    - `mode: "off"`
+  - legacy debug/evidence payloads still emit `qualityGate: true` as the compatibility alias
+
+Observed example outcomes with the current implementation:
+
+- sample: `Readers understand this behavior.`
+  - `default`
+    - `contentGate.passed: true`
+    - `fallbackReason: "belowThreshold"`
+  - `strict`
+    - `contentGate.passed: false`
+    - `fallbackReason: "qualityGate"`
+- sample:
+  - `mode: debug`
+  - `tee: true`
+  - `path: logs`
+  - `Use this for testing.`
+  - `default`
+    - `contentGate.passed: false`
+    - `fallbackReason: "qualityGate"`
+  - `loose`
+    - `contentGate.passed: true`
+    - `fallbackReason: "belowThreshold"`
+
+Those examples are more sensitive than whole-document tests on `README.md`, where `strict` and `loose` may legitimately look identical while `off` still shows a large shift.
 
 ## Current WASM Engine Remap Support
 

@@ -133,7 +133,8 @@ Compact evidence example:
   "contentGate": {
     "applied": true,
     "passed": true,
-    "policy": "latinProse"
+    "policy": "latinProse",
+    "mode": "default"
   },
   "qualityGate": true,
   "raw": {
@@ -164,6 +165,7 @@ Field notes:
 - compact evidence uses single-line whitespace-collapsed previews capped at `160` Unicode code points per preview field
 - verbose evidence replaces preview fields with full `text` and `normalizedText`
 - `contentGate` is the structured detector gate contract for new detector-state payloads
+- `contentGate.mode` reports the configured gate mode applied to the detector decision
 - `qualityGate` remains as a temporary compatibility alias derived from `contentGate.passed` in existing debug/evidence events
 - `decision.finalTag` reports the post-fallback tag seen by downstream counting output
 - `decision.finalLocales` is optional and only appears when deferred Latin fallback splits a fallback window into multiple relabeled locales instead of one final tag

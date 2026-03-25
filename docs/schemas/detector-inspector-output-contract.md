@@ -66,13 +66,18 @@ Preview rules:
 Current CLI shape:
 
 ```bash
-word-counter inspect [--detector wasm|regex] [--view pipeline|engine] [--format standard|json] [--pretty] [--section all|frontmatter|content] [--path-mode auto|manual] [--no-recursive] [--include-ext <exts>] [--exclude-ext <exts>] [--regex <pattern>] [-p|--path <path> ...] [text...]
+word-counter inspect [--detector wasm|regex] [--content-gate default|strict|loose|off] [--view pipeline|engine] [--format standard|json] [--pretty] [--section all|frontmatter|content] [--path-mode auto|manual] [--no-recursive] [--include-ext <exts>] [--exclude-ext <exts>] [--regex <pattern>] [-p|--path <path> ...] [text...]
 ```
 
 Shared validation rules:
 
 - `--view engine` requires `--detector wasm`
 - `--detector regex` is valid only with `--view pipeline`
+- `--content-gate` must be one of:
+  - `default`
+  - `strict`
+  - `loose`
+  - `off`
 - `--format raw` is invalid for `inspect`
 - `--pretty` changes JSON indentation only
 - positional inspect input is always treated as text, never auto-resolved as a path
@@ -225,6 +230,13 @@ WASM pipeline windows include:
 - `engine`
 - `decision`
 
+`contentGate` fields:
+
+- `applied`
+- `passed`
+- `policy`
+- `mode`
+
 Regex pipeline output:
 
 - requires `chunks`
@@ -306,7 +318,8 @@ Example WASM pipeline shape:
       "contentGate": {
         "applied": false,
         "passed": true,
-        "policy": "none"
+        "policy": "none",
+        "mode": "default"
       },
       "engine": {
         "executed": true
@@ -368,6 +381,7 @@ Formatting rules:
 
 - use stable section labels
 - keep previews single-line and bounded to the same `160` code point limit
+- include configured content gate mode wherever standard output already reports `contentGate`
 - reserve full exact sampled text for engine-view JSON only
 
 ## Version History
