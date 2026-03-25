@@ -1,6 +1,7 @@
 ---
 title: "configurable content gate behavior"
 created-date: 2026-03-25
+modified-date: 2026-03-25
 status: draft
 agent: Codex
 ---
@@ -23,6 +24,8 @@ Implement first-version user-configurable `contentGate` behavior for both CLI an
   - `segmentTextByLocaleWithDetector`
   - `countSectionsWithDetector`
   - `inspectTextWithDetector`
+- The repo now has project-level `oxlint` and `oxfmt` scripts and config.
+  - implementation validation should keep changed files lint-clean and format-clean
 
 ## Scope
 
@@ -151,11 +154,13 @@ Validation for this phase:
 - [ ] Update detector-facing docs and any relevant schema/contract docs to explain configured-mode behavior.
 - [ ] Record implementation progress in job records under `docs/plans/jobs/`.
 - [ ] Add release-note-ready documentation of the new public option and compatibility behavior.
-- [ ] Run final regression, type-check, and build verification before closing the plan.
+- [ ] Run final regression, lint, format-check, type-check, and build verification before closing the plan.
 
 Validation for this phase:
 
 - doc review against the settled research contract
+- `bun run lint`
+- `bun run format:check`
 - `bun run type-check`
 - `bun run build`
 - targeted regression audit across CLI, library, inspect, and compatibility payloads
@@ -169,6 +174,7 @@ Validation for this phase:
 - [ ] `off` disables only gate evaluation and does not disable route eligibility, corroboration, or fallback.
 - [ ] Non-applicable routes accept all supported modes without lying about gate application.
 - [ ] No public numeric threshold controls are introduced in this phase.
+- [ ] Changed files remain clean under the configured lint and format scripts.
 
 ## Related Plans
 
