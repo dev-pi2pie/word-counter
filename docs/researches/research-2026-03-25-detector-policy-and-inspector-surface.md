@@ -1,6 +1,7 @@
 ---
 title: "detector policy and inspector surface"
 created-date: 2026-03-25
+modified-date: 2026-03-25
 status: draft
 agent: codex
 ---
@@ -61,11 +62,17 @@ Define a clearer detector architecture for three follow-up needs:
   - A reasonable target shape is:
 
 ```ts
+type ContentGateResult = {
+  applied: boolean;
+  passed: boolean;
+  policy: "latinProse" | "none";
+};
+
 type DetectorRoutePolicy = {
   eligibility: { minScriptChars: number };
   normalizeSample(text: string): string;
   buildDiagnosticContext?(window: DetectorWindow, chunks: LocaleChunk[]): string;
-  contentGate?(windowText: string, normalizedText: string): boolean;
+  evaluateContentGate?(windowText: string, normalizedText: string): ContentGateResult;
   accept(candidate: DetectorResult): boolean;
   acceptCorroborated?(raw: DetectorResult, normalized: DetectorResult): boolean;
   fallbackTag(window: DetectorWindow, options: DetectorLocaleOptions): string;
@@ -85,7 +92,7 @@ type DetectorRoutePolicy = {
     - return structured diagnostics as data instead of requiring callback capture
   - Recommended CLI direction:
     - add an `inspect` subcommand that prints detector diagnostics without the normal count result
-    - support both direct text and `--path` inputs for markdown and plain text files
+    - support positional text input and `--path <file>` input for markdown and plain text files
 - Keep two inspection levels distinct.
   - raw engine inspection should report direct Whatlang output with minimal remapping
   - pipeline inspection should report chunk/window construction, normalization, acceptance path, and fallback
@@ -106,6 +113,7 @@ type DetectorRoutePolicy = {
     - `--detector wasm|regex`
     - `--view pipeline|engine`
     - `--format standard|json`
+    - positional text input or `--path <file>`
 - Keep inspect output formats narrower than counting formats.
   - The inspect command should support:
     - `--format standard`
@@ -199,6 +207,15 @@ Recommended non-goals for that plan:
     - keep `qualityGate` only in existing debug/evidence event payloads that already expose it today
     - do not add `qualityGate` to new library inspector payloads
     - do not add `qualityGate` to normalized result JSON summaries
+  - `contentGate` should be one structured result shape everywhere it appears in new code paths.
+    - For Latin windows:
+      - `applied: true`
+      - `policy: "latinProse"`
+      - `passed` reflects the prose-vs-technical evaluation
+    - For non-Latin windows:
+      - `applied: false`
+      - `policy: "none"`
+      - `passed: true`
   - During the compatibility window, `qualityGate` should be emitted only as a derived alias for `contentGate.passed`.
   - The alias should be documented as deprecated immediately once `contentGate` lands.
   - The alias should be removed in the next debug schema version bump, with the expected cutoff being `schemaVersion: 2`.
@@ -225,7 +242,7 @@ Recommended non-goals for that plan:
 Recommended first-version CLI shape:
 
 ```bash
-word-counter inspect [--detector wasm|regex] [--view pipeline|engine] [--format standard|json] <text-or-path>
+word-counter inspect [--detector wasm|regex] [--view pipeline|engine] [--format standard|json] [--path <file>] [text...]
 ```
 
 Recommended defaults:
@@ -239,6 +256,27 @@ Recommended validation rules:
 - `--view engine` requires `--detector wasm`
 - `--detector regex` is supported only with `--view pipeline`
 - `--format raw` is invalid under `inspect`
+- exactly one input source is allowed:
+  - positional text input
+  - one `--path <file>`
+- directory expansion is out of scope for `inspect` in the first version
+- positional input must always be treated as text, never auto-interpreted as a path
+- `inspect` does not support batch or directory inspection in the first version
+  - unsupported batch-oriented usage should fail with a clear error instead of degrading into partial behavior
+
+Recommended first-version input failure rules:
+
+- when neither positional text nor `--path` is provided:
+  - error with: `No inspect input provided. Pass text or use --path <file>.`
+- when both positional text and `--path` are provided:
+  - error with: `` `inspect` accepts either positional text or one `--path <file>`, not both. ``
+- when `--path` points to a directory:
+  - error with: `` `inspect --path` requires a regular file. ``
+- when `--path` points to an unreadable file:
+  - error with the same top-level shape used by normal counting input failures:
+    - `Failed to read input: <underlying message>`
+- when the resolved input is empty or whitespace-only:
+  - return a valid empty inspect result rather than treating it as a usage error
 
 Recommended semantics:
 
@@ -260,6 +298,9 @@ Recommended regex pipeline payload direction:
   - explicit Latin hint
   - Han fallback after boundary
 - do not imitate WASM confidence or reliability fields where none exist
+- use a fixed chunk contract:
+  - `source` is required and categorical
+  - `reason` is optional and explanatory
 
 ## Recommended Inspector Schema Direction
 
@@ -280,10 +321,490 @@ Recommended scope of that schema doc:
   - `json` as structured tool-facing output
 - record version history independently from the debug-event-stream schema so inspector evolution does not force unrelated debug schema churn
 
-## Residual Open Questions
+## Recommended First-Version Inspector Payload Shapes
 
-- The exact field-level JSON schema for `engine` and `pipeline` inspector output still needs implementation-level design, but the payload boundary and field direction above are now settled.
-- The exact standard-format text layout for `inspect` still needs implementation-level design, but the command, view model, and format boundaries above are now settled.
+The first schema version should use one shared top-level container for all inspector JSON output.
+
+Recommended preview policy:
+
+- use a `160` Unicode code point preview limit for inspector JSON preview fields
+- align this limit with the existing detector evidence preview limit for consistency
+- use preview fields plus explicit truncation metadata in JSON structures that can repeat many times, such as:
+  - top-level `chunks`
+  - top-level `resolvedChunks`
+  - per-window focus and diagnostic sample summaries
+- reserve full exact sampled text for the engine-view `sample.text` field only
+  - reason: engine inspection is the one view where exact sampled content is most important
+  - even there, include `sample.textLength` so consumers can reason about payload size
+
+Recommended shared container fields:
+
+- `schemaVersion`
+- `kind`
+- `view`
+- `detector`
+- `input`
+
+Recommended first-version shared field values:
+
+- `schemaVersion: 1`
+- `kind: "detector-inspect"`
+- `view: "engine" | "pipeline"`
+- `detector: "wasm" | "regex"`
+
+Recommended `input` object fields:
+
+- `sourceType`
+  - `inline`
+  - `path`
+- `path`
+  - present only for path-based input
+- `textLength`
+- `textPreview`
+  - bounded preview for compact JSON output
+- `textPreviewTruncated`
+
+Recommended `engine` view JSON shape:
+
+```json
+{
+  "schemaVersion": 1,
+  "kind": "detector-inspect",
+  "view": "engine",
+  "detector": "wasm",
+  "input": {
+    "sourceType": "inline",
+    "textLength": 28,
+    "textPreview": "Hello world sample",
+    "textPreviewTruncated": false
+  },
+  "routeTag": "und-Latn",
+  "sample": {
+    "text": "Hello world sample",
+    "textLength": 18,
+    "normalizedText": "Hello world sample",
+    "normalizedApplied": false,
+    "textSource": "focus"
+  },
+  "engine": {
+    "name": "whatlang-wasm",
+    "raw": {
+      "lang": "eng",
+      "script": "Latin",
+      "confidence": 0.99,
+      "reliable": true
+    },
+    "normalized": {
+      "lang": "eng",
+      "script": "Latin",
+      "confidence": 0.99,
+      "reliable": true
+    },
+    "remapped": {
+      "rawTag": "en",
+      "normalizedTag": "en"
+    }
+  }
+}
+```
+
+Recommended `engine` view field rules:
+
+- include `routeTag`
+- include the exact sampled text under `sample.text`
+- include `sample.textLength`
+- include `sample.normalizedText` and `sample.normalizedApplied`
+- include `sample.textSource` with these first-version values:
+  - `focus`
+  - `borrowed-context`
+- include `sample.borrowedContext` only when context borrowing occurred
+- include raw engine-native values directly
+- include remapped public tags separately
+- omit package-level `decision` and resolved chunks from `engine` view
+
+Recommended sample-assembly rules:
+
+- `focusText` always means the original ambiguous route span only
+- `sample.text` always means the exact text sent to the detector engine
+- when no context borrowing occurs:
+  - `sample.text` and `focusText` refer to the same span
+- when context borrowing occurs:
+  - `sample.text` is assembled in text order as:
+    - optional borrowed left context
+    - focus span
+    - optional borrowed right context
+  - `sample.textLength` measures the full assembled `sample.text`
+- normalization always runs after the final sampled text is assembled
+  - build borrowed context first when applicable
+  - then run route-specific normalization across the full `sample.text`
+- because normalization is route-specific, a borrowed-context sample may collapse back to only the ambiguous script-bearing focus in the normalized output
+  - example:
+    - borrowed sample text: `こんにちは、世界！これはテストです。`
+    - Hani-normalized output: `世界`
+
+Recommended `pipeline` view JSON shape:
+
+```json
+{
+  "schemaVersion": 1,
+  "kind": "detector-inspect",
+  "view": "pipeline",
+  "detector": "wasm",
+  "input": {
+    "sourceType": "inline",
+    "textLength": 19,
+    "textPreview": "こんにちは、世界！これはテストです。",
+    "textPreviewTruncated": false
+  },
+  "chunks": [
+    {
+      "index": 0,
+      "locale": "ja",
+      "textPreview": "こんにちは、",
+      "textPreviewTruncated": false,
+      "source": "script"
+    },
+    {
+      "index": 1,
+      "locale": "und-Hani",
+      "textPreview": "世界！",
+      "textPreviewTruncated": false,
+      "source": "script"
+    },
+    {
+      "index": 2,
+      "locale": "ja",
+      "textPreview": "これはテストです。",
+      "textPreviewTruncated": false,
+      "source": "script"
+    }
+  ],
+  "windows": [
+    {
+      "windowIndex": 0,
+      "routeTag": "und-Hani",
+      "chunkRange": {
+        "start": 1,
+        "end": 1
+      },
+      "focusTextPreview": "世界！",
+      "focusTextPreviewTruncated": false,
+      "diagnosticSample": {
+        "textPreview": "こんにちは、世界！これはテストです。",
+        "textPreviewTruncated": false,
+        "normalizedTextPreview": "世界",
+        "normalizedTextPreviewTruncated": false,
+        "normalizedApplied": true,
+        "borrowedContext": {
+          "leftChunkIndex": 0,
+          "rightChunkIndex": 2
+        }
+      },
+      "eligibility": {
+        "scriptChars": 2,
+        "minScriptChars": 12,
+        "passed": false
+      },
+      "contentGate": {
+        "applied": false,
+        "passed": true,
+        "policy": "none"
+      },
+      "engine": {
+        "executed": false,
+        "reason": "notEligible"
+      },
+      "decision": {
+        "accepted": false,
+        "path": null,
+        "fallbackReason": "notEligible",
+        "finalTag": "und-Hani"
+      }
+    }
+  ],
+  "resolvedChunks": [
+    {
+      "index": 0,
+      "locale": "ja",
+      "textPreview": "こんにちは、",
+      "textPreviewTruncated": false
+    },
+    {
+      "index": 1,
+      "locale": "und-Hani",
+      "textPreview": "世界！",
+      "textPreviewTruncated": false
+    },
+    {
+      "index": 2,
+      "locale": "ja",
+      "textPreview": "これはテストです。",
+      "textPreviewTruncated": false
+    }
+  ]
+}
+```
+
+Recommended `pipeline` view field rules:
+
+- always include initial `chunks`
+- include `windows` for detector-mode routing analysis
+- include `resolvedChunks` as the final post-decision chunk projection
+- in `pipeline` view, top-level `chunks` and `resolvedChunks` should carry `textPreview` plus truncation metadata, not full text
+- each window should expose:
+  - `routeTag`
+  - `chunkRange`
+  - focus text preview
+  - diagnostic sample preview and normalized sample preview
+  - eligibility result
+  - `contentGate`
+  - engine execution result or skip reason
+  - final decision
+- regex pipeline output should reuse the same top-level container and `chunks` / `resolvedChunks` structure, but:
+  - omit `windows`
+  - omit `eligibility`
+  - omit `contentGate`
+  - omit `engine`
+  - use deterministic chunk-level `source` and `reason` fields instead
+  - still include a top-level `decision` summary that explains the deterministic route outcome
+
+Recommended `regex` pipeline JSON shape:
+
+```json
+{
+  "schemaVersion": 1,
+  "kind": "detector-inspect",
+  "view": "pipeline",
+  "detector": "regex",
+  "input": {
+    "sourceType": "inline",
+    "textLength": 19,
+    "textPreview": "こんにちは、世界！これはテストです。",
+    "textPreviewTruncated": false
+  },
+  "chunks": [
+    {
+      "index": 0,
+      "locale": "ja",
+      "textPreview": "こんにちは、",
+      "textPreviewTruncated": false,
+      "source": "script",
+      "reason": "hiragana-katakana"
+    },
+    {
+      "index": 1,
+      "locale": "und-Hani",
+      "textPreview": "世界！",
+      "textPreviewTruncated": false,
+      "source": "script",
+      "reason": "han-fallback-after-boundary"
+    },
+    {
+      "index": 2,
+      "locale": "ja",
+      "textPreview": "これはテストです。",
+      "textPreviewTruncated": false,
+      "source": "script",
+      "reason": "hiragana-katakana"
+    }
+  ],
+  "decision": {
+    "kind": "deterministic",
+    "notes": [
+      "Regex inspection does not use detector windows or engine confidence.",
+      "Final locales come directly from script detection, hint rules, and fallback rules."
+    ]
+  },
+  "resolvedChunks": [
+    {
+      "index": 0,
+      "locale": "ja",
+      "textPreview": "こんにちは、",
+      "textPreviewTruncated": false
+    },
+    {
+      "index": 1,
+      "locale": "und-Hani",
+      "textPreview": "世界！",
+      "textPreviewTruncated": false
+    },
+    {
+      "index": 2,
+      "locale": "ja",
+      "textPreview": "これはテストです。",
+      "textPreviewTruncated": false
+    }
+  ]
+}
+```
+
+Recommended `regex` pipeline field rules:
+
+- require `chunks`
+- require `resolvedChunks`
+- require a top-level deterministic `decision` object
+- require chunk-level `source`
+- allow chunk-level `reason`
+- do not emit placeholder `engine`, `windows`, `eligibility`, or `contentGate` fields for regex pipeline output
+
+Recommended regex pipeline chunk field contract:
+
+- `source` is required with these first-version values:
+  - `script`
+  - `hint`
+  - `fallback`
+- `reason` is optional freeform explanatory text for human-facing precision such as:
+  - `hiragana-katakana`
+  - `han-fallback-after-boundary`
+  - `latin-hint-rule`
+  - `explicit-latin-hint`
+- top-level regex pipeline output should always include exactly these major objects:
+  - `input`
+  - `chunks`
+  - `decision`
+  - `resolvedChunks`
+- top-level regex pipeline output should never include:
+  - `windows`
+  - `engine`
+  - `eligibility`
+  - `contentGate`
+
+## Recommended Empty Inspect Results
+
+Whitespace-only or empty input should return a valid inspect result instead of a usage error.
+
+Recommended empty `pipeline` result shape:
+
+```json
+{
+  "schemaVersion": 1,
+  "kind": "detector-inspect",
+  "view": "pipeline",
+  "detector": "wasm",
+  "input": {
+    "sourceType": "inline",
+    "textLength": 0,
+    "textPreview": "",
+    "textPreviewTruncated": false
+  },
+  "chunks": [],
+  "windows": [],
+  "decision": {
+    "kind": "empty",
+    "notes": [
+      "No detector-eligible content was present."
+    ]
+  },
+  "resolvedChunks": []
+}
+```
+
+Recommended empty `engine` result shape:
+
+```json
+{
+  "schemaVersion": 1,
+  "kind": "detector-inspect",
+  "view": "engine",
+  "detector": "wasm",
+  "input": {
+    "sourceType": "inline",
+    "textLength": 0,
+    "textPreview": "",
+    "textPreviewTruncated": false
+  },
+  "sample": {
+    "text": "",
+    "textLength": 0,
+    "normalizedText": "",
+    "normalizedApplied": false,
+    "textSource": "focus"
+  },
+  "decision": {
+    "kind": "empty",
+    "notes": [
+      "No detector-eligible content was present."
+    ]
+  }
+}
+```
+
+Recommended empty-result rules:
+
+- empty `pipeline` output should use empty arrays for `chunks`, `windows`, and `resolvedChunks`
+- empty `engine` output should omit `routeTag` and `engine`
+- both empty-result views should include a lightweight `decision.kind = "empty"` marker
+- empty-result handling should be shared across inline text and `--path` file input
+- empty regex `pipeline` output should follow the regex-specific top-level shape:
+  - include `input`
+  - include `chunks: []`
+  - include `decision.kind = "empty"`
+  - include `resolvedChunks: []`
+  - omit `windows`, `engine`, `eligibility`, and `contentGate`
+
+## Recommended First-Version Standard Output Layout
+
+The first standard-format layout should be compact, deterministic, and section-based.
+
+Recommended top-level layout:
+
+1. title block
+2. input summary
+3. chunk summary
+4. per-window details
+5. resolved chunk summary
+
+Recommended title block fields:
+
+- `Detector inspect`
+- `View: <engine|pipeline>`
+- `Detector: <wasm|regex>`
+
+Recommended input summary fields:
+
+- source type
+- optional path
+- text length
+
+Recommended chunk summary layout:
+
+- numbered rows
+- locale
+- short text preview
+- source or reason when available
+
+Recommended per-window layout for `pipeline`:
+
+- `Window <n>`
+- route tag
+- chunk range
+- focus text preview
+- borrowed context summary when present
+- normalized-sample summary
+- eligibility result
+- content gate result
+- engine execution or skip line
+- decision line
+
+Recommended `engine` view layout:
+
+- sampled text block
+- normalized-sample block
+- raw engine result block
+- normalized engine result block when present
+- remap result line
+
+Recommended first-version text conventions:
+
+- use stable section labels so examples and tests remain easy to maintain
+- keep previews single-line by collapsing repeated whitespace
+- use the same `160` Unicode code point preview limit in standard output
+- use bounded previews in standard output rather than full multi-line payload dumps
+- reserve exact full sampled text for engine-view JSON only
+
+## Remaining Narrow Design Items
+
+- The exact allowance for repeated `--path` values in a future inspect batch mode, if any, is intentionally out of scope for the first version.
 
 ## Related Plans
 
