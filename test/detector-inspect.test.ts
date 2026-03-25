@@ -66,6 +66,24 @@ describe("detector inspect library API", () => {
     });
   });
 
+  test("defaults pipeline inspection to wasm when detector is omitted", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const result = await inspectTextWithDetector(
+      "This sentence should clearly be detected as English for the wasm detector path.",
+    );
+
+    expect(result.view).toBe("pipeline");
+    expect(result.detector).toBe("wasm");
+    if (result.view !== "pipeline") {
+      throw new Error("Expected pipeline inspect result.");
+    }
+    expect(result.windows?.length).toBe(1);
+    expect(result.windows?.[0]?.engine.executed).toBeTrue();
+  });
+
   test("defaults engine inspection to wasm when engine view is requested", async () => {
     if (!hasWasmDetectorRuntime()) {
       return;

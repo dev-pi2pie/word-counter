@@ -11,7 +11,8 @@ function resolveInspectDetectorMode(
     return mode;
   }
 
-  return view === "engine" ? "wasm" : "regex";
+  void view;
+  return "wasm";
 }
 
 export async function inspectTextWithDetector(
