@@ -303,11 +303,21 @@ describe("CLI batch output", () => {
 
     expect(noJobsParsed.debug?.detector?.mode).toBe("wasm");
     expect(jobsFourParsed.debug?.detector?.mode).toBe("wasm");
-    expect(noJobsParsed.files.every((file: { debug?: { detector?: { windowsTotal?: number } } }) =>
-      (file.debug?.detector?.windowsTotal ?? 0) >= 1)).toBeTrue();
-    expect(jobsFourParsed.files.every((file: { debug?: { detector?: { windowsTotal?: number } } }) =>
-      (file.debug?.detector?.windowsTotal ?? 0) >= 1)).toBeTrue();
-    expect(noJobsParsed.debug.detector.windowsTotal).toBe(jobsFourParsed.debug.detector.windowsTotal);
+    expect(
+      noJobsParsed.files.every(
+        (file: { debug?: { detector?: { windowsTotal?: number } } }) =>
+          (file.debug?.detector?.windowsTotal ?? 0) >= 1,
+      ),
+    ).toBeTrue();
+    expect(
+      jobsFourParsed.files.every(
+        (file: { debug?: { detector?: { windowsTotal?: number } } }) =>
+          (file.debug?.detector?.windowsTotal ?? 0) >= 1,
+      ),
+    ).toBeTrue();
+    expect(noJobsParsed.debug.detector.windowsTotal).toBe(
+      jobsFourParsed.debug.detector.windowsTotal,
+    );
   });
 
   test("forwards detector debug events from worker batch runs", async () => {
@@ -383,7 +393,9 @@ describe("CLI batch output", () => {
     ]);
 
     for (const output of [asyncOutput, workerOutput]) {
-      const detectorEvents = parseDebugEvents(output.stderr).filter((item) => item.topic === "detector");
+      const detectorEvents = parseDebugEvents(output.stderr).filter(
+        (item) => item.topic === "detector",
+      );
       expect(detectorEvents.length > 0).toBeTrue();
       expect(
         detectorEvents.every((item) => item.scope === "file" && typeof item.path === "string"),
@@ -743,7 +755,9 @@ describe("CLI batch output", () => {
 
     expect(strategy?.strategy).toBe("load-count");
     expect(executor).toBeDefined();
-    expect(executor?.executor === "worker-pool" || executor?.executor === "async-fallback").toBeTrue();
+    expect(
+      executor?.executor === "worker-pool" || executor?.executor === "async-fallback",
+    ).toBeTrue();
     if (executor?.executor === "async-fallback") {
       expect(typeof executor.reason).toBe("string");
     }
@@ -773,7 +787,9 @@ describe("CLI batch output", () => {
 
       expect(executor?.executor).toBe("async-fallback");
       expect(
-        output.stderr.some((line) => line.includes("Worker executor unavailable; falling back to async load+count")),
+        output.stderr.some((line) =>
+          line.includes("Worker executor unavailable; falling back to async load+count"),
+        ),
       ).toBeTrue();
       expect(output.stdout).toEqual(["4"]);
     } finally {
@@ -807,7 +823,8 @@ describe("CLI batch output", () => {
         return;
       }
 
-      const message = outcome.error instanceof Error ? outcome.error.message : String(outcome.error);
+      const message =
+        outcome.error instanceof Error ? outcome.error.message : String(outcome.error);
       expect(/invalid language tag: invalid_tag/i.test(message)).toBeTrue();
       return;
     }
@@ -871,8 +888,12 @@ describe("CLI batch output", () => {
     const events = parseDebugEvents(output.stderr);
     const strategy = events.find((item) => item.event === "batch.jobs.strategy");
 
-    expect(output.stderr.some((line) => line.includes("Warning: requested --jobs=99999"))).toBeTrue();
-    expect(output.stderr.some((line) => line.includes(`Running with --jobs=${expectedCappedJobs}`))).toBeTrue();
+    expect(
+      output.stderr.some((line) => line.includes("Warning: requested --jobs=99999")),
+    ).toBeTrue();
+    expect(
+      output.stderr.some((line) => line.includes(`Running with --jobs=${expectedCappedJobs}`)),
+    ).toBeTrue();
     expect(strategy?.jobs).toBe(expectedCappedJobs);
     expect(output.stdout).toEqual(["4"]);
   });
@@ -892,7 +913,9 @@ describe("CLI batch output", () => {
       "--quiet-warnings",
     ]);
 
-    expect(output.stderr.some((line) => line.includes("Warning: requested --jobs=99999"))).toBeFalse();
+    expect(
+      output.stderr.some((line) => line.includes("Warning: requested --jobs=99999")),
+    ).toBeFalse();
     expect(output.stdout).toEqual(["4"]);
   });
 
@@ -914,7 +937,9 @@ describe("CLI batch output", () => {
         "--quiet-warnings",
       ]);
       expect(
-        output.stderr.some((line) => line.includes("Worker executor unavailable; falling back to async load+count")),
+        output.stderr.some((line) =>
+          line.includes("Worker executor unavailable; falling back to async load+count"),
+        ),
       ).toBeFalse();
       expect(output.stdout).toEqual(["4"]);
     } finally {

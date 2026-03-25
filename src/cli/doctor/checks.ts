@@ -26,12 +26,7 @@ function deriveBuildChannel(packageVersion: string): DoctorBuildChannel {
   }
 
   const channel = prereleaseMatch[1]?.toLowerCase();
-  if (
-    channel === "alpha" ||
-    channel === "beta" ||
-    channel === "rc" ||
-    channel === "canary"
-  ) {
+  if (channel === "alpha" || channel === "beta" || channel === "rc" || channel === "canary") {
     return channel;
   }
 
@@ -49,7 +44,9 @@ function parseNodeMajor(version: string): number | null {
 }
 
 function resolveRuntimeSummary(overrides: DoctorRuntimeOverrides = {}): DoctorRuntimeSummary {
-  const packageVersion = normalizePackageVersion(overrides.packageVersion ?? EMBEDDED_PACKAGE_VERSION);
+  const packageVersion = normalizePackageVersion(
+    overrides.packageVersion ?? EMBEDDED_PACKAGE_VERSION,
+  );
   const nodeVersion = overrides.nodeVersion ?? process.version;
   const major = parseNodeMajor(nodeVersion);
 
@@ -151,10 +148,7 @@ function collectWarnings(
   return warnings;
 }
 
-function resolveStatus(
-  segmenter: DoctorSegmenterHealth,
-  warnings: string[],
-): DoctorStatus {
+function resolveStatus(segmenter: DoctorSegmenterHealth, warnings: string[]): DoctorStatus {
   const hardFailure =
     !segmenter.available ||
     !segmenter.wordGranularity ||

@@ -31,14 +31,13 @@ type RunBatchCountOptions = {
 };
 
 export async function runBatchCount(options: RunBatchCountOptions): Promise<BatchSummary> {
-  const detectorEvidence =
-    options.detectorEvidence
-      ? {
-          verbosity: options.debug.verbosity,
-          mode: options.wcOptions.mode ?? "chunk",
-          section: options.section,
-        }
-      : undefined;
+  const detectorEvidence = options.detectorEvidence
+    ? {
+        verbosity: options.debug.verbosity,
+        mode: options.wcOptions.mode ?? "chunk",
+        section: options.section,
+      }
+    : undefined;
   const createFileDetectorDebugContext = ({ path }: { path: string }) =>
     options.debug.enabled && options.wcOptions.detector === "wasm"
       ? {
@@ -62,19 +61,14 @@ export async function runBatchCount(options: RunBatchCountOptions): Promise<Batc
           ...(detectorEvidence ? { evidence: detectorEvidence } : {}),
         }
       : undefined;
-  const emitWorkerDetectorDebugEvent =
-    options.debug.enabled
-      ? (
-          event: string,
-          details?: Record<string, unknown>,
-          eventOptions?: DebugEventOptions,
-        ) => {
-          options.debug.emit(event, details, {
-            ...eventOptions,
-            scope: "file",
-          });
-        }
-      : undefined;
+  const emitWorkerDetectorDebugEvent = options.debug.enabled
+    ? (event: string, details?: Record<string, unknown>, eventOptions?: DebugEventOptions) => {
+        options.debug.emit(event, details, {
+          ...eventOptions,
+          scope: "file",
+        });
+      }
+    : undefined;
   const batchStartedAtMs = Date.now();
   const resolveStartedAtMs = Date.now();
 

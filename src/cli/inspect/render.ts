@@ -69,7 +69,9 @@ export function buildInspectStandardLines(
     for (const chunk of result.chunks) {
       const source = chunk.source ? ` | ${chunk.source}` : "";
       const reason = chunk.reason ? ` | ${chunk.reason}` : "";
-      lines.push(`[${chunk.index}] ${chunk.locale}${source}${reason} | ${JSON.stringify(chunk.textPreview)}`);
+      lines.push(
+        `[${chunk.index}] ${chunk.locale}${source}${reason} | ${JSON.stringify(chunk.textPreview)}`,
+      );
     }
   }
 
@@ -84,7 +86,9 @@ export function buildInspectStandardLines(
         lines.push(`Borrowed context: ${JSON.stringify(window.diagnosticSample.borrowedContext)}`);
       }
       lines.push(`Sample: ${JSON.stringify(window.diagnosticSample.textPreview)}`);
-      lines.push(`Normalized sample: ${JSON.stringify(window.diagnosticSample.normalizedTextPreview)}`);
+      lines.push(
+        `Normalized sample: ${JSON.stringify(window.diagnosticSample.normalizedTextPreview)}`,
+      );
       lines.push(
         `Eligibility: ${window.eligibility.scriptChars}/${window.eligibility.minScriptChars} passed=${window.eligibility.passed}`,
       );

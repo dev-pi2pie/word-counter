@@ -5,11 +5,7 @@ import { isProbablyBinary } from "../path/load";
 import { resolveBatchFileEntries } from "../path/resolve";
 import { formatInputReadError } from "../runtime/options";
 import type { BatchSkip, PathMode } from "../types";
-import type {
-  InspectLoadedPathInput,
-  InspectSectionMode,
-  InspectSingleInput,
-} from "./types";
+import type { InspectLoadedPathInput, InspectSectionMode, InspectSingleInput } from "./types";
 
 export function selectInspectText(input: string, section: InspectSectionMode): string {
   if (section === "all") {

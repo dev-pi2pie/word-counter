@@ -44,18 +44,11 @@ describe("inspect command", () => {
 
     const root = await makeTempFixture("inspect-engine-preview");
     const filePath = join(root, "large.txt");
-    const longText = "This sentence should clearly be detected as English for the wasm detector path. ".repeat(
-      8,
-    );
+    const longText =
+      "This sentence should clearly be detected as English for the wasm detector path. ".repeat(8);
     await writeFile(filePath, longText);
 
-    const output = await captureCli([
-      "inspect",
-      "--view",
-      "engine",
-      "--path",
-      filePath,
-    ]);
+    const output = await captureCli(["inspect", "--view", "engine", "--path", filePath]);
 
     expect(output.exitCode).toBe(0);
     expect(output.stdout.some((line) => line.startsWith("Sample text preview: "))).toBeTrue();
@@ -165,13 +158,7 @@ describe("inspect command", () => {
     const filePath = join(root, "empty.txt");
     await writeFile(filePath, "");
 
-    const output = await captureCli([
-      "inspect",
-      "--format",
-      "json",
-      "--path",
-      filePath,
-    ]);
+    const output = await captureCli(["inspect", "--format", "json", "--path", filePath]);
 
     expect(output.exitCode).toBe(0);
     const parsed = JSON.parse(output.stdout[0] ?? "{}");
@@ -249,14 +236,7 @@ describe("inspect command", () => {
     await writeFile(join(root, "a.md"), "Hello world");
     await writeFile(join(root, "ignored.js"), "const x = 1;");
 
-    const output = await captureCli([
-      "inspect",
-      "--format",
-      "json",
-      "--pretty",
-      "--path",
-      root,
-    ]);
+    const output = await captureCli(["inspect", "--format", "json", "--pretty", "--path", root]);
 
     expect(output.exitCode).toBe(0);
     expect(output.stdout.length).toBe(1);
@@ -277,22 +257,19 @@ describe("inspect command", () => {
     await chmod(unreadablePath, 0o000);
 
     try {
-      const output = await captureCli([
-        "inspect",
-        "--format",
-        "json",
-        "--path",
-        root,
-      ]);
+      const output = await captureCli(["inspect", "--format", "json", "--path", root]);
 
       expect(output.exitCode).toBe(0);
       const parsed = JSON.parse(output.stdout[0] ?? "{}");
       expect(parsed.summary.succeeded).toBe(1);
       expect(parsed.summary.skipped).toBe(1);
       expect(parsed.summary.failed).toBe(0);
-      expect(parsed.skipped.some((entry: { path: string; reason: string }) =>
-        entry.path === unreadablePath && entry.reason.startsWith("not readable:"),
-      )).toBeTrue();
+      expect(
+        parsed.skipped.some(
+          (entry: { path: string; reason: string }) =>
+            entry.path === unreadablePath && entry.reason.startsWith("not readable:"),
+        ),
+      ).toBeTrue();
     } finally {
       await chmod(unreadablePath, 0o644);
     }
@@ -353,13 +330,17 @@ describe("inspect command", () => {
     ]);
 
     expect(output.exitCode).toBe(1);
-    expect(output.stderr.some((line) => line.includes("`--view engine` requires `--detector wasm`."))).toBeTrue();
+    expect(
+      output.stderr.some((line) => line.includes("`--view engine` requires `--detector wasm`.")),
+    ).toBeTrue();
   });
 
   test("rejects inspect raw format", async () => {
     const output = await captureCli(["inspect", "--format", "raw", "Hello world"]);
 
     expect(output.exitCode).toBe(1);
-    expect(output.stderr.some((line) => line.includes("`inspect` does not support `--format raw`."))).toBeTrue();
+    expect(
+      output.stderr.some((line) => line.includes("`inspect` does not support `--format raw`.")),
+    ).toBeTrue();
   });
 });

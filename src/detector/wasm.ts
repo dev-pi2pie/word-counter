@@ -2,9 +2,7 @@ import { segmentTextByLocale } from "../wc";
 import { resolveLocaleDetectContext } from "../wc/locale-detect";
 import { buildWordCounterResultFromChunks } from "./result-builder";
 import { countSectionsWithResolvedDetector } from "./sections";
-import {
-  type DetectorWindow,
-} from "./policy";
+import { type DetectorWindow } from "./policy";
 import { createInspectInput, segmentTextByLocaleWithTrace } from "./inspect-helpers";
 import type { DetectorInspectOptions, DetectorInspectResult } from "./inspect-types";
 import {
@@ -90,7 +88,10 @@ export async function inspectTextWithWasmDetector(
   options: DetectorInspectOptions = {},
 ): Promise<DetectorInspectResult> {
   const input = createInspectInput(text, options.input);
-  const tracedChunks = segmentTextByLocaleWithTrace(text, createDeferredLatinPreSegmentOptions(options));
+  const tracedChunks = segmentTextByLocaleWithTrace(
+    text,
+    createDeferredLatinPreSegmentOptions(options),
+  );
   const chunks = tracedChunks.map(({ locale, text: chunkText }) => ({
     locale,
     text: chunkText,
@@ -111,7 +112,9 @@ export async function inspectTextWithWasmDetector(
   }
 
   const resolved = [...chunks];
-  const resolvedWindows: Array<ResolvedDetectorWindow & { window: DetectorWindow; windowIndex: number }> = [];
+  const resolvedWindows: Array<
+    ResolvedDetectorWindow & { window: DetectorWindow; windowIndex: number }
+  > = [];
 
   for (const [windowIndex, window] of windows.entries()) {
     const resolution = await resolveWindowLocale(window, windowIndex, chunks, options);

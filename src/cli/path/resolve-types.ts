@@ -1,9 +1,6 @@
 import type { DebugChannel } from "../debug/channel";
 import type { PathMode } from "../types";
-import type {
-  DirectoryExtensionFilter,
-  DirectoryRegexFilter,
-} from "./filter";
+import type { DirectoryExtensionFilter, DirectoryRegexFilter } from "./filter";
 
 export type ResolveBatchFilePathOptions = {
   pathMode: PathMode;

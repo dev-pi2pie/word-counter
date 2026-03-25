@@ -6,11 +6,7 @@ import { createDetectorDebugSummary } from "../../../../detector/debug";
 import wordCounter from "../../../../wc";
 import { compactCollectorSegmentsInCountResult } from "../../aggregate";
 import { isProbablyBinary } from "../../../path/load";
-import type {
-  WorkerConfig,
-  WorkerRequestMessage,
-  WorkerResponseMessage,
-} from "./protocol";
+import type { WorkerConfig, WorkerRequestMessage, WorkerResponseMessage } from "./protocol";
 
 const config = workerData as WorkerConfig;
 

@@ -1,8 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import wordCounter, {
-  DEFAULT_LATIN_HINT_RULES,
-  segmentTextByLocale,
-} from "../src/wc";
+import wordCounter, { DEFAULT_LATIN_HINT_RULES, segmentTextByLocale } from "../src/wc";
 
 describe("segmentTextByLocale", () => {
   test("splits Latin and Han scripts into separate locales", () => {
@@ -96,7 +93,11 @@ describe("segmentTextByLocale", () => {
   });
 
   test("resets carried Latin locale after fullwidth and halfwidth periods", () => {
-    const samples = ["Überzug。Another paragraph", "Überzug｡Another paragraph", "Überzug．Another paragraph"];
+    const samples = [
+      "Überzug。Another paragraph",
+      "Überzug｡Another paragraph",
+      "Überzug．Another paragraph",
+    ];
     for (const text of samples) {
       const chunks = segmentTextByLocale(text);
       expect(chunks.map((chunk) => chunk.locale)).toEqual(["de", "und-Latn"]);

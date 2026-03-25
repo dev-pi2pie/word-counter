@@ -150,7 +150,9 @@ describe("detector entrypoint", () => {
 
     expect(chunks.map((chunk) => chunk.locale)).toEqual(["en", "es"]);
     expect(chunks[0]?.text).toContain("borrowed word ");
-    expect(chunks[1]?.text).toBe("niño inside the same detector window to check hint preservation.");
+    expect(chunks[1]?.text).toBe(
+      "niño inside the same detector window to check hint preservation.",
+    );
   });
 
   test("reapplies custom Latin hint rules after unresolved wasm detector evaluation", async () => {

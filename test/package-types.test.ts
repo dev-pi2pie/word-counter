@@ -9,9 +9,7 @@ const require = createRequire(import.meta.url);
 const tscEntrypoint = require.resolve("typescript/bin/tsc");
 
 afterEach(async () => {
-  await Promise.all(
-    tempRoots.splice(0).map((path) => rm(path, { recursive: true, force: true })),
-  );
+  await Promise.all(tempRoots.splice(0).map((path) => rm(path, { recursive: true, force: true })));
 });
 
 async function makeTypecheckFixture(): Promise<string> {

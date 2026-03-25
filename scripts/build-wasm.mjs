@@ -23,7 +23,9 @@ function runCommand(command, args, cwd) {
         resolvePromise(undefined);
         return;
       }
-      rejectPromise(new Error(`${command} ${args.join(" ")} failed with exit code ${code ?? "unknown"}.`));
+      rejectPromise(
+        new Error(`${command} ${args.join(" ")} failed with exit code ${code ?? "unknown"}.`),
+      );
     });
   });
 }

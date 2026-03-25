@@ -12,10 +12,7 @@ import {
   resolvePathDebugChannel,
 } from "./resolve-debug";
 import { expandDirectory } from "./resolve-directory";
-import type {
-  PathResolveDebugStats,
-  ResolveBatchFilePathOptions,
-} from "./resolve-types";
+import type { PathResolveDebugStats, ResolveBatchFilePathOptions } from "./resolve-types";
 
 export async function resolveBatchFileEntries(
   pathInputs: string[],
@@ -158,7 +155,9 @@ export async function resolveBatchFileEntries(
     skipped.push({ path, reason: "regex excluded", source: "directory" });
   }
 
-  const files = [...resolvedFiles.values()].sort((left, right) => left.path.localeCompare(right.path));
+  const files = [...resolvedFiles.values()].sort((left, right) =>
+    left.path.localeCompare(right.path),
+  );
   emitPathResolveSummaries(debug, stats, files.length, skipped.length);
 
   return { files, skipped };

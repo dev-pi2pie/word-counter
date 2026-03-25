@@ -59,7 +59,12 @@ export async function runInspectBatch(
     });
   }
 
-  const payload = buildInspectBatchJsonPayload(validated, batchFiles, loaded.skipped, loaded.failures);
+  const payload = buildInspectBatchJsonPayload(
+    validated,
+    batchFiles,
+    loaded.skipped,
+    loaded.failures,
+  );
   if (validated.format === "json") {
     console.log(JSON.stringify(payload, null, validated.pretty ? 2 : 0));
   } else {

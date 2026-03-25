@@ -12,7 +12,7 @@ const LATIN_PROMOTION_BREAK_REGEX = /[\s,.!?;:，、。！？；：．｡､]/u;
 
 export function segmentTextByLocale(
   text: string,
-  options: LocaleDetectOptions = {}
+  options: LocaleDetectOptions = {},
 ): LocaleChunk[] {
   const context = resolveLocaleDetectContext(options);
   const chunks: LocaleChunk[] = [];

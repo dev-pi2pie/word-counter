@@ -208,7 +208,9 @@ describe("regex filters", () => {
     });
 
     expect(resolved.files).toEqual([child]);
-    expect(resolved.skipped.some((entry) => entry.path === child && entry.reason === "regex excluded")).toBeFalse();
+    expect(
+      resolved.skipped.some((entry) => entry.path === child && entry.reason === "regex excluded"),
+    ).toBeFalse();
   });
 
   test("does not apply regex filtering to direct file paths", async () => {

@@ -84,7 +84,9 @@ export function createDetectorDebugSummary(
 export function mergeDetectorDebugSummaries(
   summaries: Array<DetectorDebugSummary | undefined>,
 ): DetectorDebugSummary | undefined {
-  const present = summaries.filter((summary): summary is DetectorDebugSummary => summary !== undefined);
+  const present = summaries.filter(
+    (summary): summary is DetectorDebugSummary => summary !== undefined,
+  );
   if (present.length === 0) {
     return undefined;
   }

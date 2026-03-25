@@ -12,13 +12,7 @@ import {
 import type { ExpandDirectoryOptions, PathResolveDebugStats } from "./resolve-types";
 
 export async function expandDirectory(
-  {
-    rootPath,
-    directoryPath,
-    recursive,
-    extensionFilter,
-    regexFilter,
-  }: ExpandDirectoryOptions,
+  { rootPath, directoryPath, recursive, extensionFilter, regexFilter }: ExpandDirectoryOptions,
   skipped: BatchResolvedSkip[],
   recordRegexExcluded: (filePath: string) => boolean,
   debug: DebugChannel,
@@ -29,7 +23,11 @@ export async function expandDirectory(
     entries = await readdir(directoryPath, { withFileTypes: true, encoding: "utf8" });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    skipped.push({ path: directoryPath, reason: `directory read failed: ${message}`, source: "directory" });
+    skipped.push({
+      path: directoryPath,
+      reason: `directory read failed: ${message}`,
+      source: "directory",
+    });
     debug.emit("path.resolve.expand.read_failed", {
       directory: directoryPath,
       reason: `directory read failed: ${message}`,

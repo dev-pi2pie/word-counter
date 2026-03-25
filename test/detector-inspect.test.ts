@@ -84,7 +84,7 @@ describe("detector inspect library API", () => {
         detector: "regex",
         view: "engine",
       }),
-    ).rejects.toThrow("`view: \"engine\"` requires `detector: \"wasm\"`.");
+    ).rejects.toThrow('`view: "engine"` requires `detector: "wasm"`.');
   });
 
   test("returns wasm engine inspection for the first ambiguous route sample", async () => {

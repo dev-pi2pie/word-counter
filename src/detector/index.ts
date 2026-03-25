@@ -14,10 +14,7 @@ import {
   wordCounterWithWasmDetector,
 } from "./wasm";
 import { inspectTextWithDetector } from "./inspect";
-import {
-  createDetectorDebugSummary,
-  mergeDetectorDebugSummaries,
-} from "./debug";
+import { createDetectorDebugSummary, mergeDetectorDebugSummaries } from "./debug";
 import type {
   DetectorCountSectionsOptions,
   DetectorLocaleOptions,

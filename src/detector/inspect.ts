@@ -22,7 +22,7 @@ export async function inspectTextWithDetector(
   const detector = resolveInspectDetectorMode(options.detector, view);
 
   if (detector === "regex" && view === "engine") {
-    throw new Error("`view: \"engine\"` requires `detector: \"wasm\"`.");
+    throw new Error('`view: "engine"` requires `detector: "wasm"`.');
   }
 
   if (detector === "regex") {

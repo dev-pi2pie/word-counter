@@ -138,6 +138,4 @@ export type DetectorInspectPipelineResult = DetectorInspectBaseResult & {
   decision?: DetectorInspectDecision;
 };
 
-export type DetectorInspectResult =
-  | DetectorInspectEngineResult
-  | DetectorInspectPipelineResult;
+export type DetectorInspectResult = DetectorInspectEngineResult | DetectorInspectPipelineResult;

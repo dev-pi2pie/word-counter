@@ -1,7 +1,4 @@
-import type {
-  DetectorDiagnosticSample,
-  DetectorRouteTag,
-} from "./policy";
+import type { DetectorDiagnosticSample, DetectorRouteTag } from "./policy";
 import { remapWhatlangResult } from "./whatlang-map";
 import { detectWithWhatlangWasm } from "./whatlang-wasm";
 import type { DetectorResult } from "./types";

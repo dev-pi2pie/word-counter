@@ -7,7 +7,13 @@ import type { OutputFormat } from "../runtime/types";
 import type { DetectorMode } from "../../detector";
 import type { WordCounterMode } from "../../wc";
 
-const MODE_CHOICES: WordCounterMode[] = ["chunk", "segments", "collector", "char", "char-collector"];
+const MODE_CHOICES: WordCounterMode[] = [
+  "chunk",
+  "segments",
+  "collector",
+  "char",
+  "char-collector",
+];
 const DETECTOR_CHOICES: DetectorMode[] = ["regex", "wasm"];
 const FORMAT_CHOICES: OutputFormat[] = ["standard", "raw", "json"];
 const SECTION_CHOICES: SectionMode[] = [

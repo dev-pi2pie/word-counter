@@ -94,20 +94,12 @@ function resolveHanHint(options: LocaleDetectOptions): string | undefined {
   return undefined;
 }
 
-function compileLatinHintPattern(
-  pattern: string | RegExp,
-  label: string,
-): RegExp {
+function compileLatinHintPattern(pattern: string | RegExp, label: string): RegExp {
   const source = typeof pattern === "string" ? pattern : pattern.source;
   const hasUnicodeMode =
-    typeof pattern !== "string" &&
-    (pattern.flags.includes("u") || pattern.flags.includes("v"));
+    typeof pattern !== "string" && (pattern.flags.includes("u") || pattern.flags.includes("v"));
   const flags =
-    typeof pattern === "string"
-      ? "u"
-      : hasUnicodeMode
-        ? pattern.flags
-        : `${pattern.flags}u`;
+    typeof pattern === "string" ? "u" : hasUnicodeMode ? pattern.flags : `${pattern.flags}u`;
   if (source.length === 0) {
     throw new Error(`${label}: pattern must not be empty.`);
   }
@@ -196,9 +188,7 @@ function resolveLatinHintRules(options: LocaleDetectOptions): ResolvedLatinHintR
   return resolvedRules;
 }
 
-export function resolveLocaleDetectContext(
-  options: LocaleDetectOptions = {},
-): LocaleDetectContext {
+export function resolveLocaleDetectContext(options: LocaleDetectOptions = {}): LocaleDetectContext {
   const latinHint = resolveLatinHint(options);
   const latinHintRules = resolveLatinHintRules(options);
   const latinLocales = new Set<string>([DEFAULT_LOCALE]);

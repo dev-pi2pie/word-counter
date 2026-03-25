@@ -4,20 +4,21 @@ import {
   createInspectPreview,
   type TracedLocaleChunk,
 } from "./inspect-helpers";
-import type {
-  DetectorInspectResult,
-  DetectorInspectWindow,
-} from "./inspect-types";
+import type { DetectorInspectResult, DetectorInspectWindow } from "./inspect-types";
 import type { ResolvedDetectorWindow } from "./wasm-resolution";
 import type { ExecutedEngineSample } from "./wasm-engine";
 
-function buildInspectSample(sample: ResolvedDetectorWindow["sample"] | {
-  text: string;
-  normalizedText: string;
-  normalizedApplied: boolean;
-  textSource: "focus" | "borrowed-context";
-  borrowedContext?: ResolvedDetectorWindow["sample"]["borrowedContext"];
-}) {
+function buildInspectSample(
+  sample:
+    | ResolvedDetectorWindow["sample"]
+    | {
+        text: string;
+        normalizedText: string;
+        normalizedApplied: boolean;
+        textSource: "focus" | "borrowed-context";
+        borrowedContext?: ResolvedDetectorWindow["sample"]["borrowedContext"];
+      },
+) {
   return {
     text: sample.text,
     textLength: sample.text.length,
@@ -56,13 +57,17 @@ export async function buildEngineInspectResult(
   window: DetectorWindow,
   chunks: Array<{ locale: string; text: string }>,
   executeEngine: (
-    sample: ReturnType<typeof DETECTOR_ROUTE_POLICIES[typeof window.routeTag]["buildDiagnosticSample"]>,
+    sample: ReturnType<
+      (typeof DETECTOR_ROUTE_POLICIES)[typeof window.routeTag]["buildDiagnosticSample"]
+    >,
     routeTag: typeof window.routeTag,
   ) => Promise<ExecutedEngineSample>,
 ): Promise<DetectorInspectResult> {
   const sample = DETECTOR_ROUTE_POLICIES[window.routeTag].buildDiagnosticSample(window, chunks);
-  const { rawResult, rawRemapped, normalizedResult, normalizedRemapped } =
-    await executeEngine(sample, window.routeTag);
+  const { rawResult, rawRemapped, normalizedResult, normalizedRemapped } = await executeEngine(
+    sample,
+    window.routeTag,
+  );
 
   if (!rawResult) {
     return {
@@ -133,7 +138,16 @@ export function buildPipelineInspectResult(
       }),
     ),
     windows: resolvedWindows.map(
-      ({ window, windowIndex, sample, eligibility, contentGate, engineExecuted, engineReason, decision }) => {
+      ({
+        window,
+        windowIndex,
+        sample,
+        eligibility,
+        contentGate,
+        engineExecuted,
+        engineReason,
+        decision,
+      }) => {
         const focusPreview = createInspectPreview(sample.focusText);
         const samplePreview = createInspectPreview(sample.text);
         const normalizedPreview = createInspectPreview(sample.normalizedText);

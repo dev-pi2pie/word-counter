@@ -212,10 +212,7 @@ function shouldTreatLatinProseBlockAsSentenceLike(
   return lineCount <= 1 ? latinWords >= 5 : latinWords >= 8;
 }
 
-function shouldAcceptLatinDetectorWindow(
-  text: string,
-  normalizedSample: string,
-): boolean {
+function shouldAcceptLatinDetectorWindow(text: string, normalizedSample: string): boolean {
   const normalizedLatinWords = countLatinWords(normalizedSample);
   if (normalizedLatinWords < 4) {
     return false;
@@ -422,16 +419,10 @@ export function isAmbiguousDetectorRoute(locale: string): locale is DetectorRout
   return locale === DEFAULT_LOCALE || locale === DEFAULT_HAN_TAG;
 }
 
-export function countScriptBearingCharsForRoute(
-  text: string,
-  routeTag: DetectorRouteTag,
-): number {
+export function countScriptBearingCharsForRoute(text: string, routeTag: DetectorRouteTag): number {
   return countMatchingChars(text, getEligibilityScriptMatcher(routeTag));
 }
 
-export function normalizeDetectorSampleForRoute(
-  text: string,
-  routeTag: DetectorRouteTag,
-): string {
+export function normalizeDetectorSampleForRoute(text: string, routeTag: DetectorRouteTag): string {
   return normalizeSampleText(text, routeTag);
 }

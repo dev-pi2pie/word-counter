@@ -31,10 +31,7 @@ export type {
 export { countCharsForLocale, countWordsForLocale, segmentTextByLocale };
 export { DEFAULT_LATIN_HINT_RULES } from "./latin-hints";
 
-export function wordCounter(
-  text: string,
-  options: WordCounterOptions = {}
-): WordCounterResult {
+export function wordCounter(text: string, options: WordCounterOptions = {}): WordCounterResult {
   const mode: WordCounterMode = resolveMode(options.mode, "chunk");
   const collectNonWords = Boolean(options.nonWords);
   const includeWhitespace = Boolean(options.includeWhitespace);
@@ -94,9 +91,7 @@ export function wordCounter(
     };
   }
 
-  const analyzed = chunks.map((chunk) =>
-    analyzeChunk(chunk, collectNonWords, includeWhitespace),
-  );
+  const analyzed = chunks.map((chunk) => analyzeChunk(chunk, collectNonWords, includeWhitespace));
   const wordsTotal = analyzed.reduce((sum, chunk) => sum + chunk.words, 0);
   const nonWordsTotal = collectNonWords
     ? analyzed.reduce((sum, chunk) => {
@@ -114,7 +109,9 @@ export function wordCounter(
     return sum + chunkTotal;
   }, 0);
 
-  const counts = collectNonWords ? { words: wordsTotal, nonWords: nonWordsTotal, total } : undefined;
+  const counts = collectNonWords
+    ? { words: wordsTotal, nonWords: nonWordsTotal, total }
+    : undefined;
 
   if (mode === "segments") {
     const items: ChunkWithSegments[] = analyzed.map((chunk) => ({
@@ -173,7 +170,6 @@ function getNonWordTotal(nonWords: NonWordCollection): number {
     (nonWords.counts.whitespace ?? 0)
   );
 }
-
 
 function collectNonWordsAggregate(
   analyzed: Array<{ nonWords?: NonWordCollection }>,

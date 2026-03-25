@@ -36,10 +36,7 @@ function isFallbackFriendlyWorkerError(error: unknown): boolean {
   }
 
   const message = error instanceof Error ? error.message : String(error);
-  return (
-    message.includes("Unknown file extension") ||
-    message.includes("Cannot find module")
-  );
+  return message.includes("Unknown file extension") || message.includes("Cannot find module");
 }
 
 export async function resolveWorkerRoutePreflight(

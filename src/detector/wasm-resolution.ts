@@ -1,4 +1,10 @@
-import { createDetectorEvidencePreview, recordDetectorAccepted, recordDetectorFallback, recordDetectorWindow, type DetectorFallbackReason } from "./debug";
+import {
+  createDetectorEvidencePreview,
+  recordDetectorAccepted,
+  recordDetectorFallback,
+  recordDetectorWindow,
+  type DetectorFallbackReason,
+} from "./debug";
 import {
   DETECTOR_ROUTE_POLICIES,
   type DetectorContentGateResult,

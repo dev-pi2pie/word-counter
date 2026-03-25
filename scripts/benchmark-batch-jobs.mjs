@@ -240,7 +240,8 @@ function main() {
       runs: parsed.runs,
       requestedJobs: parsed.jobs,
       effectiveJobs: rows.map((row) => row.effectiveJobs),
-      command: "node dist/esm/bin.mjs --path <fixture> --format raw --quiet-skips --no-progress --jobs <n>",
+      command:
+        "node dist/esm/bin.mjs --path <fixture> --format raw --quiet-skips --no-progress --jobs <n>",
     },
     hostLimit: jobsLimit,
     parity,

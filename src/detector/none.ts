@@ -1,6 +1,10 @@
 import { countSections } from "../markdown";
 import wordCounter, { segmentTextByLocale } from "../wc";
-import { createInspectChunk, createInspectInput, segmentTextByLocaleWithTrace } from "./inspect-helpers";
+import {
+  createInspectChunk,
+  createInspectInput,
+  segmentTextByLocaleWithTrace,
+} from "./inspect-helpers";
 import type { DetectorInspectOptions, DetectorInspectResult } from "./inspect-types";
 import type {
   DetectorCountSectionsOptions,

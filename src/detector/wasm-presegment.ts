@@ -18,9 +18,7 @@ export function createDeferredLatinPreSegmentOptions(
   };
 }
 
-function createRuleOnlyLatinOptions(
-  options: DetectorLocaleOptions,
-): DetectorLocaleOptions {
+function createRuleOnlyLatinOptions(options: DetectorLocaleOptions): DetectorLocaleOptions {
   return {
     ...options,
     latinLanguageHint: undefined,

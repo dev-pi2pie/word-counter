@@ -141,11 +141,7 @@ describe("CLI compatibility gates", () => {
   test("merges --latin-hints-file with CLI custom hints deterministically", async () => {
     const root = await makeTempFixture("cli-latin-hints-merge");
     const rulesPath = join(root, "latin-hints.json");
-    await writeFile(
-      rulesPath,
-      JSON.stringify([{ tag: "ro", pattern: "[șȘ]" }]),
-      "utf8",
-    );
+    await writeFile(rulesPath, JSON.stringify([{ tag: "ro", pattern: "[șȘ]" }]), "utf8");
 
     const output = await captureCli([
       "--format",

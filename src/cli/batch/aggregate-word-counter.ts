@@ -54,10 +54,7 @@ export function mergeWordCounterResult(
     };
   }
 
-  if (
-    left.breakdown.mode === "char-collector" &&
-    right.breakdown.mode === "char-collector"
-  ) {
+  if (left.breakdown.mode === "char-collector" && right.breakdown.mode === "char-collector") {
     const localeOrder: string[] = [];
     const mergedByLocale = new Map<
       string,

@@ -1,8 +1,4 @@
-import wordCounter, {
-  countCharsForLocale,
-  countWordsForLocale,
-  segmentTextByLocale,
-} from "./wc";
+import wordCounter, { countCharsForLocale, countWordsForLocale, segmentTextByLocale } from "./wc";
 import { parseMarkdown, countSections } from "./markdown";
 import { showSingularOrPluralWord } from "./utils";
 

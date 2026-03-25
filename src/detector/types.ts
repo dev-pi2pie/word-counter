@@ -21,9 +21,7 @@ export interface DetectorRuntimeOptions {
 
 export interface DetectorLocaleOptions extends LocaleDetectOptions, DetectorRuntimeOptions {}
 
-export interface DetectorWordCounterOptions
-  extends WordCounterOptions,
-    DetectorRuntimeOptions {}
+export interface DetectorWordCounterOptions extends WordCounterOptions, DetectorRuntimeOptions {}
 
 export type DetectorCountSectionsOptions = DetectorWordCounterOptions;
 

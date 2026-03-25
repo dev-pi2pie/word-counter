@@ -186,7 +186,9 @@ describe("CLI doctor diagnostics", () => {
 
     expect(output.exitCode).toBe(1);
     expect(output.stdout).toEqual([]);
-    expect(output.stderr.some((line) => line.includes("`--pretty` requires `--format json`."))).toBeTrue();
+    expect(
+      output.stderr.some((line) => line.includes("`--pretty` requires `--format json`.")),
+    ).toBeTrue();
   });
 
   test("rejects unsupported output modes", async () => {

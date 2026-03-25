@@ -257,13 +257,7 @@ export function validateInspectInvocation(argv: string[]): ValidInspectInvocatio
             ? "includeExt"
             : optionName === "exclude-ext"
               ? "excludeExt"
-              : (optionName as
-                  | "detector"
-                  | "view"
-                  | "format"
-                  | "section"
-                  | "path"
-                  | "regex");
+              : (optionName as "detector" | "view" | "format" | "section" | "path" | "regex");
 
       const error = consumeValue(normalizedOption, value);
       if (error) {
@@ -311,10 +305,7 @@ export function validateInspectInvocation(argv: string[]): ValidInspectInvocatio
     };
   }
 
-  if (
-    (view as DetectorInspectView) === "engine" &&
-    (detector as InspectDetectorMode) === "regex"
-  ) {
+  if ((view as DetectorInspectView) === "engine" && (detector as InspectDetectorMode) === "regex") {
     return {
       ok: false,
       message: "`--view engine` requires `--detector wasm`.",

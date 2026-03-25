@@ -84,7 +84,12 @@ export function segmentTextByLocaleWithTrace(
     }
   };
 
-  const pushChunk = (locale: string, textValue: string, source: LocaleDetectTraceSource, reason?: string) => {
+  const pushChunk = (
+    locale: string,
+    textValue: string,
+    source: LocaleDetectTraceSource,
+    reason?: string,
+  ) => {
     if (textValue.length === 0) {
       return;
     }

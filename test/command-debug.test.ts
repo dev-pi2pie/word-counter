@@ -38,14 +38,17 @@ describe("CLI debug diagnostics", () => {
     expect(stageTimingNames.includes("finalize")).toBeTrue();
     expect(events.every((item) => item.schemaVersion === 1)).toBeTrue();
     expect(
-      events.every((item) => typeof item.timestamp === "string" && !Number.isNaN(Date.parse(String(item.timestamp)))),
+      events.every(
+        (item) =>
+          typeof item.timestamp === "string" && !Number.isNaN(Date.parse(String(item.timestamp))),
+      ),
     ).toBeTrue();
     expect(
-      events.every((item) => typeof item.runId === "string" && String(item.runId).startsWith("wc-debug-")),
+      events.every(
+        (item) => typeof item.runId === "string" && String(item.runId).startsWith("wc-debug-"),
+      ),
     ).toBeTrue();
-    expect(
-      events.every((item) => item.topic === "batch" || item.topic === "path"),
-    ).toBeTrue();
+    expect(events.every((item) => item.topic === "batch" || item.topic === "path")).toBeTrue();
     expect(events.every((item) => item.scope === "run" || item.scope === "file")).toBeTrue();
     expect(output.stdout).toEqual(["2"]);
   });
@@ -291,7 +294,10 @@ describe("CLI debug diagnostics", () => {
       .split("\n")
       .map((line) => line.trim())
       .filter((line) => line.length > 0)
-      .map((line) => JSON.parse(line) as { runId?: string; timestamp?: string; schemaVersion?: number });
+      .map(
+        (line) =>
+          JSON.parse(line) as { runId?: string; timestamp?: string; schemaVersion?: number },
+      );
 
     expect(entries.length).toBe(2);
     expect(entries.every((entry) => entry.runId === "wc-debug-1774330341123-55149")).toBeTrue();

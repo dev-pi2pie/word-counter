@@ -10,9 +10,7 @@ export function isExplicitInspectInvocation(argv: string[]): boolean {
   return argv[2] === "inspect";
 }
 
-export async function executeInspectCommand({
-  argv,
-}: ExecuteInspectCommandOptions): Promise<void> {
+export async function executeInspectCommand({ argv }: ExecuteInspectCommandOptions): Promise<void> {
   const validated = validateInspectInvocation(argv);
   if (!validated.ok) {
     console.error(pc.red(`error: ${validated.message}`));
@@ -28,7 +26,11 @@ export async function executeInspectCommand({
 
   try {
     if (validated.paths.length === 0) {
-      const input = await loadSingleInspectInput(undefined, validated.textTokens, validated.section);
+      const input = await loadSingleInspectInput(
+        undefined,
+        validated.textTokens,
+        validated.section,
+      );
       await runSingleInspect(validated, input);
       return;
     }

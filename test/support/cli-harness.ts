@@ -92,9 +92,10 @@ export function createCliHarness() {
     };
   }
 
-  function createCapturedStream(
-    isTTY: boolean,
-  ): { stream: ProgressOutputStream; writes: string[] } {
+  function createCapturedStream(isTTY: boolean): {
+    stream: ProgressOutputStream;
+    writes: string[];
+  } {
     const writes: string[] = [];
     return {
       writes,
@@ -120,10 +121,7 @@ export function createCliHarness() {
       .filter((event): event is string => typeof event === "string");
   }
 
-  function findDebugEvents(
-    stderr: string[],
-    eventName: string,
-  ): Array<Record<string, unknown>> {
+  function findDebugEvents(stderr: string[], eventName: string): Array<Record<string, unknown>> {
     return parseDebugEvents(stderr).filter((item) => item.event === eventName);
   }
 
