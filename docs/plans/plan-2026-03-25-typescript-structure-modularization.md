@@ -2,7 +2,7 @@
 title: "TypeScript structure modularization follow-up"
 created-date: 2026-03-25
 modified-date: 2026-03-25
-status: draft
+status: completed
 agent: Codex
 ---
 
@@ -237,19 +237,19 @@ Proposed layout:
 
 ### Phase 5 - WASM Detector Helper Extraction
 
-- [ ] Refactor `src/detector/wasm.ts` in staged, compatibility-first passes rather than one large rewrite.
-- [ ] First extract Latin hint deferral and relabel helpers into `src/detector/wasm-presegment.ts`.
-- [ ] First extract detector-window construction helpers into `src/detector/wasm-windows.ts`.
-- [ ] In a follow-up pass, extract engine execution and remap packaging into `src/detector/wasm-engine.ts` if the first pass remains stable.
-- [ ] In a follow-up pass, extract window resolution and evidence/debug emission into `src/detector/wasm-resolution.ts` if the first pass remains stable.
-- [ ] Extract inspect-specific result shaping into `src/detector/wasm-inspect.ts` only when the prior helper extraction is complete.
-- [ ] Preserve exported function names, debug event payloads, inspect payload shapes, and fallback behavior exactly.
+- [x] Refactor `src/detector/wasm.ts` in staged, compatibility-first passes rather than one large rewrite.
+- [x] First extract Latin hint deferral and relabel helpers into `src/detector/wasm-presegment.ts`.
+- [x] First extract detector-window construction helpers into `src/detector/wasm-windows.ts`.
+- [x] In a follow-up pass, extract engine execution and remap packaging into `src/detector/wasm-engine.ts` if the first pass remains stable.
+- [x] In a follow-up pass, extract window resolution and evidence/debug emission into `src/detector/wasm-resolution.ts` if the first pass remains stable.
+- [x] Extract inspect-specific result shaping into `src/detector/wasm-inspect.ts` only when the prior helper extraction is complete.
+- [x] Preserve exported function names, debug event payloads, inspect payload shapes, and fallback behavior exactly.
 
 ### Phase 6 - Word Counter Test Split
 
-- [ ] Split `test/word-counter.test.ts` after the source-module boundaries above have settled.
-- [ ] Separate coverage into focused files for core counting, detector entrypoints, segmentation, char modes, and collector behavior.
-- [ ] Keep current assertions intact while updating imports to match the refactored boundaries.
+- [x] Split `test/word-counter.test.ts` after the source-module boundaries above have settled.
+- [x] Separate coverage into focused files for core counting, detector entrypoints, segmentation, char modes, and collector behavior.
+- [x] Keep current assertions intact while updating imports to match the refactored boundaries.
 
 ## Execution Notes
 
