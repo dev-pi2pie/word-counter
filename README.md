@@ -111,6 +111,8 @@ word-counter inspect --view engine "This sentence should clearly be detected as 
 word-counter inspect --detector regex -f json "こんにちは、世界！これはテストです。"
 word-counter inspect --detector regex -f json --pretty "こんにちは、世界！これはテストです。"
 word-counter inspect -p ./examples/yaml-basic.md
+word-counter inspect -p ./examples/test-case-multi-files-support
+word-counter inspect -p ./examples/test-case-multi-files-support --section content -f json --pretty
 ```
 
 Detector mode notes:
@@ -123,10 +125,17 @@ Detector mode notes:
 - Very short chunks stay on the original `und-*` fallback.
 - Low-confidence or unsupported detector results fall back to `und-*`.
 - Technical-noise-heavy Latin windows stay conservative and may remain `und-Latn` even when the detector produces a wrong-but-confident language guess.
-- `word-counter inspect` is single-input only in the first version:
+- `word-counter inspect` supports:
   - positional text input
-  - one `-p, --path <file>`
-  - no batch or directory inspect mode yet
+  - one direct `-p, --path <file>` input
+  - repeated `-p, --path` inputs for batch inspect
+  - directory inputs in default `--path-mode auto`
+  - literal file-only path handling in `--path-mode manual`
+  - `--section all|frontmatter|content`
+- batch inspect keeps counting-style path acquisition but not counting aggregation:
+  - no inspect `--merged`
+  - no inspect `--per-file`
+  - no inspect `--jobs`
 
 ### Detector Subpath (`@dev-pi2pie/word-counter/detector`)
 

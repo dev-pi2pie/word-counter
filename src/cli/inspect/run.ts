@@ -522,7 +522,11 @@ async function loadInspectBatchInputs(
       buffer = await readFile(entry.path);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      failures.push({ path: entry.path, reason: `not readable: ${message}` });
+      if (entry.source === "direct") {
+        failures.push({ path: entry.path, reason: `not readable: ${message}` });
+      } else {
+        skipped.push({ path: entry.path, reason: `not readable: ${message}` });
+      }
       continue;
     }
 

@@ -19,7 +19,7 @@ This document defines the planned first-version request/response contract for `w
 
 ## Top-Level Container
 
-All JSON inspector results use one shared top-level container.
+Single-input JSON inspector results use one shared top-level container.
 
 Required fields:
 
@@ -63,38 +63,68 @@ Preview rules:
 
 ## Validation Boundaries
 
-First-version CLI shape:
+Current CLI shape:
 
 ```bash
-word-counter inspect [--detector wasm|regex] [--view pipeline|engine] [--format standard|json] [--path <file>] [text...]
+word-counter inspect [--detector wasm|regex] [--view pipeline|engine] [--format standard|json] [--pretty] [--section all|frontmatter|content] [--path-mode auto|manual] [--no-recursive] [--include-ext <exts>] [--exclude-ext <exts>] [--regex <pattern>] [-p|--path <path> ...] [text...]
 ```
 
-Validation rules:
+Shared validation rules:
 
 - `--view engine` requires `--detector wasm`
 - `--detector regex` is valid only with `--view pipeline`
 - `--format raw` is invalid for `inspect`
+- `--pretty` changes JSON indentation only
+- positional inspect input is always treated as text, never auto-resolved as a path
+- supported inspect section modes are:
+  - `all`
+  - `frontmatter`
+  - `content`
+- counting-oriented inspect section modes remain invalid:
+  - `split`
+  - `per-key`
+  - `split-per-key`
+
+Single-input rules:
+
 - exactly one input source is allowed:
   - positional text
-  - one `--path <file>`
-- positional inspect input is always treated as text, never auto-resolved as a path
-- directory input is out of scope and must fail clearly
-- batch and directory inspection are out of scope for the first version
-
-Input failure rules:
-
-- no input:
-  - `No inspect input provided. Pass text or use --path <file>.`
+  - one direct `--path <file>`
 - both positional text and `--path`:
-  - `` `inspect` accepts either positional text or one `--path <file>`, not both. ``
-- `--path` points to a directory:
-  - `` `inspect --path` requires a regular file. ``
-- unreadable path input:
-  - `Failed to read input: <underlying message>`
-
-Empty input rule:
-
+  - `` `inspect` accepts either positional text or --path inputs, not both. ``
+- no input:
+  - `No inspect input provided. Pass text or use --path.`
 - empty or whitespace-only input returns a valid empty inspect result instead of a usage error
+
+Batch/path rules:
+
+- repeated `-p, --path` values enable inspect batch mode
+- default `--path-mode` is `auto`
+- in `--path-mode auto`, directory inputs are expanded using the same path-resolution contract as counting
+- in `--path-mode manual`, `--path` values are treated as literal file inputs and explicit directories become `not a regular file` failures
+- directory-expanded files honor:
+  - `--no-recursive`
+  - `--include-ext`
+  - `--exclude-ext`
+  - `--regex`
+
+Batch output rules:
+
+- batch JSON uses a dedicated container with:
+  - `summary`
+  - `files`
+  - `skipped`
+  - `failures`
+- batch standard output uses:
+  - a batch header
+  - per-file inspect blocks
+  - `Skipped` / `Failures` sections
+
+Batch exit rules:
+
+- non-zero when any `failures` entry is present
+- non-zero when `files` is empty after path resolution/filtering, even if `failures` is empty
+- `0` when `files` is non-empty and `failures` is empty, even if `skipped` entries are present
 
 ## Engine View
 

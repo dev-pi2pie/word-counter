@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import { spawnSync } from "node:child_process";
-import { mkdtemp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { chmod, mkdtemp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, join } from "node:path";
 import { buildBatchSummary, loadBatchInputs, resolveBatchFilePaths, runCli } from "../src/command";
@@ -819,6 +819,36 @@ describe("inspect command", () => {
     expect(parsed.kind).toBe("detector-inspect-batch");
     expect(parsed.summary.succeeded).toBe(1);
     expect(parsed.summary.skipped).toBe(1);
+  });
+
+  test("treats unreadable directory-discovered files as skipped", async () => {
+    const root = await makeTempFixture("inspect-unreadable-directory-file");
+    const readablePath = join(root, "a.md");
+    const unreadablePath = join(root, "b.md");
+    await writeFile(readablePath, "Hello world");
+    await writeFile(unreadablePath, "Hidden text");
+    await chmod(unreadablePath, 0o000);
+
+    try {
+      const output = await captureCli([
+        "inspect",
+        "--format",
+        "json",
+        "--path",
+        root,
+      ]);
+
+      expect(output.exitCode).toBe(0);
+      const parsed = JSON.parse(output.stdout[0] ?? "{}");
+      expect(parsed.summary.succeeded).toBe(1);
+      expect(parsed.summary.skipped).toBe(1);
+      expect(parsed.summary.failed).toBe(0);
+      expect(parsed.skipped.some((entry: { path: string; reason: string }) =>
+        entry.path === unreadablePath && entry.reason.startsWith("not readable:"),
+      )).toBeTrue();
+    } finally {
+      await chmod(unreadablePath, 0o644);
+    }
   });
 
   test("reports explicit inspect path directories as failures in manual mode", async () => {
