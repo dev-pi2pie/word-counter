@@ -10,6 +10,8 @@ agent: Codex
 
 Document current locale-tag detection behavior, known limits, and override flags.
 
+For the current supported-route and remap overview, see `docs/language-detection-support-guide.md`.
+
 ## Detection Model
 
 - Default detection is regex/script based (Unicode script checks), not a statistical language-ID model.
