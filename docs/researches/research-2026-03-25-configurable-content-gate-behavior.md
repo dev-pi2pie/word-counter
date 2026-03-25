@@ -90,6 +90,7 @@ The follow-up implementation plan should keep these boundaries:
 
 ## Related Plans
 
+- `docs/plans/plan-2026-03-25-configurable-content-gate-behavior.md`
 - `docs/plans/plan-2026-03-25-detector-policy-and-inspect-command.md`
 - `docs/plans/plan-2026-03-25-inspect-batch-command.md`
 - `docs/plans/plan-2026-03-25-typescript-structure-modularization.md`
