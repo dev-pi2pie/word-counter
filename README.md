@@ -108,8 +108,8 @@ Inspect detector behavior without count output:
 ```bash
 word-counter inspect "こんにちは、世界！これはテストです。"
 word-counter inspect --view engine "This sentence should clearly be detected as English for the wasm detector path."
-word-counter inspect --detector regex --format json "こんにちは、世界！これはテストです。"
-word-counter inspect --path ./examples/yaml-basic.md
+word-counter inspect --detector regex -f json "こんにちは、世界！これはテストです。"
+word-counter inspect -p ./examples/yaml-basic.md
 ```
 
 Detector mode notes:
@@ -124,7 +124,7 @@ Detector mode notes:
 - Technical-noise-heavy Latin windows stay conservative and may remain `und-Latn` even when the detector produces a wrong-but-confident language guess.
 - `word-counter inspect` is single-input only in the first version:
   - positional text input
-  - one `--path <file>`
+  - one `-p, --path <file>`
   - no batch or directory inspect mode yet
 
 ### Detector Subpath (`@dev-pi2pie/word-counter/detector`)

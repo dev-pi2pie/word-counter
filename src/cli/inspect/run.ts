@@ -39,8 +39,8 @@ const INSPECT_HELP_LINES = [
   "Options:",
   "  --detector <mode>  inspect detector mode (wasm, regex) (default: wasm)",
   "  --view <view>      inspect view (pipeline, engine) (default: pipeline)",
-  "  --format <format>  inspect output format (standard, json) (default: standard)",
-  "  --path <file>      inspect text from one regular file",
+  "  -f, --format <format>  inspect output format (standard, json) (default: standard)",
+  "  -p, --path <file>  inspect text from one regular file",
   "  -h, --help         display help for command",
 ];
 
@@ -147,8 +147,20 @@ function validateInspectInvocation(argv: string[]): ValidInspectInvocation {
       continue;
     }
 
-    if (token === "--detector" || token === "--view" || token === "--format" || token === "--path") {
-      expects = token.slice(2) as "detector" | "view" | "format" | "path";
+    if (
+      token === "--detector" ||
+      token === "--view" ||
+      token === "--format" ||
+      token === "-f" ||
+      token === "--path" ||
+      token === "-p"
+    ) {
+      expects =
+        token === "-p"
+          ? "path"
+          : token === "-f"
+            ? "format"
+            : (token.slice(2) as "detector" | "view" | "format" | "path");
       continue;
     }
 

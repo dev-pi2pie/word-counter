@@ -657,6 +657,43 @@ describe("inspect command", () => {
     expect(parsed.input.path).toBe(filePath);
   });
 
+  test("supports inspect -p alias for one regular file", async () => {
+    const root = await makeTempFixture("inspect-path-alias");
+    const filePath = join(root, "sample.txt");
+    await writeFile(filePath, "Hello world");
+
+    const output = await captureCli([
+      "inspect",
+      "--detector",
+      "regex",
+      "--format",
+      "json",
+      "-p",
+      filePath,
+    ]);
+
+    expect(output.exitCode).toBe(0);
+    const parsed = JSON.parse(output.stdout[0] ?? "{}");
+    expect(parsed.input.sourceType).toBe("path");
+    expect(parsed.input.path).toBe(filePath);
+  });
+
+  test("supports inspect -f alias for json output", async () => {
+    const output = await captureCli([
+      "inspect",
+      "--detector",
+      "regex",
+      "-f",
+      "json",
+      "こんにちは、世界！これはテストです。",
+    ]);
+
+    expect(output.exitCode).toBe(0);
+    const parsed = JSON.parse(output.stdout[0] ?? "{}");
+    expect(parsed.detector).toBe("regex");
+    expect(parsed.view).toBe("pipeline");
+  });
+
   test("returns valid empty inspect result for empty path input", async () => {
     const root = await makeTempFixture("inspect-empty-path");
     const filePath = join(root, "empty.txt");
