@@ -50,6 +50,7 @@ export type DetectorContentGateResult = {
   applied: boolean;
   passed: boolean;
   policy: DetectorContentGatePolicy;
+  mode: DetectorContentGateMode;
 };
 
 export type DetectorCorroboratedAcceptance =
@@ -229,6 +230,7 @@ function evaluateLatinContentGate(
       applied: true,
       passed: false,
       policy: "latinProse",
+      mode,
     };
   }
 
@@ -283,6 +285,7 @@ function evaluateLatinContentGate(
     applied: true,
     passed: proseWords >= minProseWords && proseWords + technicalWordSlack >= technicalWords,
     policy: "latinProse",
+    mode,
   };
 }
 
@@ -383,6 +386,7 @@ function createLatinRoutePolicy(): DetectorRoutePolicy {
           applied: false,
           passed: true,
           policy: "none",
+          mode,
         };
       }
 
@@ -414,11 +418,12 @@ function createHaniRoutePolicy(): DetectorRoutePolicy {
     buildDiagnosticSample(window, chunks) {
       return buildHaniDiagnosticSample(window, chunks);
     },
-    evaluateContentGate() {
+    evaluateContentGate(_sample, mode = "default") {
       return {
         applied: false,
         passed: true,
         policy: "none",
+        mode,
       };
     },
     accept(candidate) {

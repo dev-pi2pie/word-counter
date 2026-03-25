@@ -62,6 +62,61 @@ describe("detector entrypoint", () => {
       applied: true,
       passed: false,
       policy: "latinProse",
+      mode: "strict",
+    });
+  });
+
+  test("threads content gate mode through wasm segment and section detector entrypoints", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const segmentEvents: Array<Record<string, unknown>> = [];
+    const sectionEvents: Array<Record<string, unknown>> = [];
+
+    const segments = await segmentTextByLocaleWithDetector(
+      "Internationalization documentation remains understandable.",
+      {
+        detector: "wasm",
+        contentGate: { mode: "strict" },
+        detectorDebug: {
+          emit(event, details) {
+            if (event === "detector.window.sample") {
+              segmentEvents.push(details ?? {});
+            }
+          },
+        },
+      },
+    );
+    const sections = await countSectionsWithDetector(
+      "Internationalization documentation remains understandable.",
+      "all",
+      {
+        detector: "wasm",
+        contentGate: { mode: "strict" },
+        detectorDebug: {
+          emit(event, details) {
+            if (event === "detector.window.sample") {
+              sectionEvents.push(details ?? {});
+            }
+          },
+        },
+      },
+    );
+
+    expect(segments.map((chunk) => chunk.locale)).toEqual(["und-Latn"]);
+    expect(sections.total).toBe(4);
+    expect(segmentEvents[0]?.contentGate).toEqual({
+      applied: true,
+      passed: false,
+      policy: "latinProse",
+      mode: "strict",
+    });
+    expect(sectionEvents[0]?.contentGate).toEqual({
+      applied: true,
+      passed: false,
+      policy: "latinProse",
+      mode: "strict",
     });
   });
 

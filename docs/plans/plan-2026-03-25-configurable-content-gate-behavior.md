@@ -116,11 +116,11 @@ Validation for this phase:
 
 ### Phase 3 - Diagnostic And Compatibility Surfaces
 
-- [ ] Update inspect output to disclose the configured mode wherever `contentGate` is reported.
-- [ ] Update debug and detector-evidence payload generation so canonical `contentGate` output reflects the configured mode.
-- [ ] Preserve `qualityGate` only as the derived compatibility alias in payloads that already expose it.
-- [ ] Avoid adding `qualityGate` to new inspector-only payloads.
-- [ ] Ensure no-op routes report the configured mode with honest non-application state.
+- [x] Update inspect output to disclose the configured mode wherever `contentGate` is reported.
+- [x] Update debug and detector-evidence payload generation so canonical `contentGate` output reflects the configured mode.
+- [x] Preserve `qualityGate` only as the derived compatibility alias in payloads that already expose it.
+- [x] Avoid adding `qualityGate` to new inspector-only payloads.
+- [x] Ensure no-op routes report the configured mode with honest non-application state.
 
 Validation for this phase:
 
@@ -131,15 +131,15 @@ Validation for this phase:
 
 ### Phase 4 - CLI And Library Behavior Coverage
 
-- [ ] Add CLI behavior tests for `--content-gate` across count and inspect flows where detector policy is exercised.
-- [ ] Add library tests covering configurable `contentGate` on:
+- [x] Add CLI behavior tests for `--content-gate` across count and inspect flows where detector policy is exercised.
+- [x] Add library tests covering configurable `contentGate` on:
   - `wordCounterWithDetector`
   - `segmentTextByLocaleWithDetector`
   - `countSectionsWithDetector`
   - `inspectTextWithDetector`
-- [ ] Verify batch inspect and single-input inspect both report the configured mode consistently.
-- [ ] Verify the public option works with existing detector-related options without changing unrelated behavior.
-- [ ] Add compatibility-focused regressions for older debug/evidence consumers that still read `qualityGate`.
+- [x] Verify batch inspect and single-input inspect both report the configured mode consistently.
+- [x] Verify the public option works with existing detector-related options without changing unrelated behavior.
+- [x] Add compatibility-focused regressions for older debug/evidence consumers that still read `qualityGate`.
 
 Validation for this phase:
 
@@ -193,3 +193,4 @@ Validation for this phase:
 ## Related Jobs
 
 - `docs/plans/jobs/2026-03-25-configurable-content-gate-phase1-phase2-implementation.md`
+- `docs/plans/jobs/2026-03-25-configurable-content-gate-phase3-phase4-implementation.md`

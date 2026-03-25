@@ -193,7 +193,114 @@ describe("inspect command", () => {
       applied: false,
       passed: true,
       policy: "none",
+      mode: "off",
     });
+  });
+
+  test("shows configured content gate mode in standard inspect output", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const output = await captureCli([
+      "inspect",
+      "--detector",
+      "wasm",
+      "--content-gate",
+      "off",
+      ["mode: debug", "tee: true", "path: logs", "Use this for testing."].join("\n"),
+    ]);
+
+    expect(output.exitCode).toBe(0);
+    expect(
+      output.stdout.some((line) =>
+        line.includes("Content gate: mode=off policy=none applied=false passed=true"),
+      ),
+    ).toBeTrue();
+  });
+
+  test("reports configured content gate mode consistently for single and batch inspect", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const root = await makeTempFixture("inspect-content-gate-batch-mode");
+    const filePath = join(root, "doc.md");
+    await writeFile(
+      filePath,
+      ["mode: debug", "tee: true", "path: logs", "Use this for testing."].join("\n"),
+    );
+
+    const singleOutput = await captureCli([
+      "inspect",
+      "--detector",
+      "wasm",
+      "--content-gate",
+      "off",
+      "--format",
+      "json",
+      "--path",
+      filePath,
+    ]);
+    const batchOutput = await captureCli([
+      "inspect",
+      "--detector",
+      "wasm",
+      "--content-gate",
+      "off",
+      "--format",
+      "json",
+      "--path",
+      root,
+    ]);
+
+    expect(singleOutput.exitCode).toBe(0);
+    expect(batchOutput.exitCode).toBe(0);
+    const singleParsed = JSON.parse(singleOutput.stdout[0] ?? "{}");
+    const batchParsed = JSON.parse(batchOutput.stdout[0] ?? "{}");
+    expect(singleParsed.windows?.[0]?.contentGate).toEqual({
+      applied: false,
+      passed: true,
+      policy: "none",
+      mode: "off",
+    });
+    expect(batchParsed.files?.[0]?.result?.windows?.[0]?.contentGate).toEqual({
+      applied: false,
+      passed: true,
+      policy: "none",
+      mode: "off",
+    });
+  });
+
+  test("shows configured content gate mode in standard batch inspect output", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const root = await makeTempFixture("inspect-content-gate-batch-standard");
+    await writeFile(
+      join(root, "doc.md"),
+      ["mode: debug", "tee: true", "path: logs", "Use this for testing."].join("\n"),
+    );
+
+    const output = await captureCli([
+      "inspect",
+      "--detector",
+      "wasm",
+      "--content-gate",
+      "off",
+      "--path",
+      root,
+    ]);
+
+    expect(output.exitCode).toBe(0);
+    expect(output.stdout.some((line) => line.startsWith("Detector inspect batch"))).toBeTrue();
+    expect(output.stdout.some((line) => line.startsWith("File: "))).toBeTrue();
+    expect(
+      output.stdout.some((line) =>
+        line.includes("Content gate: mode=off policy=none applied=false passed=true"),
+      ),
+    ).toBeTrue();
   });
 
   test("returns valid empty inspect result for empty path input", async () => {

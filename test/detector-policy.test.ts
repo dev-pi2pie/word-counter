@@ -34,11 +34,13 @@ describe("detector route policies", () => {
       applied: true,
       passed: true,
       policy: "latinProse",
+      mode: "default",
     });
     expect(latinPolicy.evaluateContentGate(technicalSample)).toEqual({
       applied: true,
       passed: false,
       policy: "latinProse",
+      mode: "default",
     });
 
     const haniPolicy = DETECTOR_ROUTE_POLICIES[DEFAULT_HAN_TAG];
@@ -55,6 +57,7 @@ describe("detector route policies", () => {
       applied: false,
       passed: true,
       policy: "none",
+      mode: "default",
     });
   });
 
@@ -83,26 +86,31 @@ describe("detector route policies", () => {
       applied: true,
       passed: true,
       policy: "latinProse",
+      mode: "default",
     });
     expect(latinPolicy.evaluateContentGate(shortProseSample, "strict")).toEqual({
       applied: true,
       passed: false,
       policy: "latinProse",
+      mode: "strict",
     });
     expect(latinPolicy.evaluateContentGate(mixedSample, "default")).toEqual({
       applied: true,
       passed: false,
       policy: "latinProse",
+      mode: "default",
     });
     expect(latinPolicy.evaluateContentGate(mixedSample, "loose")).toEqual({
       applied: true,
       passed: true,
       policy: "latinProse",
+      mode: "loose",
     });
     expect(latinPolicy.evaluateContentGate(mixedSample, "off")).toEqual({
       applied: false,
       passed: true,
       policy: "none",
+      mode: "off",
     });
   });
 
@@ -122,21 +130,25 @@ describe("detector route policies", () => {
       applied: false,
       passed: true,
       policy: "none",
+      mode: "default",
     });
     expect(haniPolicy.evaluateContentGate(haniSample, "strict")).toEqual({
       applied: false,
       passed: true,
       policy: "none",
+      mode: "strict",
     });
     expect(haniPolicy.evaluateContentGate(haniSample, "loose")).toEqual({
       applied: false,
       passed: true,
       policy: "none",
+      mode: "loose",
     });
     expect(haniPolicy.evaluateContentGate(haniSample, "off")).toEqual({
       applied: false,
       passed: true,
       policy: "none",
+      mode: "off",
     });
   });
 

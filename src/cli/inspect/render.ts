@@ -93,7 +93,7 @@ export function buildInspectStandardLines(
         `Eligibility: ${window.eligibility.scriptChars}/${window.eligibility.minScriptChars} passed=${window.eligibility.passed}`,
       );
       lines.push(
-        `Content gate: ${window.contentGate.policy} applied=${window.contentGate.applied} passed=${window.contentGate.passed}`,
+        `Content gate: mode=${window.contentGate.mode} policy=${window.contentGate.policy} applied=${window.contentGate.applied} passed=${window.contentGate.passed}`,
       );
       lines.push(
         `Engine: ${window.engine.executed ? "executed" : `skipped (${window.engine.reason ?? "unknown"})`}`,

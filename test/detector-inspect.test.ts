@@ -167,17 +167,23 @@ describe("detector inspect library API", () => {
       applied: true,
       passed: true,
       policy: "latinProse",
+      mode: "default",
     });
     expect(strictResult.windows?.[0]?.contentGate).toEqual({
       applied: true,
       passed: false,
       policy: "latinProse",
+      mode: "strict",
     });
     expect(offResult.windows?.[0]?.contentGate).toEqual({
       applied: false,
       passed: true,
       policy: "none",
+      mode: "off",
     });
+    expect(
+      (offResult.windows?.[0] as Record<string, unknown> | undefined)?.qualityGate,
+    ).toBeUndefined();
   });
 
   test("applies loose content gate mode in wasm pipeline inspection", async () => {
@@ -204,11 +210,13 @@ describe("detector inspect library API", () => {
       applied: true,
       passed: false,
       policy: "latinProse",
+      mode: "default",
     });
     expect(looseResult.windows?.[0]?.contentGate).toEqual({
       applied: true,
       passed: true,
       policy: "latinProse",
+      mode: "loose",
     });
   });
 });

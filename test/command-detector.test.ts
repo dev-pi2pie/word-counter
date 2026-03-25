@@ -59,7 +59,9 @@ describe("detector mode", () => {
       applied: true,
       passed: false,
       policy: "latinProse",
+      mode: "strict",
     });
+    expect(sampleEvents[0]?.qualityGate).toBe(false);
   });
 
   test("rejects invalid content gate modes on the counting CLI", async () => {
@@ -145,6 +147,7 @@ describe("detector mode", () => {
       applied: true,
       passed: true,
       policy: "latinProse",
+      mode: "default",
     });
     expect(sampleEvents[0]?.qualityGate).toBe(true);
   });
@@ -229,6 +232,65 @@ describe("detector mode", () => {
       applied: true,
       passed: true,
       policy: "latinProse",
+      mode: "default",
+    });
+    expect(evidence.qualityGate).toBe(true);
+  });
+
+  test("keeps qualityGate compatibility alias for strict detector evidence payloads", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const output = await captureCli([
+      "--detector",
+      "wasm",
+      "--content-gate",
+      "strict",
+      "--format",
+      "raw",
+      "--debug",
+      "--detector-evidence",
+      "Internationalization documentation remains understandable.",
+    ]);
+
+    const evidenceEvents = findDebugEvents(output.stderr, "detector.window.evidence");
+    expect(evidenceEvents.length).toBe(1);
+    const evidence = evidenceEvents[0]!;
+    expect(evidence.contentGate).toEqual({
+      applied: true,
+      passed: false,
+      policy: "latinProse",
+      mode: "strict",
+    });
+    expect(evidence.qualityGate).toBe(false);
+  });
+
+  test("keeps qualityGate compatibility alias for off detector evidence payloads", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const output = await captureCli([
+      "--detector",
+      "wasm",
+      "--content-gate",
+      "off",
+      "--format",
+      "raw",
+      "--debug",
+      "--detector-evidence",
+      ["mode: debug", "tee: true", "path: logs", "Use this for testing."].join("\n"),
+    ]);
+
+    const evidenceEvents = findDebugEvents(output.stderr, "detector.window.evidence");
+    expect(evidenceEvents.length).toBe(1);
+    const evidence = evidenceEvents[0]!;
+    expect(evidence.contentGate).toEqual({
+      applied: false,
+      passed: true,
+      policy: "none",
+      mode: "off",
     });
     expect(evidence.qualityGate).toBe(true);
   });
