@@ -109,6 +109,7 @@ Inspect detector behavior without count output:
 word-counter inspect "こんにちは、世界！これはテストです。"
 word-counter inspect --view engine "This sentence should clearly be detected as English for the wasm detector path."
 word-counter inspect --detector regex -f json "こんにちは、世界！これはテストです。"
+word-counter inspect --detector regex -f json --pretty "こんにちは、世界！これはテストです。"
 word-counter inspect -p ./examples/yaml-basic.md
 ```
 

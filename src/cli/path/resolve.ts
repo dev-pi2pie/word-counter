@@ -3,7 +3,7 @@ import { readdir, stat } from "node:fs/promises";
 import { resolve as resolvePath } from "node:path";
 import { appendAll } from "../../utils/append-all";
 import type { DebugChannel } from "../debug/channel";
-import type { BatchSkip, PathMode } from "../types";
+import type { BatchResolvedFile, BatchResolvedSkip, BatchSkip, PathMode } from "../types";
 import {
   buildDirectoryRegexFilter,
   buildDirectoryExtensionFilter,
@@ -36,7 +36,7 @@ async function expandDirectory(
   recursive: boolean,
   extensionFilter: DirectoryExtensionFilter,
   regexFilter: DirectoryRegexFilter,
-  skipped: BatchSkip[],
+  skipped: BatchResolvedSkip[],
   recordRegexExcluded: (filePath: string) => boolean,
   debug: DebugChannel,
   stats: PathResolveDebugStats,
@@ -46,7 +46,7 @@ async function expandDirectory(
     entries = await readdir(directoryPath, { withFileTypes: true, encoding: "utf8" });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    skipped.push({ path: directoryPath, reason: `directory read failed: ${message}` });
+    skipped.push({ path: directoryPath, reason: `directory read failed: ${message}`, source: "directory" });
     debug.emit("path.resolve.expand.read_failed", {
       directory: directoryPath,
       reason: `directory read failed: ${message}`,
@@ -67,7 +67,7 @@ async function expandDirectory(
 
     if (entry.isFile()) {
       if (!shouldIncludeFromDirectory(entryPath, extensionFilter)) {
-        skipped.push({ path: entryPath, reason: "extension excluded" });
+        skipped.push({ path: entryPath, reason: "extension excluded", source: "directory" });
         debug.emit(
           "path.resolve.filter.excluded",
           {
@@ -137,13 +137,13 @@ async function expandDirectory(
   return files;
 }
 
-export async function resolveBatchFilePaths(
+export async function resolveBatchFileEntries(
   pathInputs: string[],
   options: ResolveBatchFilePathOptions,
-): Promise<{ files: string[]; skipped: BatchSkip[] }> {
-  const skipped: BatchSkip[] = [];
+): Promise<{ files: BatchResolvedFile[]; skipped: BatchResolvedSkip[] }> {
+  const skipped: BatchResolvedSkip[] = [];
   const regexExcludedPaths = new Set<string>();
-  const resolvedFiles = new Set<string>();
+  const resolvedFiles = new Map<string, BatchResolvedFile>();
   const stats: PathResolveDebugStats = {
     dedupeAccepted: 0,
     dedupeDuplicates: 0,
@@ -180,7 +180,14 @@ export async function resolveBatchFilePaths(
   ): void => {
     regexExcludedPaths.delete(filePath);
 
-    if (resolvedFiles.has(filePath)) {
+    const existing = resolvedFiles.get(filePath);
+    if (existing) {
+      if (existing.source === "directory" && details.source === "direct") {
+        resolvedFiles.set(filePath, {
+          path: filePath,
+          source: "direct",
+        });
+      }
       stats.dedupeDuplicates += 1;
       debug.emit(
         "path.resolve.dedupe.duplicate",
@@ -194,7 +201,10 @@ export async function resolveBatchFilePaths(
       return;
     }
 
-    resolvedFiles.add(filePath);
+    resolvedFiles.set(filePath, {
+      path: filePath,
+      source: details.source,
+    });
     stats.dedupeAccepted += 1;
     debug.emit(
       "path.resolve.dedupe.accept",
@@ -235,7 +245,7 @@ export async function resolveBatchFilePaths(
       metadata = await stat(targetPath);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      skipped.push({ path: targetPath, reason: `not readable: ${message}` });
+      skipped.push({ path: targetPath, reason: `not readable: ${message}`, source: "direct" });
       debug.emit("path.resolve.skip", {
         path: targetPath,
         reason: `not readable: ${message}`,
@@ -268,7 +278,7 @@ export async function resolveBatchFilePaths(
     }
 
     if (!metadata.isFile()) {
-      skipped.push({ path: targetPath, reason: "not a regular file" });
+      skipped.push({ path: targetPath, reason: "not a regular file", source: "direct" });
       debug.emit("path.resolve.skip", {
         path: targetPath,
         reason: "not a regular file",
@@ -280,10 +290,10 @@ export async function resolveBatchFilePaths(
   }
 
   for (const path of regexExcludedPaths) {
-    skipped.push({ path, reason: "regex excluded" });
+    skipped.push({ path, reason: "regex excluded", source: "directory" });
   }
 
-  const files = [...resolvedFiles].sort((left, right) => left.localeCompare(right));
+  const files = [...resolvedFiles.values()].sort((left, right) => left.path.localeCompare(right.path));
   debug.emit("path.resolve.filter.summary", {
     excluded: stats.filterExcluded + stats.regexExcluded,
     extensionExcluded: stats.filterExcluded,
@@ -301,4 +311,15 @@ export async function resolveBatchFilePaths(
   });
 
   return { files, skipped };
+}
+
+export async function resolveBatchFilePaths(
+  pathInputs: string[],
+  options: ResolveBatchFilePathOptions,
+): Promise<{ files: string[]; skipped: BatchSkip[] }> {
+  const resolved = await resolveBatchFileEntries(pathInputs, options);
+  return {
+    files: resolved.files.map((file) => file.path),
+    skipped: resolved.skipped.map(({ path, reason }) => ({ path, reason })),
+  };
 }

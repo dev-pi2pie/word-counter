@@ -14,6 +14,7 @@ This document defines the planned first-version request/response contract for `w
 - Applies to inspect-only detector diagnostics.
 - Covers `pipeline` and `engine` views.
 - Covers `standard` and `json` output modes.
+- `--pretty` changes JSON indentation only and does not change payload schema.
 - Is independent from the counting-flow debug event stream.
 
 ## Top-Level Container

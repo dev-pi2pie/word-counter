@@ -1,7 +1,8 @@
 ---
 title: "inspect batch command"
 created-date: 2026-03-25
-status: draft
+modified-date: 2026-03-25
+status: completed
 agent: Codex
 ---
 
@@ -103,20 +104,20 @@ Implement batch-capable `word-counter inspect` behavior using the settled inspec
 
 ### Phase 1 - Inspect CLI Parsing and Validation
 
-- [ ] Extend `inspect` option parsing to accept repeated `-p, --path <path>` values.
-- [ ] Add inspect-local parsing/validation for:
+- [x] Extend `inspect` option parsing to accept repeated `-p, --path <path>` values.
+- [x] Add inspect-local parsing/validation for:
   - `--path-mode auto|manual`
   - `--no-recursive`
   - `--include-ext`
   - `--exclude-ext`
   - `--regex`
   - `--section all|frontmatter|content`
-- [ ] Reject inspect-only misuse cases:
+- [x] Reject inspect-only misuse cases:
   - positional text mixed with batch `--path`
   - unsupported section modes
   - `--format raw`
   - inherited counting flags not part of the inspect contract
-- [ ] Preserve the current single-input inspect behavior when batch inputs are not used.
+- [x] Preserve the current single-input inspect behavior when batch inputs are not used.
 
 Validation for this phase:
 
@@ -126,7 +127,7 @@ Validation for this phase:
 
 ### Phase 2 - Shared Path Resolution and Input Slicing
 
-- [ ] Reuse existing path-resolution helpers so inspect batch follows counting behavior for:
+- [x] Reuse existing path-resolution helpers so inspect batch follows counting behavior for:
   - directory expansion in `auto`
   - literal-file behavior in `manual`
   - recursion
@@ -134,16 +135,16 @@ Validation for this phase:
   - regex filtering
   - absolute-path ordering
   - overlap dedupe
-- [ ] Add inspect-specific classification after resolution/load so outcomes become:
+- [x] Add inspect-specific classification after resolution/load so outcomes become:
   - `files`
   - `skipped`
   - `failures`
-- [ ] Reuse the current text-like file guard and map `binary file` outcomes according to the settled explicit-path vs directory-discovered rule.
-- [ ] Apply inspect section slicing per file for:
+- [x] Reuse the current text-like file guard and map `binary file` outcomes according to the settled explicit-path vs directory-discovered rule.
+- [x] Apply inspect section slicing per file for:
   - `all`
   - `frontmatter`
   - `content`
-- [ ] Ensure missing/empty selected sections still produce valid empty inspect results instead of skip/failure records.
+- [x] Ensure missing/empty selected sections still produce valid empty inspect results instead of skip/failure records.
 
 Validation for this phase:
 
@@ -154,7 +155,7 @@ Validation for this phase:
 
 ### Phase 3 - Batch JSON Contract
 
-- [ ] Add the batch JSON container for inspect:
+- [x] Add the batch JSON container for inspect:
   - `schemaVersion`
   - `kind`
   - `detector`
@@ -164,10 +165,10 @@ Validation for this phase:
   - `files`
   - `skipped`
   - `failures`
-- [ ] Ensure `files[i].result` reuses the full single-result inspect object rather than inventing a reduced batch-only payload.
-- [ ] Implement `summary` counts exactly as settled in the research.
-- [ ] Emit absolute paths in `files`, `skipped`, and `failures`.
-- [ ] Ensure partial-failure and empty-result batch runs still emit JSON payloads.
+- [x] Ensure `files[i].result` reuses the full single-result inspect object rather than inventing a reduced batch-only payload.
+- [x] Implement `summary` counts exactly as settled in the research.
+- [x] Emit absolute paths in `files`, `skipped`, and `failures`.
+- [x] Ensure partial-failure and empty-result batch runs still emit JSON payloads.
 
 Validation for this phase:
 
@@ -177,24 +178,24 @@ Validation for this phase:
 
 ### Phase 4 - Standard Batch Rendering
 
-- [ ] Add standard batch rendering with:
+- [x] Add standard batch rendering with:
   - batch header
   - `Requested inputs: ...`
   - `Summary: X succeeded, Y skipped, Z failed`
   - per-file blocks prefixed by `File: <path>`
   - `Skipped` section
   - `Failures` section
-- [ ] Reuse the existing single-result standard inspect body inside each file block.
-- [ ] Render `Skipped` and `Failures` entries as one line each:
+- [x] Reuse the existing single-result standard inspect body inside each file block.
+- [x] Render `Skipped` and `Failures` entries as one line each:
   - `<path> | <reason>`
-- [ ] Keep `Skipped` and `Failures` entries out of the per-file inspect block format:
+- [x] Keep `Skipped` and `Failures` entries out of the per-file inspect block format:
   - do not render them as `File: <path>` blocks
-- [ ] Always print the batch header, even when `files` is empty.
-- [ ] When `files` is empty:
+- [x] Always print the batch header, even when `files` is empty.
+- [x] When `files` is empty:
   - omit per-file inspect blocks
   - still print `Skipped` and/or `Failures` sections when present
   - rely on the header summary plus those sections to explain the non-zero result
-- [ ] Keep batch standard output deterministic and result-first, with no progress UI.
+- [x] Keep batch standard output deterministic and result-first, with no progress UI.
 
 Validation for this phase:
 
@@ -207,16 +208,16 @@ Validation for this phase:
 
 ### Phase 5 - Exit Codes, Docs, and Regression Audit
 
-- [ ] Implement the settled exit-status rules across JSON and standard output paths.
-- [ ] Update README inspect usage examples for:
+- [x] Implement the settled exit-status rules across JSON and standard output paths.
+- [x] Update README inspect usage examples for:
   - repeated `--path`
   - directory inputs
   - `--path-mode auto|manual`
   - supported `--section` values
   - standard vs JSON batch output
-- [ ] Update any inspect-facing schema/docs so batch output and single-output documentation stay aligned.
-- [ ] Record follow-up implementation work in job records under `docs/plans/jobs/`.
-- [ ] Run a regression audit to ensure existing count and single-input inspect behavior remain intact.
+- [x] Update any inspect-facing schema/docs so batch output and single-output documentation stay aligned.
+- [x] Record follow-up implementation work in job records under `docs/plans/jobs/`.
+- [x] Run a regression audit to ensure existing count and single-input inspect behavior remain intact.
 
 Validation for this phase:
 
@@ -247,3 +248,8 @@ Validation for this phase:
 - `docs/plans/plan-2026-03-25-detector-policy-and-inspect-command.md`
 - `docs/plans/plan-2026-02-17-path-mode-clarity-and-regex-filtering.md`
 - `docs/plans/plan-2026-02-19-batch-jobs-concurrency.md`
+
+## Related Jobs
+
+- `docs/plans/jobs/2026-03-25-inspect-batch-phase1-phase2-implementation.md`
+- `docs/plans/jobs/2026-03-25-inspect-json-pretty-output.md`
