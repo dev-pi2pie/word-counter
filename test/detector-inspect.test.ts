@@ -21,6 +21,26 @@ describe("detector inspect library API", () => {
     expect(result.windows).toBeUndefined();
   });
 
+  test("returns empty pipeline inspection for empty wasm input", async () => {
+    const result = await inspectTextWithDetector("", {
+      detector: "wasm",
+      view: "pipeline",
+    });
+
+    expect(result.view).toBe("pipeline");
+    expect(result.detector).toBe("wasm");
+    if (result.view !== "pipeline") {
+      throw new Error("Expected pipeline inspect result.");
+    }
+    expect(result.chunks).toEqual([]);
+    expect(result.windows).toEqual([]);
+    expect(result.resolvedChunks).toEqual([]);
+    expect(result.decision).toEqual({
+      kind: "empty",
+      notes: ["No detector-eligible content was present."],
+    });
+  });
+
   test("returns empty engine inspection for empty input", async () => {
     const result = await inspectTextWithDetector("", {
       detector: "wasm",
@@ -85,5 +105,32 @@ describe("detector inspect library API", () => {
     expect(result.sample.textSource).toBe("borrowed-context");
     expect(result.sample.normalizedText).toBe("世界");
     expect(result.engine?.remapped.rawTag).toBe("ja");
+  });
+
+  test("reports noCandidate fallback when wasm engine returns an unmapped Latin language", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const result = await inspectTextWithDetector(
+      "Ini adalah kalimat bahasa Indonesia yang cukup panjang untuk menguji cabang fallback detektor wasm.",
+      {
+        detector: "wasm",
+        view: "pipeline",
+      },
+    );
+
+    expect(result.view).toBe("pipeline");
+    expect(result.detector).toBe("wasm");
+    if (result.view !== "pipeline") {
+      throw new Error("Expected pipeline inspect result.");
+    }
+    const windows = result.windows ?? [];
+    const [window] = windows;
+    expect(windows).toHaveLength(1);
+    expect(window?.routeTag).toBe("und-Latn");
+    expect(window?.engine.executed).toBeTrue();
+    expect(window?.decision.fallbackReason).toBe("noCandidate");
+    expect(result.resolvedChunks.map((chunk) => chunk.locale)).toEqual(["und-Latn"]);
   });
 });
