@@ -37,16 +37,6 @@ function parseFormat(rawValue: string | undefined): InspectOutputFormat | null {
   return null;
 }
 
-function parseSection(rawValue: string | undefined): InspectSectionMode | null {
-  if (rawValue === undefined) {
-    return "all";
-  }
-  if (rawValue === "all" || rawValue === "frontmatter" || rawValue === "content") {
-    return rawValue;
-  }
-  return null;
-}
-
 function parsePathMode(rawValue: string | undefined): PathMode | null {
   if (rawValue === undefined) {
     return "auto";

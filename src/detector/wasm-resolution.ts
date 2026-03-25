@@ -4,7 +4,6 @@ import {
   type DetectorContentGateResult,
   type DetectorDiagnosticSample,
   type DetectorEligibilityResult,
-  type DetectorRouteTag,
   type DetectorWindow,
 } from "./policy";
 import type { LocaleChunk } from "../wc/types";

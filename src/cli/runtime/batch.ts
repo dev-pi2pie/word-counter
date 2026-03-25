@@ -44,7 +44,7 @@ export async function executeBatchCount({
   debug,
   teeEnabled,
 }: ExecuteBatchCountOptions): Promise<void> {
-  const warningsEnabled = !Boolean(options.quietWarnings);
+  const warningsEnabled = !options.quietWarnings;
   const emitWarning = (message: string): void => {
     if (!warningsEnabled) {
       return;

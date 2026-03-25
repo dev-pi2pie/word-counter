@@ -189,7 +189,7 @@ function isTechnicalLikeLatinLine(line: string, latinWords: number): boolean {
     return true;
   }
 
-  if (/^[\-\*\d.)\s]*[\p{L}\p{N}_.-]+:\s+\S/iu.test(trimmed) && latinWords <= 8) {
+  if (/^[-*\d.)\s]*[\p{L}\p{N}_.-]+:\s+\S/iu.test(trimmed) && latinWords <= 8) {
     return true;
   }
 

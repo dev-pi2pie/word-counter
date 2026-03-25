@@ -2,7 +2,6 @@ import type { SectionMode } from "../../markdown";
 import type { DetectorWordCounterOptions } from "../../detector";
 import { createDetectorDebugSummary } from "../../detector/debug";
 import { appendAll } from "../../utils/append-all";
-import type wordCounter from "../../wc";
 import type { DebugChannel, DebugEventOptions } from "../debug/channel";
 import { countBatchInputsWithJobs } from "./jobs/load-count";
 import {
