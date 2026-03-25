@@ -129,8 +129,9 @@ export async function resolveWindowLocale(
 ): Promise<ResolvedDetectorWindow> {
   const routePolicy = DETECTOR_ROUTE_POLICIES[window.routeTag];
   const sample = routePolicy.buildDiagnosticSample(window, chunks);
-  const eligibility = routePolicy.eligibility.evaluate(sample);
-  const contentGate = routePolicy.evaluateContentGate(sample, options.contentGate?.mode);
+  const configuredMode = options.contentGate?.mode;
+  const eligibility = routePolicy.eligibility.evaluate(sample, configuredMode);
+  const contentGate = routePolicy.evaluateContentGate(sample, configuredMode);
 
   recordDetectorWindow(debug?.summary, window.routeTag);
   debug?.emit?.(

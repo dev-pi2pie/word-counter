@@ -3,6 +3,9 @@ import { inspectTextWithDetector } from "../src/detector";
 import { hasWasmDetectorRuntime } from "./support/wasm-detector-runtime";
 
 describe("detector inspect library API", () => {
+  const defaultEligibleStrictNotEligibleText = "Readers understand the feature.";
+  const defaultNotEligibleLooseEligibleText = "Users understand this now.";
+
   test("returns deterministic regex pipeline inspection", async () => {
     const result = await inspectTextWithDetector("こんにちは、世界！これはテストです。", {
       detector: "regex",
@@ -186,6 +189,45 @@ describe("detector inspect library API", () => {
     ).toBeUndefined();
   });
 
+  test("raises Latin eligibility thresholds for strict mode in wasm pipeline inspection", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const defaultResult = await inspectTextWithDetector(defaultEligibleStrictNotEligibleText, {
+      detector: "wasm",
+      view: "pipeline",
+    });
+    const strictResult = await inspectTextWithDetector(defaultEligibleStrictNotEligibleText, {
+      detector: "wasm",
+      view: "pipeline",
+      contentGate: { mode: "strict" },
+    });
+
+    if (defaultResult.view !== "pipeline" || strictResult.view !== "pipeline") {
+      throw new Error("Expected pipeline inspect result.");
+    }
+
+    expect(defaultResult.windows?.[0]?.eligibility).toEqual({
+      scriptChars: 27,
+      minScriptChars: 24,
+      passed: true,
+    });
+    expect(defaultResult.windows?.[0]?.engine).toEqual({
+      executed: true,
+    });
+    expect(strictResult.windows?.[0]?.eligibility).toEqual({
+      scriptChars: 27,
+      minScriptChars: 30,
+      passed: false,
+    });
+    expect(strictResult.windows?.[0]?.engine).toEqual({
+      executed: false,
+      reason: "notEligible",
+    });
+    expect(strictResult.windows?.[0]?.decision.fallbackReason).toBe("notEligible");
+  });
+
   test("applies loose content gate mode in wasm pipeline inspection", async () => {
     if (!hasWasmDetectorRuntime()) {
       return;
@@ -217,6 +259,62 @@ describe("detector inspect library API", () => {
       passed: true,
       policy: "latinProse",
       mode: "loose",
+    });
+  });
+
+  test("lowers Latin eligibility thresholds for loose mode while keeping off on default thresholds", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const defaultResult = await inspectTextWithDetector(defaultNotEligibleLooseEligibleText, {
+      detector: "wasm",
+      view: "pipeline",
+    });
+    const looseResult = await inspectTextWithDetector(defaultNotEligibleLooseEligibleText, {
+      detector: "wasm",
+      view: "pipeline",
+      contentGate: { mode: "loose" },
+    });
+    const offResult = await inspectTextWithDetector(defaultNotEligibleLooseEligibleText, {
+      detector: "wasm",
+      view: "pipeline",
+      contentGate: { mode: "off" },
+    });
+
+    if (
+      defaultResult.view !== "pipeline" ||
+      looseResult.view !== "pipeline" ||
+      offResult.view !== "pipeline"
+    ) {
+      throw new Error("Expected pipeline inspect result.");
+    }
+
+    expect(defaultResult.windows?.[0]?.eligibility).toEqual({
+      scriptChars: 22,
+      minScriptChars: 24,
+      passed: false,
+    });
+    expect(looseResult.windows?.[0]?.eligibility).toEqual({
+      scriptChars: 22,
+      minScriptChars: 20,
+      passed: true,
+    });
+    expect(looseResult.windows?.[0]?.engine.executed).toBeTrue();
+    expect(offResult.windows?.[0]?.eligibility).toEqual({
+      scriptChars: 22,
+      minScriptChars: 24,
+      passed: false,
+    });
+    expect(offResult.windows?.[0]?.contentGate).toEqual({
+      applied: false,
+      passed: true,
+      policy: "none",
+      mode: "off",
+    });
+    expect(offResult.windows?.[0]?.engine).toEqual({
+      executed: false,
+      reason: "notEligible",
     });
   });
 });

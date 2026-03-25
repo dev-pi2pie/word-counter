@@ -109,11 +109,11 @@ Validation for this phase:
 
 ### Phase 2 - Detector Policy Mode Semantics
 
-- [ ] Extend route-aware detector policy evaluation so `default`, `strict`, and `loose` affect both eligibility and `contentGate` behavior on applicable routes.
-- [ ] Define fixture-backed behavior differences for `strict` and `loose` on routes where `contentGate` is meaningful, including mode-specific eligibility outcomes.
-- [ ] Ensure `off` bypasses only `contentGate` evaluation, keeps `default` eligibility thresholds, and leaves corroboration and fallback intact.
-- [ ] Ensure non-applicable routes accept the configured mode while remaining truthful no-op evaluations.
-- [ ] Keep policy implementation internal and avoid exposing raw thresholds in the public contract.
+- [x] Extend route-aware detector policy evaluation so `default`, `strict`, and `loose` affect both eligibility and `contentGate` behavior on applicable routes.
+- [x] Define fixture-backed behavior differences for `strict` and `loose` on routes where `contentGate` is meaningful, including mode-specific eligibility outcomes.
+- [x] Ensure `off` bypasses only `contentGate` evaluation, keeps `default` eligibility thresholds, and leaves corroboration and fallback intact.
+- [x] Ensure non-applicable routes accept the configured mode while remaining truthful no-op evaluations.
+- [x] Keep policy implementation internal and avoid exposing raw thresholds in the public contract.
 
 Validation for this phase:
 
@@ -125,11 +125,11 @@ Validation for this phase:
 
 ### Phase 3 - Diagnostic And Compatibility Surfaces
 
-- [ ] Update inspect output to disclose the configured mode wherever `contentGate` is reported.
-- [ ] Update debug and detector-evidence payload generation so canonical `contentGate` output reflects the configured mode.
-- [ ] Preserve `qualityGate` only as the derived compatibility alias in payloads that already expose it.
-- [ ] Avoid adding `qualityGate` to new inspector-only payloads.
-- [ ] Ensure no-op routes report the configured mode with honest non-application state.
+- [x] Update inspect output to disclose the configured mode wherever `contentGate` is reported.
+- [x] Update debug and detector-evidence payload generation so canonical `contentGate` output reflects the configured mode.
+- [x] Preserve `qualityGate` only as the derived compatibility alias in payloads that already expose it.
+- [x] Avoid adding `qualityGate` to new inspector-only payloads.
+- [x] Ensure no-op routes report the configured mode with honest non-application state.
 
 Validation for this phase:
 
@@ -140,15 +140,15 @@ Validation for this phase:
 
 ### Phase 4 - CLI And Library Behavior Coverage
 
-- [ ] Add CLI behavior tests for `--content-gate` across count and inspect flows where detector policy is exercised.
-- [ ] Add library tests covering configurable `contentGate` on:
+- [x] Add CLI behavior tests for `--content-gate` across count and inspect flows where detector policy is exercised.
+- [x] Add library tests covering configurable `contentGate` on:
   - `wordCounterWithDetector`
   - `segmentTextByLocaleWithDetector`
   - `countSectionsWithDetector`
   - `inspectTextWithDetector`
-- [ ] Verify batch inspect and single-input inspect both report the configured mode consistently.
-- [ ] Verify the public option works with existing detector-related options without changing unrelated behavior.
-- [ ] Add compatibility-focused regressions for older debug/evidence consumers that still read `qualityGate`.
+- [x] Verify batch inspect and single-input inspect both report the configured mode consistently.
+- [x] Verify the public option works with existing detector-related options without changing unrelated behavior.
+- [x] Add compatibility-focused regressions for older debug/evidence consumers that still read `qualityGate`.
 
 Validation for this phase:
 
@@ -176,14 +176,14 @@ Validation for this phase:
 
 ## Compatibility Gates
 
-- [ ] Omitted configuration preserves current `default` behavior.
-- [ ] `contentGate` remains the canonical diagnostic field.
-- [ ] `qualityGate` remains available only in legacy payloads that already expose it.
-- [ ] New inspector-only payloads do not add `qualityGate`.
-- [ ] `off` disables only gate evaluation and does not disable route eligibility, corroboration, or fallback.
-- [ ] Non-applicable routes accept all supported modes without lying about gate application.
-- [ ] No public numeric threshold controls are introduced in this phase.
-- [ ] Changed files remain clean under the configured lint and format scripts.
+- [x] Omitted configuration preserves current `default` behavior.
+- [x] `contentGate` remains the canonical diagnostic field.
+- [x] `qualityGate` remains available only in legacy payloads that already expose it.
+- [x] New inspector-only payloads do not add `qualityGate`.
+- [x] `off` disables only gate evaluation and does not disable route eligibility, corroboration, or fallback.
+- [x] Non-applicable routes accept all supported modes without lying about gate application.
+- [x] No public numeric threshold controls are introduced in this phase.
+- [x] Changed files remain clean under the configured lint and format scripts.
 
 ## Related Plans
 
@@ -204,3 +204,4 @@ Validation for this phase:
 - `docs/plans/jobs/2026-03-25-configurable-content-gate-phase1-phase2-implementation.md`
 - `docs/plans/jobs/2026-03-25-configurable-content-gate-phase3-phase4-implementation.md`
 - `docs/plans/jobs/2026-03-25-configurable-content-gate-phase5-docs-and-closure.md`
+- `docs/plans/jobs/2026-03-25-configurable-content-gate-phase2-phase4-threshold-mode-implementation.md`

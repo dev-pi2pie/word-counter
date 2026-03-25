@@ -7,6 +7,9 @@ import { hasWasmDetectorRuntime } from "./support/wasm-detector-runtime";
 const { captureCli, makeTempFixture } = createCliHarness();
 
 describe("inspect command", () => {
+  const defaultEligibleStrictNotEligibleText = "Readers understand the feature.";
+  const defaultNotEligibleLooseEligibleText = "Users understand this now.";
+
   test("supports default wasm pipeline inspection", async () => {
     if (!hasWasmDetectorRuntime()) {
       return;
@@ -219,6 +222,170 @@ describe("inspect command", () => {
     ).toBeTrue();
   });
 
+  test("shows strict inspect eligibility and content gate details in standard output", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const output = await captureCli([
+      "inspect",
+      "--detector",
+      "wasm",
+      "--content-gate",
+      "strict",
+      defaultEligibleStrictNotEligibleText,
+    ]);
+
+    expect(output.exitCode).toBe(0);
+    expect(
+      output.stdout.some((line) => line.includes("Eligibility: 27/30 passed=false")),
+    ).toBeTrue();
+    expect(
+      output.stdout.some((line) =>
+        line.includes("Content gate: mode=strict policy=latinProse applied=true passed=false"),
+      ),
+    ).toBeTrue();
+  });
+
+  test("raises Latin eligibility thresholds for strict inspect mode", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const defaultOutput = await captureCli([
+      "inspect",
+      "--detector",
+      "wasm",
+      "--format",
+      "json",
+      defaultEligibleStrictNotEligibleText,
+    ]);
+    const strictOutput = await captureCli([
+      "inspect",
+      "--detector",
+      "wasm",
+      "--content-gate",
+      "strict",
+      "--format",
+      "json",
+      defaultEligibleStrictNotEligibleText,
+    ]);
+
+    expect(defaultOutput.exitCode).toBe(0);
+    expect(strictOutput.exitCode).toBe(0);
+    const defaultParsed = JSON.parse(defaultOutput.stdout[0] ?? "{}");
+    const strictParsed = JSON.parse(strictOutput.stdout[0] ?? "{}");
+    expect(defaultParsed.windows?.[0]?.eligibility).toEqual({
+      scriptChars: 27,
+      minScriptChars: 24,
+      passed: true,
+    });
+    expect(defaultParsed.windows?.[0]?.engine).toEqual({
+      executed: true,
+    });
+    expect(strictParsed.windows?.[0]?.eligibility).toEqual({
+      scriptChars: 27,
+      minScriptChars: 30,
+      passed: false,
+    });
+    expect(strictParsed.windows?.[0]?.engine).toEqual({
+      executed: false,
+      reason: "notEligible",
+    });
+    expect(strictParsed.windows?.[0]?.decision?.fallbackReason).toBe("notEligible");
+  });
+
+  test("lowers Latin eligibility thresholds for loose inspect mode while keeping off on default thresholds", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const defaultOutput = await captureCli([
+      "inspect",
+      "--detector",
+      "wasm",
+      "--format",
+      "json",
+      defaultNotEligibleLooseEligibleText,
+    ]);
+    const looseOutput = await captureCli([
+      "inspect",
+      "--detector",
+      "wasm",
+      "--content-gate",
+      "loose",
+      "--format",
+      "json",
+      defaultNotEligibleLooseEligibleText,
+    ]);
+    const offOutput = await captureCli([
+      "inspect",
+      "--detector",
+      "wasm",
+      "--content-gate",
+      "off",
+      "--format",
+      "json",
+      defaultNotEligibleLooseEligibleText,
+    ]);
+
+    expect(defaultOutput.exitCode).toBe(0);
+    expect(looseOutput.exitCode).toBe(0);
+    expect(offOutput.exitCode).toBe(0);
+    const defaultParsed = JSON.parse(defaultOutput.stdout[0] ?? "{}");
+    const looseParsed = JSON.parse(looseOutput.stdout[0] ?? "{}");
+    const offParsed = JSON.parse(offOutput.stdout[0] ?? "{}");
+    expect(defaultParsed.windows?.[0]?.eligibility).toEqual({
+      scriptChars: 22,
+      minScriptChars: 24,
+      passed: false,
+    });
+    expect(looseParsed.windows?.[0]?.eligibility).toEqual({
+      scriptChars: 22,
+      minScriptChars: 20,
+      passed: true,
+    });
+    expect(looseParsed.windows?.[0]?.engine).toEqual({
+      executed: true,
+    });
+    expect(offParsed.windows?.[0]?.eligibility).toEqual({
+      scriptChars: 22,
+      minScriptChars: 24,
+      passed: false,
+    });
+    expect(offParsed.windows?.[0]?.contentGate).toEqual({
+      applied: false,
+      passed: true,
+      policy: "none",
+      mode: "off",
+    });
+  });
+
+  test("shows loose inspect eligibility and content gate details in standard output", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const output = await captureCli([
+      "inspect",
+      "--detector",
+      "wasm",
+      "--content-gate",
+      "loose",
+      defaultNotEligibleLooseEligibleText,
+    ]);
+
+    expect(output.exitCode).toBe(0);
+    expect(
+      output.stdout.some((line) => line.includes("Eligibility: 22/20 passed=true")),
+    ).toBeTrue();
+    expect(
+      output.stdout.some((line) =>
+        line.includes("Content gate: mode=loose policy=latinProse applied=true passed=true"),
+      ),
+    ).toBeTrue();
+  });
+
   test("reports configured content gate mode consistently for single and batch inspect", async () => {
     if (!hasWasmDetectorRuntime()) {
       return;
@@ -226,17 +393,14 @@ describe("inspect command", () => {
 
     const root = await makeTempFixture("inspect-content-gate-batch-mode");
     const filePath = join(root, "doc.md");
-    await writeFile(
-      filePath,
-      ["mode: debug", "tee: true", "path: logs", "Use this for testing."].join("\n"),
-    );
+    await writeFile(filePath, defaultEligibleStrictNotEligibleText);
 
     const singleOutput = await captureCli([
       "inspect",
       "--detector",
       "wasm",
       "--content-gate",
-      "off",
+      "strict",
       "--format",
       "json",
       "--path",
@@ -247,7 +411,7 @@ describe("inspect command", () => {
       "--detector",
       "wasm",
       "--content-gate",
-      "off",
+      "strict",
       "--format",
       "json",
       "--path",
@@ -259,16 +423,26 @@ describe("inspect command", () => {
     const singleParsed = JSON.parse(singleOutput.stdout[0] ?? "{}");
     const batchParsed = JSON.parse(batchOutput.stdout[0] ?? "{}");
     expect(singleParsed.windows?.[0]?.contentGate).toEqual({
-      applied: false,
-      passed: true,
-      policy: "none",
-      mode: "off",
+      applied: true,
+      passed: false,
+      policy: "latinProse",
+      mode: "strict",
+    });
+    expect(singleParsed.windows?.[0]?.eligibility).toEqual({
+      scriptChars: 27,
+      minScriptChars: 30,
+      passed: false,
     });
     expect(batchParsed.files?.[0]?.result?.windows?.[0]?.contentGate).toEqual({
-      applied: false,
-      passed: true,
-      policy: "none",
-      mode: "off",
+      applied: true,
+      passed: false,
+      policy: "latinProse",
+      mode: "strict",
+    });
+    expect(batchParsed.files?.[0]?.result?.windows?.[0]?.eligibility).toEqual({
+      scriptChars: 27,
+      minScriptChars: 30,
+      passed: false,
     });
   });
 

@@ -8,6 +8,9 @@ import { hasWasmDetectorRuntime } from "./support/wasm-detector-runtime";
 import { WASM_LATIN_QUALITY_FIXTURES } from "./support/word-counter-fixtures";
 
 describe("detector entrypoint", () => {
+  const defaultEligibleStrictNotEligibleText = "Readers understand the feature.";
+  const defaultNotEligibleLooseEligibleText = "Users understand this now.";
+
   test("uses regex detector mode by default", async () => {
     const result = await wordCounterWithDetector("Hello world");
 
@@ -64,6 +67,188 @@ describe("detector entrypoint", () => {
       policy: "latinProse",
       mode: "strict",
     });
+  });
+
+  test("raises Latin eligibility thresholds for strict mode across detector subpath runtime entrypoints", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const countEvents: Array<Record<string, unknown>> = [];
+    const segmentEvents: Array<Record<string, unknown>> = [];
+    const sectionEvents: Array<Record<string, unknown>> = [];
+
+    await wordCounterWithDetector(defaultEligibleStrictNotEligibleText, {
+      detector: "wasm",
+      contentGate: { mode: "strict" },
+      detectorDebug: {
+        evidence: { verbosity: "compact", mode: "chunk", section: "all" },
+        emit(event, details) {
+          if (event === "detector.window.evidence") {
+            countEvents.push(details ?? {});
+          }
+        },
+      },
+    });
+    await segmentTextByLocaleWithDetector(defaultEligibleStrictNotEligibleText, {
+      detector: "wasm",
+      contentGate: { mode: "strict" },
+      detectorDebug: {
+        evidence: { verbosity: "compact", mode: "chunk", section: "all" },
+        emit(event, details) {
+          if (event === "detector.window.evidence") {
+            segmentEvents.push(details ?? {});
+          }
+        },
+      },
+    });
+    await countSectionsWithDetector(defaultEligibleStrictNotEligibleText, "all", {
+      detector: "wasm",
+      contentGate: { mode: "strict" },
+      detectorDebug: {
+        evidence: { verbosity: "compact", mode: "chunk", section: "all" },
+        emit(event, details) {
+          if (event === "detector.window.evidence") {
+            sectionEvents.push(details ?? {});
+          }
+        },
+      },
+    });
+
+    for (const evidence of [countEvents[0], segmentEvents[0], sectionEvents[0]]) {
+      expect(evidence?.minScriptChars).toBe(30);
+      expect(evidence?.eligible).toBe(false);
+      expect(evidence?.contentGate).toEqual({
+        applied: true,
+        passed: false,
+        policy: "latinProse",
+        mode: "strict",
+      });
+      expect((evidence?.decision as Record<string, unknown> | undefined)?.fallbackReason).toBe(
+        "notEligible",
+      );
+    }
+  });
+
+  test("lowers Latin eligibility thresholds for loose mode while keeping off on default thresholds", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const defaultEvents: Array<Record<string, unknown>> = [];
+    const looseCountEvents: Array<Record<string, unknown>> = [];
+    const looseSegmentEvents: Array<Record<string, unknown>> = [];
+    const looseSectionEvents: Array<Record<string, unknown>> = [];
+    const offCountEvents: Array<Record<string, unknown>> = [];
+    const offSegmentEvents: Array<Record<string, unknown>> = [];
+    const offSectionEvents: Array<Record<string, unknown>> = [];
+
+    await wordCounterWithDetector(defaultNotEligibleLooseEligibleText, {
+      detector: "wasm",
+      detectorDebug: {
+        evidence: { verbosity: "compact", mode: "chunk", section: "all" },
+        emit(event, details) {
+          if (event === "detector.window.evidence") {
+            defaultEvents.push(details ?? {});
+          }
+        },
+      },
+    });
+    await wordCounterWithDetector(defaultNotEligibleLooseEligibleText, {
+      detector: "wasm",
+      contentGate: { mode: "loose" },
+      detectorDebug: {
+        evidence: { verbosity: "compact", mode: "chunk", section: "all" },
+        emit(event, details) {
+          if (event === "detector.window.evidence") {
+            looseCountEvents.push(details ?? {});
+          }
+        },
+      },
+    });
+    await segmentTextByLocaleWithDetector(defaultNotEligibleLooseEligibleText, {
+      detector: "wasm",
+      contentGate: { mode: "loose" },
+      detectorDebug: {
+        evidence: { verbosity: "compact", mode: "chunk", section: "all" },
+        emit(event, details) {
+          if (event === "detector.window.evidence") {
+            looseSegmentEvents.push(details ?? {});
+          }
+        },
+      },
+    });
+    await countSectionsWithDetector(defaultNotEligibleLooseEligibleText, "all", {
+      detector: "wasm",
+      contentGate: { mode: "loose" },
+      detectorDebug: {
+        evidence: { verbosity: "compact", mode: "chunk", section: "all" },
+        emit(event, details) {
+          if (event === "detector.window.evidence") {
+            looseSectionEvents.push(details ?? {});
+          }
+        },
+      },
+    });
+    await wordCounterWithDetector(defaultNotEligibleLooseEligibleText, {
+      detector: "wasm",
+      contentGate: { mode: "off" },
+      detectorDebug: {
+        evidence: { verbosity: "compact", mode: "chunk", section: "all" },
+        emit(event, details) {
+          if (event === "detector.window.evidence") {
+            offCountEvents.push(details ?? {});
+          }
+        },
+      },
+    });
+    await segmentTextByLocaleWithDetector(defaultNotEligibleLooseEligibleText, {
+      detector: "wasm",
+      contentGate: { mode: "off" },
+      detectorDebug: {
+        evidence: { verbosity: "compact", mode: "chunk", section: "all" },
+        emit(event, details) {
+          if (event === "detector.window.evidence") {
+            offSegmentEvents.push(details ?? {});
+          }
+        },
+      },
+    });
+    await countSectionsWithDetector(defaultNotEligibleLooseEligibleText, "all", {
+      detector: "wasm",
+      contentGate: { mode: "off" },
+      detectorDebug: {
+        evidence: { verbosity: "compact", mode: "chunk", section: "all" },
+        emit(event, details) {
+          if (event === "detector.window.evidence") {
+            offSectionEvents.push(details ?? {});
+          }
+        },
+      },
+    });
+
+    expect(defaultEvents[0]?.minScriptChars).toBe(24);
+    expect(defaultEvents[0]?.eligible).toBe(false);
+    for (const evidence of [looseCountEvents[0], looseSegmentEvents[0], looseSectionEvents[0]]) {
+      expect(evidence?.minScriptChars).toBe(20);
+      expect(evidence?.eligible).toBe(true);
+      expect(evidence?.contentGate).toEqual({
+        applied: true,
+        passed: true,
+        policy: "latinProse",
+        mode: "loose",
+      });
+    }
+    for (const evidence of [offCountEvents[0], offSegmentEvents[0], offSectionEvents[0]]) {
+      expect(evidence?.minScriptChars).toBe(24);
+      expect(evidence?.eligible).toBe(false);
+      expect(evidence?.contentGate).toEqual({
+        applied: false,
+        passed: true,
+        policy: "none",
+        mode: "off",
+      });
+    }
   });
 
   test("threads content gate mode through wasm segment and section detector entrypoints", async () => {

@@ -7,6 +7,8 @@ export const HANI_WASM_MIN_SCRIPT_CHARS = 12;
 export const LATIN_WASM_MIN_CONFIDENCE = 0.75;
 export const HANI_WASM_MIN_CONFIDENCE = 0.9;
 export const LATIN_WASM_CORROBORATED_MIN_CONFIDENCE = 0.7;
+const LATIN_WASM_STRICT_MIN_SCRIPT_CHARS = 30;
+const LATIN_WASM_LOOSE_MIN_SCRIPT_CHARS = 20;
 
 const LATIN_SCRIPT_REGEX = /\p{Script=Latin}/u;
 const HAN_SCRIPT_REGEX = /\p{Script=Han}/u;
@@ -69,8 +71,10 @@ export type DetectorCorroboratedAcceptance =
 export type DetectorRoutePolicy = {
   routeTag: DetectorRouteTag;
   eligibility: {
-    minScriptChars: number;
-    evaluate: (sample: DetectorDiagnosticSample) => DetectorEligibilityResult;
+    evaluate: (
+      sample: DetectorDiagnosticSample,
+      mode?: DetectorContentGateMode,
+    ) => DetectorEligibilityResult;
   };
   buildDiagnosticSample: (
     window: DetectorWindow,
@@ -302,6 +306,18 @@ function evaluateEligibility(
   };
 }
 
+function getLatinEligibilityMinScriptChars(mode: DetectorContentGateMode = "default"): number {
+  if (mode === "strict") {
+    return LATIN_WASM_STRICT_MIN_SCRIPT_CHARS;
+  }
+
+  if (mode === "loose") {
+    return LATIN_WASM_LOOSE_MIN_SCRIPT_CHARS;
+  }
+
+  return LATIN_WASM_MIN_SCRIPT_CHARS;
+}
+
 function shouldAcceptCandidate(
   confidence: number | undefined,
   reliable: boolean | undefined,
@@ -372,9 +388,8 @@ function createLatinRoutePolicy(): DetectorRoutePolicy {
   return {
     routeTag: DEFAULT_LOCALE,
     eligibility: {
-      minScriptChars: LATIN_WASM_MIN_SCRIPT_CHARS,
-      evaluate(sample) {
-        return evaluateEligibility(sample, DEFAULT_LOCALE, LATIN_WASM_MIN_SCRIPT_CHARS);
+      evaluate(sample, mode = "default") {
+        return evaluateEligibility(sample, DEFAULT_LOCALE, getLatinEligibilityMinScriptChars(mode));
       },
     },
     buildDiagnosticSample(window) {
@@ -410,7 +425,6 @@ function createHaniRoutePolicy(): DetectorRoutePolicy {
   return {
     routeTag: DEFAULT_HAN_TAG,
     eligibility: {
-      minScriptChars: HANI_WASM_MIN_SCRIPT_CHARS,
       evaluate(sample) {
         return evaluateEligibility(sample, DEFAULT_HAN_TAG, HANI_WASM_MIN_SCRIPT_CHARS);
       },

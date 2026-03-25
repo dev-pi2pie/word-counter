@@ -4,6 +4,9 @@ import type { LocaleChunk } from "../src/wc/types";
 import { DETECTOR_ROUTE_POLICIES, type DetectorWindow } from "../src/detector/policy";
 
 describe("detector route policies", () => {
+  const defaultEligibleStrictNotEligibleText = "Readers understand the feature.";
+  const defaultNotEligibleLooseEligibleText = "Users understand this now.";
+
   test("applies the Latin prose content gate only to Latin windows", () => {
     const latinPolicy = DETECTOR_ROUTE_POLICIES[DEFAULT_LOCALE];
     const proseSample = latinPolicy.buildDiagnosticSample(
@@ -114,6 +117,54 @@ describe("detector route policies", () => {
     });
   });
 
+  test("changes Latin eligibility thresholds for strict and loose while keeping off on default thresholds", () => {
+    const latinPolicy = DETECTOR_ROUTE_POLICIES[DEFAULT_LOCALE];
+    const strictBoundarySample = latinPolicy.buildDiagnosticSample(
+      {
+        routeTag: DEFAULT_LOCALE,
+        startIndex: 0,
+        endIndex: 0,
+        text: defaultEligibleStrictNotEligibleText,
+      },
+      [],
+    );
+    const looseBoundarySample = latinPolicy.buildDiagnosticSample(
+      {
+        routeTag: DEFAULT_LOCALE,
+        startIndex: 0,
+        endIndex: 0,
+        text: defaultNotEligibleLooseEligibleText,
+      },
+      [],
+    );
+
+    expect(latinPolicy.eligibility.evaluate(strictBoundarySample, "default")).toEqual({
+      scriptChars: 27,
+      minScriptChars: 24,
+      passed: true,
+    });
+    expect(latinPolicy.eligibility.evaluate(strictBoundarySample, "strict")).toEqual({
+      scriptChars: 27,
+      minScriptChars: 30,
+      passed: false,
+    });
+    expect(latinPolicy.eligibility.evaluate(looseBoundarySample, "default")).toEqual({
+      scriptChars: 22,
+      minScriptChars: 24,
+      passed: false,
+    });
+    expect(latinPolicy.eligibility.evaluate(looseBoundarySample, "loose")).toEqual({
+      scriptChars: 22,
+      minScriptChars: 20,
+      passed: true,
+    });
+    expect(latinPolicy.eligibility.evaluate(looseBoundarySample, "off")).toEqual({
+      scriptChars: 22,
+      minScriptChars: 24,
+      passed: false,
+    });
+  });
+
   test("keeps non-applicable routes as no-op content gate evaluations for every mode", () => {
     const haniPolicy = DETECTOR_ROUTE_POLICIES[DEFAULT_HAN_TAG];
     const haniSample = haniPolicy.buildDiagnosticSample(
@@ -149,6 +200,26 @@ describe("detector route policies", () => {
       passed: true,
       policy: "none",
       mode: "off",
+    });
+    expect(haniPolicy.eligibility.evaluate(haniSample, "default")).toEqual({
+      scriptChars: 2,
+      minScriptChars: 12,
+      passed: false,
+    });
+    expect(haniPolicy.eligibility.evaluate(haniSample, "strict")).toEqual({
+      scriptChars: 2,
+      minScriptChars: 12,
+      passed: false,
+    });
+    expect(haniPolicy.eligibility.evaluate(haniSample, "loose")).toEqual({
+      scriptChars: 2,
+      minScriptChars: 12,
+      passed: false,
+    });
+    expect(haniPolicy.eligibility.evaluate(haniSample, "off")).toEqual({
+      scriptChars: 2,
+      minScriptChars: 12,
+      passed: false,
     });
   });
 

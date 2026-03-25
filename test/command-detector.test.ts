@@ -6,6 +6,9 @@ import { hasWasmDetectorRuntime } from "./support/wasm-detector-runtime";
 const { captureCli, findDebugEvents, listDebugEventNames } = createCliHarness();
 
 describe("detector mode", () => {
+  const defaultEligibleStrictNotEligibleText = "Readers understand the feature.";
+  const defaultNotEligibleLooseEligibleText = "Users understand this now.";
+
   test("keeps regex as the default detector mode", async () => {
     const output = await captureCli(["--format", "json", "Hello world"]);
 
@@ -62,6 +65,109 @@ describe("detector mode", () => {
       mode: "strict",
     });
     expect(sampleEvents[0]?.qualityGate).toBe(false);
+  });
+
+  test("raises Latin eligibility thresholds for strict content gate mode on the counting CLI", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const defaultOutput = await captureCli([
+      "--detector",
+      "wasm",
+      "--format",
+      "raw",
+      "--debug",
+      "--detector-evidence",
+      defaultEligibleStrictNotEligibleText,
+    ]);
+    const strictOutput = await captureCli([
+      "--detector",
+      "wasm",
+      "--content-gate",
+      "strict",
+      "--format",
+      "raw",
+      "--debug",
+      "--detector-evidence",
+      defaultEligibleStrictNotEligibleText,
+    ]);
+
+    expect(defaultOutput.exitCode).toBe(0);
+    expect(strictOutput.exitCode).toBe(0);
+    const defaultEvidence = findDebugEvents(defaultOutput.stderr, "detector.window.evidence")[0];
+    const strictEvidence = findDebugEvents(strictOutput.stderr, "detector.window.evidence")[0];
+    expect(defaultEvidence?.eligible).toBe(true);
+    expect(defaultEvidence?.minScriptChars).toBe(24);
+    expect(strictEvidence?.eligible).toBe(false);
+    expect(strictEvidence?.minScriptChars).toBe(30);
+    expect((strictEvidence?.decision as Record<string, unknown> | undefined)?.fallbackReason).toBe(
+      "notEligible",
+    );
+  });
+
+  test("lowers Latin eligibility thresholds for loose content gate mode while keeping off on default thresholds", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const defaultOutput = await captureCli([
+      "--detector",
+      "wasm",
+      "--format",
+      "raw",
+      "--debug",
+      "--detector-evidence",
+      defaultNotEligibleLooseEligibleText,
+    ]);
+    const looseOutput = await captureCli([
+      "--detector",
+      "wasm",
+      "--content-gate",
+      "loose",
+      "--format",
+      "raw",
+      "--debug",
+      "--detector-evidence",
+      defaultNotEligibleLooseEligibleText,
+    ]);
+    const offOutput = await captureCli([
+      "--detector",
+      "wasm",
+      "--content-gate",
+      "off",
+      "--format",
+      "raw",
+      "--debug",
+      "--detector-evidence",
+      defaultNotEligibleLooseEligibleText,
+    ]);
+
+    expect(defaultOutput.exitCode).toBe(0);
+    expect(looseOutput.exitCode).toBe(0);
+    expect(offOutput.exitCode).toBe(0);
+    const defaultEvidence = findDebugEvents(defaultOutput.stderr, "detector.window.evidence")[0];
+    const looseEvidence = findDebugEvents(looseOutput.stderr, "detector.window.evidence")[0];
+    const offEvidence = findDebugEvents(offOutput.stderr, "detector.window.evidence")[0];
+    expect(defaultEvidence?.eligible).toBe(false);
+    expect(defaultEvidence?.minScriptChars).toBe(24);
+    expect(looseEvidence?.eligible).toBe(true);
+    expect(looseEvidence?.minScriptChars).toBe(20);
+    expect(looseEvidence?.contentGate).toEqual({
+      applied: true,
+      passed: true,
+      policy: "latinProse",
+      mode: "loose",
+    });
+    expect(offEvidence?.eligible).toBe(false);
+    expect(offEvidence?.minScriptChars).toBe(24);
+    expect(offEvidence?.contentGate).toEqual({
+      applied: false,
+      passed: true,
+      policy: "none",
+      mode: "off",
+    });
+    expect(offEvidence?.qualityGate).toBe(true);
   });
 
   test("rejects invalid content gate modes on the counting CLI", async () => {
