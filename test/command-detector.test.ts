@@ -8,6 +8,10 @@ const { captureCli, findDebugEvents, listDebugEventNames } = createCliHarness();
 describe("detector mode", () => {
   const defaultEligibleStrictNotEligibleText = "Readers understand the feature.";
   const defaultNotEligibleLooseEligibleText = "Users understand this now.";
+  const shortHaniText = "世界";
+  const idiomLengthHaniText = "四字成語";
+  const borrowedShortHaniText = "こんにちは、世界！";
+  const borrowedLongHaniText = "こんにちは、世界！これはテストです。";
 
   test("keeps regex as the default detector mode", async () => {
     const output = await captureCli(["--format", "json", "Hello world"]);
@@ -168,6 +172,208 @@ describe("detector mode", () => {
       mode: "off",
     });
     expect(offEvidence?.qualityGate).toBe(true);
+  });
+
+  test("keeps short Hani windows ineligible across all counting CLI modes", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const defaultOutput = await captureCli([
+      "--detector",
+      "wasm",
+      "--format",
+      "raw",
+      "--debug",
+      "--detector-evidence",
+      shortHaniText,
+    ]);
+    const strictOutput = await captureCli([
+      "--detector",
+      "wasm",
+      "--content-gate",
+      "strict",
+      "--format",
+      "raw",
+      "--debug",
+      "--detector-evidence",
+      shortHaniText,
+    ]);
+    const looseOutput = await captureCli([
+      "--detector",
+      "wasm",
+      "--content-gate",
+      "loose",
+      "--format",
+      "raw",
+      "--debug",
+      "--detector-evidence",
+      shortHaniText,
+    ]);
+    const offOutput = await captureCli([
+      "--detector",
+      "wasm",
+      "--content-gate",
+      "off",
+      "--format",
+      "raw",
+      "--debug",
+      "--detector-evidence",
+      shortHaniText,
+    ]);
+
+    expect(defaultOutput.exitCode).toBe(0);
+    expect(strictOutput.exitCode).toBe(0);
+    expect(looseOutput.exitCode).toBe(0);
+    expect(offOutput.exitCode).toBe(0);
+    const evidenceEvents = [
+      findDebugEvents(defaultOutput.stderr, "detector.window.evidence")[0],
+      findDebugEvents(strictOutput.stderr, "detector.window.evidence")[0],
+      findDebugEvents(looseOutput.stderr, "detector.window.evidence")[0],
+      findDebugEvents(offOutput.stderr, "detector.window.evidence")[0],
+    ];
+    expect(evidenceEvents[0]?.minScriptChars).toBe(12);
+    expect(evidenceEvents[0]?.eligible).toBe(false);
+    expect(evidenceEvents[1]?.minScriptChars).toBe(16);
+    expect(evidenceEvents[1]?.eligible).toBe(false);
+    expect(evidenceEvents[2]?.minScriptChars).toBe(4);
+    expect(evidenceEvents[2]?.eligible).toBe(false);
+    expect(evidenceEvents[3]?.minScriptChars).toBe(12);
+    expect(evidenceEvents[3]?.eligible).toBe(false);
+    const expectedModes = ["default", "strict", "loose", "off"] as const;
+    for (const [index, evidence] of evidenceEvents.entries()) {
+      expect(evidence?.contentGate).toEqual({
+        applied: false,
+        passed: true,
+        policy: "none",
+        mode: expectedModes[index],
+      });
+      expect(evidence?.qualityGate).toBe(true);
+    }
+  });
+
+  test("uses Hani loose mode as a short-window idiom path without turning borrowed context into a shortcut", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const idiomDefaultOutput = await captureCli([
+      "--detector",
+      "wasm",
+      "--format",
+      "raw",
+      "--debug",
+      "--detector-evidence",
+      idiomLengthHaniText,
+    ]);
+    const idiomLooseOutput = await captureCli([
+      "--detector",
+      "wasm",
+      "--content-gate",
+      "loose",
+      "--format",
+      "raw",
+      "--debug",
+      "--detector-evidence",
+      idiomLengthHaniText,
+    ]);
+    const borrowedShortLooseOutput = await captureCli([
+      "--detector",
+      "wasm",
+      "--content-gate",
+      "loose",
+      "--format",
+      "raw",
+      "--debug",
+      "--detector-evidence",
+      borrowedShortHaniText,
+    ]);
+    const borrowedLongDefaultOutput = await captureCli([
+      "--detector",
+      "wasm",
+      "--format",
+      "raw",
+      "--debug",
+      "--detector-evidence",
+      borrowedLongHaniText,
+    ]);
+    const borrowedLongStrictOutput = await captureCli([
+      "--detector",
+      "wasm",
+      "--content-gate",
+      "strict",
+      "--format",
+      "raw",
+      "--debug",
+      "--detector-evidence",
+      borrowedLongHaniText,
+    ]);
+    const borrowedLongLooseOutput = await captureCli([
+      "--detector",
+      "wasm",
+      "--content-gate",
+      "loose",
+      "--format",
+      "raw",
+      "--debug",
+      "--detector-evidence",
+      borrowedLongHaniText,
+    ]);
+    const borrowedLongOffOutput = await captureCli([
+      "--detector",
+      "wasm",
+      "--content-gate",
+      "off",
+      "--format",
+      "raw",
+      "--debug",
+      "--detector-evidence",
+      borrowedLongHaniText,
+    ]);
+
+    const idiomDefaultEvidence = findDebugEvents(
+      idiomDefaultOutput.stderr,
+      "detector.window.evidence",
+    )[0];
+    const idiomLooseEvidence = findDebugEvents(
+      idiomLooseOutput.stderr,
+      "detector.window.evidence",
+    )[0];
+    const borrowedShortLooseEvidence = findDebugEvents(
+      borrowedShortLooseOutput.stderr,
+      "detector.window.evidence",
+    )[0];
+    const borrowedLongDefaultEvidence = findDebugEvents(
+      borrowedLongDefaultOutput.stderr,
+      "detector.window.evidence",
+    )[0];
+    const borrowedLongStrictEvidence = findDebugEvents(
+      borrowedLongStrictOutput.stderr,
+      "detector.window.evidence",
+    )[0];
+    const borrowedLongLooseEvidence = findDebugEvents(
+      borrowedLongLooseOutput.stderr,
+      "detector.window.evidence",
+    )[0];
+    const borrowedLongOffEvidence = findDebugEvents(
+      borrowedLongOffOutput.stderr,
+      "detector.window.evidence",
+    )[0];
+
+    expect(idiomDefaultEvidence?.eligible).toBe(false);
+    expect(idiomDefaultEvidence?.minScriptChars).toBe(12);
+    expect(idiomLooseEvidence?.eligible).toBe(true);
+    expect(idiomLooseEvidence?.minScriptChars).toBe(4);
+    expect(borrowedShortLooseEvidence?.eligible).toBe(false);
+    expect(borrowedShortLooseEvidence?.minScriptChars).toBe(4);
+    expect(borrowedLongDefaultEvidence?.eligible).toBe(true);
+    expect(borrowedLongDefaultEvidence?.minScriptChars).toBe(12);
+    expect(borrowedLongStrictEvidence?.eligible).toBe(false);
+    expect(borrowedLongStrictEvidence?.minScriptChars).toBe(16);
+    expect(borrowedLongLooseEvidence?.eligible).toBe(false);
+    expect(borrowedLongLooseEvidence?.minScriptChars).toBe(4);
+    expect(borrowedLongOffEvidence?.eligible).toBe(true);
+    expect(borrowedLongOffEvidence?.minScriptChars).toBe(12);
   });
 
   test("rejects invalid content gate modes on the counting CLI", async () => {

@@ -6,6 +6,17 @@ import { DETECTOR_ROUTE_POLICIES, type DetectorWindow } from "../src/detector/po
 describe("detector route policies", () => {
   const defaultEligibleStrictNotEligibleText = "Readers understand the feature.";
   const defaultNotEligibleLooseEligibleText = "Users understand this now.";
+  const shortHaniText = "世界";
+  const idiomLengthHaniText = "四字成語";
+  const borrowedShortHaniChunks: LocaleChunk[] = [
+    { locale: "ja", text: "こんにちは、" },
+    { locale: DEFAULT_HAN_TAG, text: "世界！" },
+  ];
+  const borrowedLongHaniChunks: LocaleChunk[] = [
+    { locale: "ja", text: "こんにちは、" },
+    { locale: DEFAULT_HAN_TAG, text: "世界！" },
+    { locale: "ja", text: "これはテストです。" },
+  ];
 
   test("applies the Latin prose content gate only to Latin windows", () => {
     const latinPolicy = DETECTOR_ROUTE_POLICIES[DEFAULT_LOCALE];
@@ -165,14 +176,14 @@ describe("detector route policies", () => {
     });
   });
 
-  test("keeps non-applicable routes as no-op content gate evaluations for every mode", () => {
+  test("keeps eligibility-only Hani routes as no-op content gate evaluations for every mode", () => {
     const haniPolicy = DETECTOR_ROUTE_POLICIES[DEFAULT_HAN_TAG];
     const haniSample = haniPolicy.buildDiagnosticSample(
       {
         routeTag: DEFAULT_HAN_TAG,
         startIndex: 0,
         endIndex: 0,
-        text: "世界！",
+        text: shortHaniText,
       },
       [],
     );
@@ -208,18 +219,102 @@ describe("detector route policies", () => {
     });
     expect(haniPolicy.eligibility.evaluate(haniSample, "strict")).toEqual({
       scriptChars: 2,
-      minScriptChars: 12,
+      minScriptChars: 16,
       passed: false,
     });
     expect(haniPolicy.eligibility.evaluate(haniSample, "loose")).toEqual({
       scriptChars: 2,
-      minScriptChars: 12,
+      minScriptChars: 4,
       passed: false,
     });
     expect(haniPolicy.eligibility.evaluate(haniSample, "off")).toEqual({
       scriptChars: 2,
       minScriptChars: 12,
       passed: false,
+    });
+  });
+
+  test("changes Hani eligibility thresholds for strict and loose while keeping off on default thresholds", () => {
+    const haniPolicy = DETECTOR_ROUTE_POLICIES[DEFAULT_HAN_TAG];
+    const idiomSample = haniPolicy.buildDiagnosticSample(
+      {
+        routeTag: DEFAULT_HAN_TAG,
+        startIndex: 0,
+        endIndex: 0,
+        text: idiomLengthHaniText,
+      },
+      [],
+    );
+    const borrowedShortSample = haniPolicy.buildDiagnosticSample(
+      {
+        routeTag: DEFAULT_HAN_TAG,
+        startIndex: 1,
+        endIndex: 1,
+        text: "世界！",
+      },
+      borrowedShortHaniChunks,
+    );
+    const borrowedLongSample = haniPolicy.buildDiagnosticSample(
+      {
+        routeTag: DEFAULT_HAN_TAG,
+        startIndex: 1,
+        endIndex: 1,
+        text: "世界！",
+      },
+      borrowedLongHaniChunks,
+    );
+
+    expect(haniPolicy.eligibility.evaluate(idiomSample, "default")).toEqual({
+      scriptChars: 4,
+      minScriptChars: 12,
+      passed: false,
+    });
+    expect(haniPolicy.eligibility.evaluate(idiomSample, "strict")).toEqual({
+      scriptChars: 4,
+      minScriptChars: 16,
+      passed: false,
+    });
+    expect(haniPolicy.eligibility.evaluate(idiomSample, "loose")).toEqual({
+      scriptChars: 4,
+      minScriptChars: 4,
+      passed: true,
+    });
+    expect(haniPolicy.eligibility.evaluate(idiomSample, "off")).toEqual({
+      scriptChars: 4,
+      minScriptChars: 12,
+      passed: false,
+    });
+
+    expect(haniPolicy.eligibility.evaluate(borrowedShortSample, "default")).toEqual({
+      scriptChars: 7,
+      minScriptChars: 12,
+      passed: false,
+    });
+    expect(haniPolicy.eligibility.evaluate(borrowedShortSample, "loose")).toEqual({
+      scriptChars: 2,
+      minScriptChars: 4,
+      passed: false,
+    });
+
+    expect(haniPolicy.eligibility.evaluate(borrowedLongSample, "default")).toEqual({
+      scriptChars: 15,
+      minScriptChars: 12,
+      passed: true,
+    });
+    expect(haniPolicy.eligibility.evaluate(borrowedLongSample, "strict")).toEqual({
+      scriptChars: 15,
+      minScriptChars: 16,
+      passed: false,
+    });
+    expect(haniPolicy.eligibility.evaluate(borrowedLongSample, "loose")).toEqual({
+      scriptChars: 2,
+      minScriptChars: 4,
+      passed: false,
+    });
+    expect(haniPolicy.eligibility.evaluate(borrowedLongSample, "off")).toEqual({
+      scriptChars: 15,
+      minScriptChars: 12,
+      passed: true,
     });
   });
 

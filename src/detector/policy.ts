@@ -9,6 +9,8 @@ export const HANI_WASM_MIN_CONFIDENCE = 0.9;
 export const LATIN_WASM_CORROBORATED_MIN_CONFIDENCE = 0.7;
 const LATIN_WASM_STRICT_MIN_SCRIPT_CHARS = 30;
 const LATIN_WASM_LOOSE_MIN_SCRIPT_CHARS = 20;
+const HANI_WASM_STRICT_MIN_SCRIPT_CHARS = 16;
+const HANI_WASM_LOOSE_MIN_FOCUS_HAN_CHARS = 4;
 
 const LATIN_SCRIPT_REGEX = /\p{Script=Latin}/u;
 const HAN_SCRIPT_REGEX = /\p{Script=Han}/u;
@@ -318,6 +320,24 @@ function getLatinEligibilityMinScriptChars(mode: DetectorContentGateMode = "defa
   return LATIN_WASM_MIN_SCRIPT_CHARS;
 }
 
+function evaluateHaniEligibility(
+  sample: DetectorDiagnosticSample,
+  mode: DetectorContentGateMode = "default",
+): DetectorEligibilityResult {
+  if (mode === "loose") {
+    const scriptChars = countMatchingChars(sample.focusText, HAN_SCRIPT_REGEX);
+    return {
+      scriptChars,
+      minScriptChars: HANI_WASM_LOOSE_MIN_FOCUS_HAN_CHARS,
+      passed: scriptChars >= HANI_WASM_LOOSE_MIN_FOCUS_HAN_CHARS,
+    };
+  }
+
+  const minScriptChars =
+    mode === "strict" ? HANI_WASM_STRICT_MIN_SCRIPT_CHARS : HANI_WASM_MIN_SCRIPT_CHARS;
+  return evaluateEligibility(sample, DEFAULT_HAN_TAG, minScriptChars);
+}
+
 function shouldAcceptCandidate(
   confidence: number | undefined,
   reliable: boolean | undefined,
@@ -425,8 +445,8 @@ function createHaniRoutePolicy(): DetectorRoutePolicy {
   return {
     routeTag: DEFAULT_HAN_TAG,
     eligibility: {
-      evaluate(sample) {
-        return evaluateEligibility(sample, DEFAULT_HAN_TAG, HANI_WASM_MIN_SCRIPT_CHARS);
+      evaluate(sample, mode = "default") {
+        return evaluateHaniEligibility(sample, mode);
       },
     },
     buildDiagnosticSample(window, chunks) {

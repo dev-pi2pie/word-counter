@@ -10,6 +10,10 @@ import { WASM_LATIN_QUALITY_FIXTURES } from "./support/word-counter-fixtures";
 describe("detector entrypoint", () => {
   const defaultEligibleStrictNotEligibleText = "Readers understand the feature.";
   const defaultNotEligibleLooseEligibleText = "Users understand this now.";
+  const shortHaniText = "世界";
+  const idiomLengthHaniText = "四字成語";
+  const borrowedShortHaniText = "こんにちは、世界！";
+  const borrowedLongHaniText = "こんにちは、世界！これはテストです。";
 
   test("uses regex detector mode by default", async () => {
     const result = await wordCounterWithDetector("Hello world");
@@ -249,6 +253,242 @@ describe("detector entrypoint", () => {
         mode: "off",
       });
     }
+  });
+
+  test("keeps short Hani windows ineligible across detector subpath runtime entrypoints", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const defaultCountEvents: Array<Record<string, unknown>> = [];
+    const strictCountEvents: Array<Record<string, unknown>> = [];
+    const looseSegmentEvents: Array<Record<string, unknown>> = [];
+    const offSectionEvents: Array<Record<string, unknown>> = [];
+
+    await wordCounterWithDetector(shortHaniText, {
+      detector: "wasm",
+      detectorDebug: {
+        evidence: { verbosity: "compact", mode: "chunk", section: "all" },
+        emit(event, details) {
+          if (event === "detector.window.evidence") {
+            defaultCountEvents.push(details ?? {});
+          }
+        },
+      },
+    });
+    await wordCounterWithDetector(shortHaniText, {
+      detector: "wasm",
+      contentGate: { mode: "strict" },
+      detectorDebug: {
+        evidence: { verbosity: "compact", mode: "chunk", section: "all" },
+        emit(event, details) {
+          if (event === "detector.window.evidence") {
+            strictCountEvents.push(details ?? {});
+          }
+        },
+      },
+    });
+    await segmentTextByLocaleWithDetector(shortHaniText, {
+      detector: "wasm",
+      contentGate: { mode: "loose" },
+      detectorDebug: {
+        evidence: { verbosity: "compact", mode: "chunk", section: "all" },
+        emit(event, details) {
+          if (event === "detector.window.evidence") {
+            looseSegmentEvents.push(details ?? {});
+          }
+        },
+      },
+    });
+    await countSectionsWithDetector(shortHaniText, "all", {
+      detector: "wasm",
+      contentGate: { mode: "off" },
+      detectorDebug: {
+        evidence: { verbosity: "compact", mode: "chunk", section: "all" },
+        emit(event, details) {
+          if (event === "detector.window.evidence") {
+            offSectionEvents.push(details ?? {});
+          }
+        },
+      },
+    });
+
+    expect(defaultCountEvents[0]?.minScriptChars).toBe(12);
+    expect(defaultCountEvents[0]?.eligible).toBe(false);
+    expect(strictCountEvents[0]?.minScriptChars).toBe(16);
+    expect(strictCountEvents[0]?.eligible).toBe(false);
+    expect(looseSegmentEvents[0]?.minScriptChars).toBe(4);
+    expect(looseSegmentEvents[0]?.eligible).toBe(false);
+    expect(offSectionEvents[0]?.minScriptChars).toBe(12);
+    expect(offSectionEvents[0]?.eligible).toBe(false);
+    const expectedModes = ["default", "strict", "loose", "off"] as const;
+    for (const [index, evidence] of [
+      defaultCountEvents[0],
+      strictCountEvents[0],
+      looseSegmentEvents[0],
+      offSectionEvents[0],
+    ].entries()) {
+      expect(evidence?.contentGate).toEqual({
+        applied: false,
+        passed: true,
+        policy: "none",
+        mode: expectedModes[index],
+      });
+    }
+  });
+
+  test("uses Hani loose mode for idiom-length windows without turning borrowed context into a shortcut", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const idiomDefaultEvents: Array<Record<string, unknown>> = [];
+    const idiomLooseEvents: Array<Record<string, unknown>> = [];
+    const borrowedShortLooseEvents: Array<Record<string, unknown>> = [];
+    const borrowedLongDefaultEvents: Array<Record<string, unknown>> = [];
+    const borrowedLongStrictEvents: Array<Record<string, unknown>> = [];
+    const borrowedLongLooseEvents: Array<Record<string, unknown>> = [];
+    const borrowedLongOffEvents: Array<Record<string, unknown>> = [];
+
+    await wordCounterWithDetector(idiomLengthHaniText, {
+      detector: "wasm",
+      detectorDebug: {
+        evidence: { verbosity: "compact", mode: "chunk", section: "all" },
+        emit(event, details) {
+          if (event === "detector.window.evidence") {
+            idiomDefaultEvents.push(details ?? {});
+          }
+        },
+      },
+    });
+    await wordCounterWithDetector(idiomLengthHaniText, {
+      detector: "wasm",
+      contentGate: { mode: "loose" },
+      detectorDebug: {
+        evidence: { verbosity: "compact", mode: "chunk", section: "all" },
+        emit(event, details) {
+          if (event === "detector.window.evidence") {
+            idiomLooseEvents.push(details ?? {});
+          }
+        },
+      },
+    });
+    await wordCounterWithDetector(borrowedShortHaniText, {
+      detector: "wasm",
+      contentGate: { mode: "loose" },
+      detectorDebug: {
+        evidence: { verbosity: "compact", mode: "chunk", section: "all" },
+        emit(event, details) {
+          if (event === "detector.window.evidence") {
+            borrowedShortLooseEvents.push(details ?? {});
+          }
+        },
+      },
+    });
+    await wordCounterWithDetector(borrowedLongHaniText, {
+      detector: "wasm",
+      detectorDebug: {
+        evidence: { verbosity: "compact", mode: "chunk", section: "all" },
+        emit(event, details) {
+          if (event === "detector.window.evidence") {
+            borrowedLongDefaultEvents.push(details ?? {});
+          }
+        },
+      },
+    });
+    await segmentTextByLocaleWithDetector(borrowedLongHaniText, {
+      detector: "wasm",
+      contentGate: { mode: "strict" },
+      detectorDebug: {
+        evidence: { verbosity: "compact", mode: "chunk", section: "all" },
+        emit(event, details) {
+          if (event === "detector.window.evidence") {
+            borrowedLongStrictEvents.push(details ?? {});
+          }
+        },
+      },
+    });
+    await countSectionsWithDetector(borrowedLongHaniText, "all", {
+      detector: "wasm",
+      contentGate: { mode: "loose" },
+      detectorDebug: {
+        evidence: { verbosity: "compact", mode: "chunk", section: "all" },
+        emit(event, details) {
+          if (event === "detector.window.evidence") {
+            borrowedLongLooseEvents.push(details ?? {});
+          }
+        },
+      },
+    });
+    await wordCounterWithDetector(borrowedLongHaniText, {
+      detector: "wasm",
+      contentGate: { mode: "off" },
+      detectorDebug: {
+        evidence: { verbosity: "compact", mode: "chunk", section: "all" },
+        emit(event, details) {
+          if (event === "detector.window.evidence") {
+            borrowedLongOffEvents.push(details ?? {});
+          }
+        },
+      },
+    });
+
+    expect(idiomDefaultEvents[0]?.minScriptChars).toBe(12);
+    expect(idiomDefaultEvents[0]?.eligible).toBe(false);
+    expect(idiomDefaultEvents[0]?.contentGate).toEqual({
+      applied: false,
+      passed: true,
+      policy: "none",
+      mode: "default",
+    });
+    expect(idiomLooseEvents[0]?.minScriptChars).toBe(4);
+    expect(idiomLooseEvents[0]?.eligible).toBe(true);
+    expect(idiomLooseEvents[0]?.contentGate).toEqual({
+      applied: false,
+      passed: true,
+      policy: "none",
+      mode: "loose",
+    });
+    expect(borrowedShortLooseEvents[0]?.minScriptChars).toBe(4);
+    expect(borrowedShortLooseEvents[0]?.eligible).toBe(false);
+    expect(borrowedShortLooseEvents[0]?.contentGate).toEqual({
+      applied: false,
+      passed: true,
+      policy: "none",
+      mode: "loose",
+    });
+    expect(borrowedLongDefaultEvents[0]?.minScriptChars).toBe(12);
+    expect(borrowedLongDefaultEvents[0]?.eligible).toBe(true);
+    expect(borrowedLongDefaultEvents[0]?.contentGate).toEqual({
+      applied: false,
+      passed: true,
+      policy: "none",
+      mode: "default",
+    });
+    expect(borrowedLongStrictEvents[0]?.minScriptChars).toBe(16);
+    expect(borrowedLongStrictEvents[0]?.eligible).toBe(false);
+    expect(borrowedLongStrictEvents[0]?.contentGate).toEqual({
+      applied: false,
+      passed: true,
+      policy: "none",
+      mode: "strict",
+    });
+    expect(borrowedLongLooseEvents[0]?.minScriptChars).toBe(4);
+    expect(borrowedLongLooseEvents[0]?.eligible).toBe(false);
+    expect(borrowedLongLooseEvents[0]?.contentGate).toEqual({
+      applied: false,
+      passed: true,
+      policy: "none",
+      mode: "loose",
+    });
+    expect(borrowedLongOffEvents[0]?.minScriptChars).toBe(12);
+    expect(borrowedLongOffEvents[0]?.eligible).toBe(true);
+    expect(borrowedLongOffEvents[0]?.contentGate).toEqual({
+      applied: false,
+      passed: true,
+      policy: "none",
+      mode: "off",
+    });
   });
 
   test("threads content gate mode through wasm segment and section detector entrypoints", async () => {

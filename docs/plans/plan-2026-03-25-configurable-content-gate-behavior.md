@@ -123,9 +123,9 @@ Validation for this phase:
 - [x] Ensure `off` bypasses only `contentGate` evaluation, keeps `default` eligibility thresholds, and leaves corroboration and fallback intact.
 - [x] Ensure eligibility-only routes accept the configured mode while remaining truthful no-op gate evaluations.
 - [x] Keep policy implementation internal and avoid exposing raw thresholds in the public contract.
-- [ ] Extend Hani route policy so `default`, `strict`, and `loose` affect Hani eligibility thresholds even while Hani `contentGate` stays `policy = "none"`.
-- [ ] Calibrate Hani `loose` so idiom-length samples can become eligible without letting borrowed Japanese context create noisy short-window promotions.
-- [ ] Keep `off` aligned with `default` Hani eligibility thresholds so it remains a gate bypass rather than a detector-lax Hani mode.
+- [x] Extend Hani route policy so `default`, `strict`, and `loose` affect Hani eligibility thresholds even while Hani `contentGate` stays `policy = "none"`.
+- [x] Calibrate Hani `loose` so idiom-length samples can become eligible without letting borrowed Japanese context create noisy short-window promotions.
+- [x] Keep `off` aligned with `default` Hani eligibility thresholds so it remains a gate bypass rather than a detector-lax Hani mode.
 
 Validation for this phase:
 
@@ -143,7 +143,7 @@ Validation for this phase:
 - [x] Preserve `qualityGate` only as the derived compatibility alias in payloads that already expose it.
 - [x] Avoid adding `qualityGate` to new inspector-only payloads.
 - [x] Ensure eligibility-only routes report the configured mode with honest non-application state.
-- [ ] Ensure Hani inspect/debug output reports mode-driven eligibility changes truthfully even though Hani `contentGate` remains `policy = "none"`.
+- [x] Ensure Hani inspect/debug output reports mode-driven eligibility changes truthfully even though Hani `contentGate` remains `policy = "none"`.
 
 Validation for this phase:
 
@@ -168,7 +168,7 @@ Validation for this phase:
 - [x] Verify batch inspect and single-input inspect both report the configured mode consistently.
 - [x] Verify the public option works with existing detector-related options without changing unrelated behavior.
 - [x] Add compatibility-focused regressions for older debug/evidence consumers that still read `qualityGate`.
-- [ ] Add Hani-specific CLI and library regressions for short Han-only windows, idiom-length windows, and borrowed-context mixed Japanese samples across `default|strict|loose|off`.
+- [x] Add Hani-specific CLI and library regressions for short Han-only windows, idiom-length windows, and borrowed-context mixed Japanese samples across `default|strict|loose|off`.
 
 Validation for this phase:
 
@@ -214,7 +214,7 @@ Validation for this phase:
 - [x] Eligibility-only routes accept all supported modes without lying about gate application.
 - [x] No public numeric threshold controls are introduced in this phase.
 - [x] Changed files remain clean under the configured lint and format scripts.
-- [ ] Hani participates in the documented mode scale rather than remaining fixed at one eligibility threshold.
+- [x] Hani participates in the documented mode scale rather than remaining fixed at one eligibility threshold.
 
 ## Related Plans
 
@@ -236,3 +236,4 @@ Validation for this phase:
 - `docs/plans/jobs/2026-03-25-configurable-content-gate-phase3-phase4-implementation.md`
 - `docs/plans/jobs/2026-03-25-configurable-content-gate-phase5-docs-and-closure.md`
 - `docs/plans/jobs/2026-03-25-configurable-content-gate-phase2-phase4-threshold-mode-implementation.md`
+- `docs/plans/jobs/2026-03-25-configurable-content-gate-hani-phase2-phase4-implementation.md`

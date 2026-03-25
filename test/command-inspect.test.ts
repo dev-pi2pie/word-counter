@@ -9,6 +9,10 @@ const { captureCli, makeTempFixture } = createCliHarness();
 describe("inspect command", () => {
   const defaultEligibleStrictNotEligibleText = "Readers understand the feature.";
   const defaultNotEligibleLooseEligibleText = "Users understand this now.";
+  const shortHaniText = "世界";
+  const idiomLengthHaniText = "四字成語";
+  const borrowedShortHaniText = "こんにちは、世界！";
+  const borrowedLongHaniText = "こんにちは、世界！これはテストです。";
 
   test("supports default wasm pipeline inspection", async () => {
     if (!hasWasmDetectorRuntime()) {
@@ -384,6 +388,282 @@ describe("inspect command", () => {
         line.includes("Content gate: mode=loose policy=latinProse applied=true passed=true"),
       ),
     ).toBeTrue();
+  });
+
+  test("shows Hani loose idiom eligibility in inspect json output", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const defaultOutput = await captureCli([
+      "inspect",
+      "--detector",
+      "wasm",
+      "--format",
+      "json",
+      idiomLengthHaniText,
+    ]);
+    const looseOutput = await captureCli([
+      "inspect",
+      "--detector",
+      "wasm",
+      "--content-gate",
+      "loose",
+      "--format",
+      "json",
+      idiomLengthHaniText,
+    ]);
+    const offOutput = await captureCli([
+      "inspect",
+      "--detector",
+      "wasm",
+      "--content-gate",
+      "off",
+      "--format",
+      "json",
+      idiomLengthHaniText,
+    ]);
+
+    expect(defaultOutput.exitCode).toBe(0);
+    expect(looseOutput.exitCode).toBe(0);
+    expect(offOutput.exitCode).toBe(0);
+    const defaultParsed = JSON.parse(defaultOutput.stdout[0] ?? "{}");
+    const looseParsed = JSON.parse(looseOutput.stdout[0] ?? "{}");
+    const offParsed = JSON.parse(offOutput.stdout[0] ?? "{}");
+    expect(defaultParsed.windows?.[0]?.eligibility).toEqual({
+      scriptChars: 4,
+      minScriptChars: 12,
+      passed: false,
+    });
+    expect(looseParsed.windows?.[0]?.eligibility).toEqual({
+      scriptChars: 4,
+      minScriptChars: 4,
+      passed: true,
+    });
+    expect(offParsed.windows?.[0]?.eligibility).toEqual({
+      scriptChars: 4,
+      minScriptChars: 12,
+      passed: false,
+    });
+    expect(looseParsed.windows?.[0]?.contentGate).toEqual({
+      applied: false,
+      passed: true,
+      policy: "none",
+      mode: "loose",
+    });
+  });
+
+  test("shows Hani loose idiom eligibility in standard inspect output", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const output = await captureCli([
+      "inspect",
+      "--detector",
+      "wasm",
+      "--content-gate",
+      "loose",
+      idiomLengthHaniText,
+    ]);
+
+    expect(output.exitCode).toBe(0);
+    expect(output.stdout.some((line) => line.includes("Eligibility: 4/4 passed=true"))).toBeTrue();
+    expect(
+      output.stdout.some((line) =>
+        line.includes("Content gate: mode=loose policy=none applied=false passed=true"),
+      ),
+    ).toBeTrue();
+  });
+
+  test("keeps short Hani windows ineligible across all inspect modes", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const defaultOutput = await captureCli([
+      "inspect",
+      "--detector",
+      "wasm",
+      "--format",
+      "json",
+      shortHaniText,
+    ]);
+    const strictOutput = await captureCli([
+      "inspect",
+      "--detector",
+      "wasm",
+      "--content-gate",
+      "strict",
+      "--format",
+      "json",
+      shortHaniText,
+    ]);
+    const looseOutput = await captureCli([
+      "inspect",
+      "--detector",
+      "wasm",
+      "--content-gate",
+      "loose",
+      "--format",
+      "json",
+      shortHaniText,
+    ]);
+    const offOutput = await captureCli([
+      "inspect",
+      "--detector",
+      "wasm",
+      "--content-gate",
+      "off",
+      "--format",
+      "json",
+      shortHaniText,
+    ]);
+
+    const parsedResults = [defaultOutput, strictOutput, looseOutput, offOutput].map((output) =>
+      JSON.parse(output.stdout[0] ?? "{}"),
+    );
+    const expectedModes = ["default", "strict", "loose", "off"] as const;
+    for (const [index, parsed] of parsedResults.entries()) {
+      expect(parsed.windows?.[0]?.contentGate.policy).toBe("none");
+      expect(parsed.windows?.[0]?.contentGate.applied).toBe(false);
+      expect(parsed.windows?.[0]?.contentGate.mode).toBe(expectedModes[index]);
+      expect(parsed.windows?.[0]?.engine).toEqual({
+        executed: false,
+        reason: "notEligible",
+      });
+    }
+    expect(parsedResults[0].windows?.[0]?.eligibility).toEqual({
+      scriptChars: 2,
+      minScriptChars: 12,
+      passed: false,
+    });
+    expect(parsedResults[1].windows?.[0]?.eligibility).toEqual({
+      scriptChars: 2,
+      minScriptChars: 16,
+      passed: false,
+    });
+    expect(parsedResults[2].windows?.[0]?.eligibility).toEqual({
+      scriptChars: 2,
+      minScriptChars: 4,
+      passed: false,
+    });
+    expect(parsedResults[3].windows?.[0]?.eligibility).toEqual({
+      scriptChars: 2,
+      minScriptChars: 12,
+      passed: false,
+    });
+  });
+
+  test("keeps borrowed-context Hani inspect output truthful across default strict loose and off", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const borrowedShortLooseOutput = await captureCli([
+      "inspect",
+      "--detector",
+      "wasm",
+      "--content-gate",
+      "loose",
+      "--format",
+      "json",
+      borrowedShortHaniText,
+    ]);
+    const borrowedLongDefaultOutput = await captureCli([
+      "inspect",
+      "--detector",
+      "wasm",
+      "--format",
+      "json",
+      borrowedLongHaniText,
+    ]);
+    const borrowedLongStrictOutput = await captureCli([
+      "inspect",
+      "--detector",
+      "wasm",
+      "--content-gate",
+      "strict",
+      "--format",
+      "json",
+      borrowedLongHaniText,
+    ]);
+    const borrowedLongLooseOutput = await captureCli([
+      "inspect",
+      "--detector",
+      "wasm",
+      "--content-gate",
+      "loose",
+      "--format",
+      "json",
+      borrowedLongHaniText,
+    ]);
+    const borrowedLongOffOutput = await captureCli([
+      "inspect",
+      "--detector",
+      "wasm",
+      "--content-gate",
+      "off",
+      "--format",
+      "json",
+      borrowedLongHaniText,
+    ]);
+
+    const borrowedShortLooseParsed = JSON.parse(borrowedShortLooseOutput.stdout[0] ?? "{}");
+    const borrowedLongDefaultParsed = JSON.parse(borrowedLongDefaultOutput.stdout[0] ?? "{}");
+    const borrowedLongStrictParsed = JSON.parse(borrowedLongStrictOutput.stdout[0] ?? "{}");
+    const borrowedLongLooseParsed = JSON.parse(borrowedLongLooseOutput.stdout[0] ?? "{}");
+    const borrowedLongOffParsed = JSON.parse(borrowedLongOffOutput.stdout[0] ?? "{}");
+
+    expect(borrowedShortLooseParsed.windows?.[0]?.eligibility).toEqual({
+      scriptChars: 2,
+      minScriptChars: 4,
+      passed: false,
+    });
+    expect(borrowedLongDefaultParsed.windows?.[0]?.eligibility).toEqual({
+      scriptChars: 15,
+      minScriptChars: 12,
+      passed: true,
+    });
+    expect(borrowedLongDefaultParsed.windows?.[0]?.contentGate).toEqual({
+      applied: false,
+      passed: true,
+      policy: "none",
+      mode: "default",
+    });
+    expect(borrowedLongStrictParsed.windows?.[0]?.eligibility).toEqual({
+      scriptChars: 15,
+      minScriptChars: 16,
+      passed: false,
+    });
+    expect(borrowedLongStrictParsed.windows?.[0]?.contentGate).toEqual({
+      applied: false,
+      passed: true,
+      policy: "none",
+      mode: "strict",
+    });
+    expect(borrowedLongLooseParsed.windows?.[0]?.eligibility).toEqual({
+      scriptChars: 2,
+      minScriptChars: 4,
+      passed: false,
+    });
+    expect(borrowedLongLooseParsed.windows?.[0]?.contentGate).toEqual({
+      applied: false,
+      passed: true,
+      policy: "none",
+      mode: "loose",
+    });
+    expect(borrowedLongOffParsed.windows?.[0]?.eligibility).toEqual({
+      scriptChars: 15,
+      minScriptChars: 12,
+      passed: true,
+    });
+    expect(borrowedLongOffParsed.windows?.[0]?.contentGate).toEqual({
+      applied: false,
+      passed: true,
+      policy: "none",
+      mode: "off",
+    });
   });
 
   test("reports configured content gate mode consistently for single and batch inspect", async () => {

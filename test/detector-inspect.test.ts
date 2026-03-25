@@ -5,6 +5,10 @@ import { hasWasmDetectorRuntime } from "./support/wasm-detector-runtime";
 describe("detector inspect library API", () => {
   const defaultEligibleStrictNotEligibleText = "Readers understand the feature.";
   const defaultNotEligibleLooseEligibleText = "Users understand this now.";
+  const shortHaniText = "世界";
+  const idiomLengthHaniText = "四字成語";
+  const borrowedShortHaniText = "こんにちは、世界！";
+  const borrowedLongHaniText = "こんにちは、世界！これはテストです。";
 
   test("returns deterministic regex pipeline inspection", async () => {
     const result = await inspectTextWithDetector("こんにちは、世界！これはテストです。", {
@@ -315,6 +319,226 @@ describe("detector inspect library API", () => {
     expect(offResult.windows?.[0]?.engine).toEqual({
       executed: false,
       reason: "notEligible",
+    });
+  });
+
+  test("keeps short Hani windows ineligible across all modes while preserving no-op content gate disclosure", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const assertPipelineResult = (result: Awaited<ReturnType<typeof inspectTextWithDetector>>) => {
+      if (result.view !== "pipeline") {
+        throw new Error("Expected pipeline inspect result.");
+      }
+      return result;
+    };
+
+    const defaultResult = await inspectTextWithDetector(shortHaniText, {
+      detector: "wasm",
+      view: "pipeline",
+    });
+    const strictResult = await inspectTextWithDetector(shortHaniText, {
+      detector: "wasm",
+      view: "pipeline",
+      contentGate: { mode: "strict" },
+    });
+    const looseResult = await inspectTextWithDetector(shortHaniText, {
+      detector: "wasm",
+      view: "pipeline",
+      contentGate: { mode: "loose" },
+    });
+    const offResult = await inspectTextWithDetector(shortHaniText, {
+      detector: "wasm",
+      view: "pipeline",
+      contentGate: { mode: "off" },
+    });
+
+    const pipelineResults = [
+      assertPipelineResult(defaultResult),
+      assertPipelineResult(strictResult),
+      assertPipelineResult(looseResult),
+      assertPipelineResult(offResult),
+    ];
+    const expectedModes = ["default", "strict", "loose", "off"] as const;
+    for (const [index, result] of pipelineResults.entries()) {
+      expect(result.windows?.[0]?.contentGate).toEqual({
+        applied: false,
+        passed: true,
+        policy: "none",
+        mode: expectedModes[index]!,
+      });
+      expect(result.windows?.[0]?.engine).toEqual({
+        executed: false,
+        reason: "notEligible",
+      });
+    }
+
+    const defaultPipeline = pipelineResults[0]!;
+    const strictPipeline = pipelineResults[1]!;
+    const loosePipeline = pipelineResults[2]!;
+    const offPipeline = pipelineResults[3]!;
+    expect(defaultPipeline.windows?.[0]?.eligibility).toEqual({
+      scriptChars: 2,
+      minScriptChars: 12,
+      passed: false,
+    });
+    expect(strictPipeline.windows?.[0]?.eligibility).toEqual({
+      scriptChars: 2,
+      minScriptChars: 16,
+      passed: false,
+    });
+    expect(loosePipeline.windows?.[0]?.eligibility).toEqual({
+      scriptChars: 2,
+      minScriptChars: 4,
+      passed: false,
+    });
+    expect(offPipeline.windows?.[0]?.eligibility).toEqual({
+      scriptChars: 2,
+      minScriptChars: 12,
+      passed: false,
+    });
+  });
+
+  test("admits idiom-length Hani windows only in loose mode", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const defaultResult = await inspectTextWithDetector(idiomLengthHaniText, {
+      detector: "wasm",
+      view: "pipeline",
+    });
+    const looseResult = await inspectTextWithDetector(idiomLengthHaniText, {
+      detector: "wasm",
+      view: "pipeline",
+      contentGate: { mode: "loose" },
+    });
+    const offResult = await inspectTextWithDetector(idiomLengthHaniText, {
+      detector: "wasm",
+      view: "pipeline",
+      contentGate: { mode: "off" },
+    });
+
+    if (
+      defaultResult.view !== "pipeline" ||
+      looseResult.view !== "pipeline" ||
+      offResult.view !== "pipeline"
+    ) {
+      throw new Error("Expected pipeline inspect result.");
+    }
+
+    expect(defaultResult.windows?.[0]?.eligibility).toEqual({
+      scriptChars: 4,
+      minScriptChars: 12,
+      passed: false,
+    });
+    expect(looseResult.windows?.[0]?.eligibility).toEqual({
+      scriptChars: 4,
+      minScriptChars: 4,
+      passed: true,
+    });
+    expect(offResult.windows?.[0]?.eligibility).toEqual({
+      scriptChars: 4,
+      minScriptChars: 12,
+      passed: false,
+    });
+    expect(looseResult.windows?.[0]?.contentGate).toEqual({
+      applied: false,
+      passed: true,
+      policy: "none",
+      mode: "loose",
+    });
+  });
+
+  test("keeps borrowed-context Hani windows mode-aware without turning loose into a context-only shortcut", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const borrowedShortLooseResult = await inspectTextWithDetector(borrowedShortHaniText, {
+      detector: "wasm",
+      view: "pipeline",
+      contentGate: { mode: "loose" },
+    });
+    const borrowedLongDefaultResult = await inspectTextWithDetector(borrowedLongHaniText, {
+      detector: "wasm",
+      view: "pipeline",
+    });
+    const borrowedLongStrictResult = await inspectTextWithDetector(borrowedLongHaniText, {
+      detector: "wasm",
+      view: "pipeline",
+      contentGate: { mode: "strict" },
+    });
+    const borrowedLongLooseResult = await inspectTextWithDetector(borrowedLongHaniText, {
+      detector: "wasm",
+      view: "pipeline",
+      contentGate: { mode: "loose" },
+    });
+    const borrowedLongOffResult = await inspectTextWithDetector(borrowedLongHaniText, {
+      detector: "wasm",
+      view: "pipeline",
+      contentGate: { mode: "off" },
+    });
+
+    if (
+      borrowedShortLooseResult.view !== "pipeline" ||
+      borrowedLongDefaultResult.view !== "pipeline" ||
+      borrowedLongStrictResult.view !== "pipeline" ||
+      borrowedLongLooseResult.view !== "pipeline" ||
+      borrowedLongOffResult.view !== "pipeline"
+    ) {
+      throw new Error("Expected pipeline inspect result.");
+    }
+
+    expect(borrowedShortLooseResult.windows?.[0]?.eligibility).toEqual({
+      scriptChars: 2,
+      minScriptChars: 4,
+      passed: false,
+    });
+    expect(borrowedLongDefaultResult.windows?.[0]?.eligibility).toEqual({
+      scriptChars: 15,
+      minScriptChars: 12,
+      passed: true,
+    });
+    expect(borrowedLongStrictResult.windows?.[0]?.eligibility).toEqual({
+      scriptChars: 15,
+      minScriptChars: 16,
+      passed: false,
+    });
+    expect(borrowedLongStrictResult.windows?.[0]?.contentGate).toEqual({
+      applied: false,
+      passed: true,
+      policy: "none",
+      mode: "strict",
+    });
+    expect(borrowedLongLooseResult.windows?.[0]?.eligibility).toEqual({
+      scriptChars: 2,
+      minScriptChars: 4,
+      passed: false,
+    });
+    expect(borrowedLongOffResult.windows?.[0]?.eligibility).toEqual({
+      scriptChars: 15,
+      minScriptChars: 12,
+      passed: true,
+    });
+    expect(borrowedLongOffResult.windows?.[0]?.contentGate).toEqual({
+      applied: false,
+      passed: true,
+      policy: "none",
+      mode: "off",
+    });
+    expect(borrowedLongDefaultResult.windows?.[0]?.contentGate).toEqual({
+      applied: false,
+      passed: true,
+      policy: "none",
+      mode: "default",
+    });
+    expect(borrowedLongLooseResult.windows?.[0]?.contentGate).toEqual({
+      applied: false,
+      passed: true,
+      policy: "none",
+      mode: "loose",
     });
   });
 });
