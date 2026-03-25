@@ -190,10 +190,10 @@ Proposed layout:
 
 ### Phase 1 - CLI Test Harness and Command Spec Split
 
-- [ ] Split `test/command.test.ts` into focused spec files plus a shared harness module.
-- [ ] Move temp-fixture helpers, `captureCli`, JSON capture helpers, debug-event parsers, and captured progress-stream helpers into `test/support/cli-harness.ts`.
-- [ ] Preserve existing assertions and test intent exactly; this phase should not change product code.
-- [ ] Keep the split aligned to the current describe-block domains:
+- [x] Split `test/command.test.ts` into focused spec files plus a shared harness module.
+- [x] Move temp-fixture helpers, `captureCli`, JSON capture helpers, debug-event parsers, and captured progress-stream helpers into `test/support/cli-harness.ts`.
+- [x] Preserve existing assertions and test intent exactly; this phase should not change product code.
+- [x] Keep the split aligned to the current describe-block domains:
   - path resolution
   - detector mode
   - inspect
@@ -208,14 +208,14 @@ Proposed layout:
 
 ### Phase 2 - Inspect Command Modularization
 
-- [ ] Refactor `src/cli/inspect/run.ts` into a thin entry file plus focused helpers under `src/cli/inspect/`.
-- [ ] Extract inspect-local parsing and validation into `src/cli/inspect/parse.ts`.
-- [ ] Extract help text and help rendering into `src/cli/inspect/help.ts`.
-- [ ] Extract path loading, binary rejection, and section selection into `src/cli/inspect/input.ts`.
-- [ ] Extract standard output shaping for single-input and batch flows into `src/cli/inspect/render.ts`.
-- [ ] Extract batch JSON payload creation and batch execution helpers into `src/cli/inspect/batch.ts`.
-- [ ] Keep only `executeInspectCommand` and `isExplicitInspectInvocation` exported from `src/cli/inspect/run.ts`.
-- [ ] Preserve help text, validation messages, batch JSON shape, standard rendering, and exit-code behavior exactly.
+- [x] Refactor `src/cli/inspect/run.ts` into a thin entry file plus focused helpers under `src/cli/inspect/`.
+- [x] Extract inspect-local parsing and validation into `src/cli/inspect/parse.ts`.
+- [x] Extract help text and help rendering into `src/cli/inspect/help.ts`.
+- [x] Extract path loading, binary rejection, and section selection into `src/cli/inspect/input.ts`.
+- [x] Extract standard output shaping for single-input and batch flows into `src/cli/inspect/render.ts`.
+- [x] Extract batch JSON payload creation and batch execution helpers into `src/cli/inspect/batch.ts`.
+- [x] Keep only `executeInspectCommand` and `isExplicitInspectInvocation` exported from `src/cli/inspect/run.ts`.
+- [x] Preserve help text, validation messages, batch JSON shape, standard rendering, and exit-code behavior exactly.
 
 ### Phase 3 - Shared Path-Resolution Split
 
