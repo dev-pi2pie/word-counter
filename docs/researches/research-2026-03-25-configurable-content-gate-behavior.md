@@ -27,15 +27,20 @@ Settle whether `contentGate` should be exposed as a user-configurable policy sur
   - `und-Latn` currently requires at least `24` script-bearing Latin characters
   - `und-Hani` currently requires at least `12` script-bearing Han characters
   - those thresholds are currently internal-only, but they materially affect whether the engine runs at all
-- Route asymmetry still exists, but it does not block a first public configuration surface if the contract is explicit.
-  - some detector routes meaningfully apply `contentGate`
-  - other routes should accept the configured mode but report that the gate was not applied
+- Route asymmetry still exists, but it should not force Hani to stay outside the mode scale.
+  - Latin routes have both eligibility policy and a prose-style `contentGate`
+  - Hani routes do not currently have a prose-style gate, but they still have meaningful eligibility thresholds
+  - Hani can participate in `default|strict|loose` through eligibility-only variation while continuing to report `contentGate.policy = "none"`
 - A small discrete mode set is still the safest public contract.
   - it is easier to explain than numeric thresholds
   - it leaves room for fixture-backed internal tuning without exposing raw detector heuristics
 - A gate-only mode scale is weaker than a policy-wide mode scale.
   - if `default`, `strict`, and `loose` only change the Latin content gate, many realistic documents will show little or no visible difference between them
   - coupling those modes to eligibility thresholds as well as gate behavior makes the public scale more meaningful without exposing raw threshold knobs
+- Hani specifically benefits from a looser idiom-length path.
+  - short Han-only samples such as four-character idioms are real user-facing content, not just noise
+  - a Hani `loose` mode should be allowed to admit a much shorter eligibility window than `default`
+  - the initial target can be four Han-bearing characters in the focus window, but it should still be calibrated with fixtures so borrowed Japanese context does not make unrelated short windows eligible too aggressively
 
 ## Settled Decision
 
@@ -46,7 +51,8 @@ Settle whether `contentGate` should be exposed as a user-configurable policy sur
 - Keep the public surface mode-based, not threshold-based.
 - Keep the configuration global in the first version, not route-specific.
 - Treat `default`, `strict`, and `loose` as policy-wide detector modes for applicable routes:
-  - they should affect eligibility thresholds and content-gate behavior together
+  - on Latin routes, they should affect eligibility thresholds and content-gate behavior together
+  - on Hani routes, they should affect eligibility thresholds even while `contentGate` remains a truthful no-op policy
 - Treat `off` as a narrower escape hatch:
   - it bypasses `contentGate` only
   - it does not loosen eligibility thresholds
@@ -76,15 +82,23 @@ CLI:
 - `loose` relaxes policy in two places on routes where `contentGate` is meaningful:
   - it lowers eligibility thresholds
   - it relaxes content-gate acceptance so more borderline windows may upgrade
+- Hani should participate in mode-specific eligibility even though it does not currently have a prose-style gate:
+  - `default` keeps the current Hani eligibility threshold
+  - `strict` raises the Hani eligibility threshold
+  - `loose` lowers the Hani eligibility threshold enough to admit idiom-length samples
+  - the initial `loose` target is four Han-bearing characters in the focus window, kept as an internal policy detail rather than a public option
 - `off` bypasses `contentGate` evaluation only.
 - `off` keeps the same eligibility thresholds as `default`.
 - `off` does not disable route eligibility, corroboration, or fallback-tag behavior.
-- Non-applicable routes must accept the configured mode without error.
-- Non-applicable routes must report honest no-op behavior in inspect and debug output:
+- Routes where `contentGate` is meaningful should apply the selected mode normally and disclose the resulting evaluation.
+- Routes that participate through eligibility-only variation should still report honest no-op gate state in inspect and debug output:
   - `contentGate.applied = false`
   - `contentGate.policy = "none"`
-- Routes where `contentGate` is meaningful should apply the selected mode normally and disclose the resulting evaluation.
 - Routes where the configured mode changes eligibility should surface that effect truthfully through inspect/debug output, including cases where engine execution changes from `executed` to `notEligible` or vice versa.
+- The Hani implementation should be fixture-backed with concrete mode expectations, not category-only guidance:
+  - a short Han-only sample such as `世界` remains ineligible in `default|strict|loose|off`
+  - an idiom-length Han-only sample such as `四字成語` becomes eligible in `loose` and remains ineligible in `default|strict|off`
+  - a mixed borrowed-context sample such as `こんにちは、世界！` remains ineligible in `default|strict|loose|off` unless the Hani focus window itself meets the mode threshold
 - New diagnostic surfaces should use `contentGate` as the canonical field.
 - Legacy debug/evidence payloads that already exposed `qualityGate` should continue to emit the derived compatibility alias during the compatibility window.
 
@@ -103,8 +117,9 @@ The follow-up implementation plan should keep these boundaries:
 - cover both CLI and library surfaces in one contract
 - preserve `contentGate` as the canonical diagnostic field
 - preserve `qualityGate` only as a compatibility alias where it already exists
-- keep first-version behavior global, with truthful no-op reporting on non-applicable routes
+- keep first-version behavior global, while allowing Hani to vary by mode through eligibility even before any Hani-specific prose gate exists
 - allow internal eligibility thresholds to vary by mode even though threshold numbers remain private implementation details
+- treat Hani `loose` as a supported idiom-length path rather than leaving short Han samples permanently outside the public mode scale
 - keep `off` limited to content-gate bypass rather than treating it as a global detector-lax mode
 - avoid route-specific tuning or threshold exposure in v1
 

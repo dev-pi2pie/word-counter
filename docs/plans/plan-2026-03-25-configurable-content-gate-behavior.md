@@ -18,7 +18,8 @@ Implement first-version user-configurable `contentGate` behavior for both CLI an
   - use discrete modes instead of public numeric thresholds
   - keep `contentGate` as the canonical diagnostic field
   - preserve `qualityGate` only as a compatibility alias in legacy payloads
-  - let `default|strict|loose` affect eligibility thresholds and content-gate behavior together on applicable routes
+  - let `default|strict|loose` affect eligibility thresholds and content-gate behavior together on Latin routes
+  - let Hani participate in the same mode scale through eligibility variation even while Hani `contentGate` remains a truthful no-op policy
   - keep `off` scoped to content-gate bypass only
 - The implementation must reuse the existing route-aware detector policy model rather than reopening detector architecture.
 - In library form, v1 applies to the detector subpath entrypoints that already execute detector policy:
@@ -26,6 +27,8 @@ Implement first-version user-configurable `contentGate` behavior for both CLI an
   - `segmentTextByLocaleWithDetector`
   - `countSectionsWithDetector`
   - `inspectTextWithDetector`
+- Latin threshold-coupled mode behavior is already implemented.
+- The remaining detector-policy scope in this plan is the Hani-specific mode design plus the final docs/release pass.
 - The repo now has project-level `oxlint` and `oxfmt` scripts and config.
   - implementation validation should keep changed files lint-clean and format-clean
 
@@ -38,10 +41,11 @@ Implement first-version user-configurable `contentGate` behavior for both CLI an
     - `default`
     - `strict`
     - `loose`
-    - `off`
+  - `off`
   - thread the configured mode through detector-policy evaluation
   - allow `default|strict|loose` to affect eligibility thresholds on applicable routes
-  - preserve truthful no-op behavior for routes where `contentGate` is not meaningfully applied
+  - allow Hani to vary by mode through eligibility even if Hani `contentGate` remains `policy = "none"`
+  - preserve truthful no-op gate reporting for routes where a prose-style `contentGate` is not meaningfully applied
   - surface the configured mode and resulting gate evaluation through inspect and existing debug/evidence payloads where applicable
   - preserve the existing legacy `qualityGate` compatibility alias in payloads that already expose it
   - add regression coverage for CLI, library, inspect, and compatibility behavior
@@ -75,11 +79,16 @@ contentGate?: {
 - `loose` relaxes policy in two places on routes where `contentGate` is meaningful:
   - it lowers eligibility thresholds
   - it relaxes content-gate acceptance so more borderline windows may upgrade
+- Hani participates in the same public mode set through eligibility, even though Hani does not yet have a prose-style gate policy:
+  - `default` keeps the current Hani eligibility threshold
+  - `strict` raises the Hani eligibility threshold
+  - `loose` lowers the Hani eligibility threshold enough to admit idiom-length samples
+  - the initial `loose` calibration target is four Han-bearing characters in the focus window, kept as an internal policy detail rather than a public option
 - `off` bypasses `contentGate` evaluation only.
 - `off` keeps the same eligibility thresholds as `default`.
 - `off` does not disable route eligibility, corroboration, or fallback-tag behavior.
-- Non-applicable routes must accept any supported mode without validation failure.
-- Non-applicable routes must report truthful no-op state in diagnostic output:
+- Eligibility-only routes must accept any supported mode without validation failure.
+- Eligibility-only routes must report truthful no-op gate state in diagnostic output:
   - `contentGate.applied = false`
   - `contentGate.policy = "none"`
 - `contentGate` remains the canonical gate field for inspect and new diagnostic disclosure.
@@ -112,16 +121,20 @@ Validation for this phase:
 - [x] Extend route-aware detector policy evaluation so `default`, `strict`, and `loose` affect both eligibility and `contentGate` behavior on applicable routes.
 - [x] Define fixture-backed behavior differences for `strict` and `loose` on routes where `contentGate` is meaningful, including mode-specific eligibility outcomes.
 - [x] Ensure `off` bypasses only `contentGate` evaluation, keeps `default` eligibility thresholds, and leaves corroboration and fallback intact.
-- [x] Ensure non-applicable routes accept the configured mode while remaining truthful no-op evaluations.
+- [x] Ensure eligibility-only routes accept the configured mode while remaining truthful no-op gate evaluations.
 - [x] Keep policy implementation internal and avoid exposing raw thresholds in the public contract.
+- [ ] Extend Hani route policy so `default`, `strict`, and `loose` affect Hani eligibility thresholds even while Hani `contentGate` stays `policy = "none"`.
+- [ ] Calibrate Hani `loose` so idiom-length samples can become eligible without letting borrowed Japanese context create noisy short-window promotions.
+- [ ] Keep `off` aligned with `default` Hani eligibility thresholds so it remains a gate bypass rather than a detector-lax Hani mode.
 
 Validation for this phase:
 
 - detector-policy tests covering each mode on content-gated routes
 - regression tests proving `default|strict|loose` can change eligibility as well as gate evaluation on applicable routes
 - regression tests proving `off` changes only gate evaluation, not eligibility or unrelated policy stages
-- tests for non-applicable routes showing accepted config plus `applied = false`
+- tests for eligibility-only routes showing accepted config plus `applied = false`
 - fixture-backed comparisons demonstrating distinct `default`, `strict`, and `loose` outcomes
+- Hani-specific fixtures covering short Han-only samples, idiom-length samples, and borrowed-context mixed Japanese cases
 
 ### Phase 3 - Diagnostic And Compatibility Surfaces
 
@@ -129,14 +142,20 @@ Validation for this phase:
 - [x] Update debug and detector-evidence payload generation so canonical `contentGate` output reflects the configured mode.
 - [x] Preserve `qualityGate` only as the derived compatibility alias in payloads that already expose it.
 - [x] Avoid adding `qualityGate` to new inspector-only payloads.
-- [x] Ensure no-op routes report the configured mode with honest non-application state.
+- [x] Ensure eligibility-only routes report the configured mode with honest non-application state.
+- [ ] Ensure Hani inspect/debug output reports mode-driven eligibility changes truthfully even though Hani `contentGate` remains `policy = "none"`.
 
 Validation for this phase:
 
 - inspect JSON and standard-output tests covering configured-mode disclosure
 - legacy debug/evidence regression tests proving `qualityGate` compatibility remains intact
 - tests proving new inspector payloads use `contentGate` as the canonical field
-- tests for non-applicable routes showing truthful inspect/debug disclosure
+- tests for eligibility-only routes showing truthful inspect/debug disclosure
+- Hani inspect/debug cases showing `strict|default|loose` threshold differences with `contentGate.applied = false`
+- fixture-backed Hani inspect/debug expectations for:
+  - `世界` staying ineligible in `default|strict|loose|off`
+  - `四字成語` becoming eligible only in `loose`
+  - `こんにちは、世界！` staying ineligible unless the Hani focus window itself meets the mode threshold
 
 ### Phase 4 - CLI And Library Behavior Coverage
 
@@ -149,6 +168,7 @@ Validation for this phase:
 - [x] Verify batch inspect and single-input inspect both report the configured mode consistently.
 - [x] Verify the public option works with existing detector-related options without changing unrelated behavior.
 - [x] Add compatibility-focused regressions for older debug/evidence consumers that still read `qualityGate`.
+- [ ] Add Hani-specific CLI and library regressions for short Han-only windows, idiom-length windows, and borrowed-context mixed Japanese samples across `default|strict|loose|off`.
 
 Validation for this phase:
 
@@ -156,6 +176,11 @@ Validation for this phase:
 - detector and library-focused tests for configured-mode behavior
 - inspect batch and single-input parity checks
 - regression tests proving unchanged behavior outside content-gate policy differences
+- Hani-specific regressions proving:
+  - `世界` stays ineligible in `default|strict|loose|off`
+  - `四字成語` becomes eligible only in `loose`
+  - borrowed Japanese context alone does not make `こんにちは、世界！` eligible in `loose`
+  - `contentGate.policy` remains `none` for Hani across all modes
 
 ### Phase 5 - Docs, Jobs, And Release Readiness
 
@@ -164,6 +189,11 @@ Validation for this phase:
 - [ ] Record implementation progress in job records under `docs/plans/jobs/`.
 - [ ] Add release-note-ready documentation of the new public option and compatibility behavior.
 - [ ] Run final regression, lint, format-check, type-check, and build verification before closing the plan.
+
+Phase note:
+
+- README and other user-facing runtime docs for Hani mode behavior stay deferred until the Hani implementation ships.
+- Internal planning docs, job records, and schema notes can be updated earlier so the implementation contract stays explicit.
 
 Validation for this phase:
 
@@ -181,9 +211,10 @@ Validation for this phase:
 - [x] `qualityGate` remains available only in legacy payloads that already expose it.
 - [x] New inspector-only payloads do not add `qualityGate`.
 - [x] `off` disables only gate evaluation and does not disable route eligibility, corroboration, or fallback.
-- [x] Non-applicable routes accept all supported modes without lying about gate application.
+- [x] Eligibility-only routes accept all supported modes without lying about gate application.
 - [x] No public numeric threshold controls are introduced in this phase.
 - [x] Changed files remain clean under the configured lint and format scripts.
+- [ ] Hani participates in the documented mode scale rather than remaining fixed at one eligibility threshold.
 
 ## Related Plans
 
