@@ -62,4 +62,50 @@ describe("published package types", () => {
     expect(result.status).toBe(0);
     expect(result.stderr).toBe("");
   });
+
+  test("detector subpath exports inspect API and types", async () => {
+    const fixtureRoot = await makeTypecheckFixture();
+    const entryPath = join(fixtureRoot, "detector-imports.mts");
+
+    await writeFile(
+      entryPath,
+      [
+        "import {",
+        "  inspectTextWithDetector,",
+        "  segmentTextByLocaleWithDetector,",
+        "  type DetectorInspectOptions,",
+        "  type DetectorInspectResult,",
+        "} from '@dev-pi2pie/word-counter/detector';",
+        "const options: DetectorInspectOptions = { detector: 'regex', view: 'pipeline' };",
+        "const resultPromise: Promise<DetectorInspectResult> = inspectTextWithDetector('Hello world', options);",
+        "segmentTextByLocaleWithDetector('Hello world', { detector: 'regex' });",
+        "void resultPromise;",
+      ].join("\n"),
+    );
+
+    const result = spawnSync(
+      process.execPath,
+      [
+        tscEntrypoint,
+        "--noEmit",
+        "--pretty",
+        "false",
+        "--module",
+        "NodeNext",
+        "--moduleResolution",
+        "NodeNext",
+        "--target",
+        "ES2022",
+        "--skipLibCheck",
+        entryPath,
+      ],
+      {
+        cwd: process.cwd(),
+        encoding: "utf8",
+      },
+    );
+
+    expect(result.status).toBe(0);
+    expect(result.stderr).toBe("");
+  });
 });

@@ -30,6 +30,13 @@ export type LocaleDetectContext = {
   latinLocales: Set<string>;
 };
 
+export type LocaleDetectTraceSource = "script" | "hint" | "fallback";
+export type LocaleDetectTrace = {
+  locale: string | null;
+  source?: LocaleDetectTraceSource;
+  reason?: string;
+};
+
 const regex = {
   hiragana: /\p{Script=Hiragana}/u,
   katakana: /\p{Script=Katakana}/u,
@@ -220,6 +227,122 @@ function detectLatinLocale(char: string, context: LocaleDetectContext): string {
   return DEFAULT_LOCALE;
 }
 
+export function detectLocaleForCharTrace(
+  char: string,
+  previousLocale?: string | null,
+  options: LocaleDetectOptions = {},
+  context: LocaleDetectContext = resolveLocaleDetectContext(options),
+  allowLatinLocaleCarry = true,
+  allowJapaneseHanCarry = true,
+): LocaleDetectTrace {
+  if (regex.hiragana.test(char) || regex.katakana.test(char)) {
+    return {
+      locale: "ja",
+      source: "script",
+      reason: "hiragana-katakana",
+    };
+  }
+  if (regex.hangul.test(char)) {
+    return {
+      locale: "ko",
+      source: "script",
+      reason: "hangul",
+    };
+  }
+  if (regex.arabic.test(char)) {
+    return {
+      locale: "ar",
+      source: "script",
+      reason: "arabic",
+    };
+  }
+  if (regex.cyrillic.test(char)) {
+    return {
+      locale: "ru",
+      source: "script",
+      reason: "cyrillic",
+    };
+  }
+  if (regex.devanagari.test(char)) {
+    return {
+      locale: "hi",
+      source: "script",
+      reason: "devanagari",
+    };
+  }
+  if (regex.thai.test(char)) {
+    return {
+      locale: "th",
+      source: "script",
+      reason: "thai",
+    };
+  }
+
+  if (regex.han.test(char)) {
+    if (allowJapaneseHanCarry && previousLocale && previousLocale.startsWith("ja")) {
+      return {
+        locale: previousLocale,
+        source: "script",
+        reason: "japanese-han-carry",
+      };
+    }
+    if (context.hanHint) {
+      return {
+        locale: context.hanHint,
+        source: "hint",
+        reason: "explicit-han-hint",
+      };
+    }
+    return {
+      locale: DEFAULT_HAN_TAG,
+      source: "fallback",
+      reason:
+        previousLocale && previousLocale.startsWith("ja") && !allowJapaneseHanCarry
+          ? "han-fallback-after-boundary"
+          : "han-fallback",
+    };
+  }
+
+  if (regex.latin.test(char)) {
+    const hintedLocale = detectLatinLocale(char, context);
+    if (hintedLocale !== DEFAULT_LOCALE) {
+      return {
+        locale: hintedLocale,
+        source: "hint",
+        reason: "latin-hint-rule",
+      };
+    }
+    if (
+      allowLatinLocaleCarry &&
+      previousLocale &&
+      isLatinLocale(previousLocale, context) &&
+      previousLocale !== DEFAULT_LOCALE
+    ) {
+      return {
+        locale: previousLocale,
+        source: "hint",
+        reason: "latin-locale-carry",
+      };
+    }
+    if (context.latinHint) {
+      return {
+        locale: context.latinHint,
+        source: "hint",
+        reason: "explicit-latin-hint",
+      };
+    }
+    return {
+      locale: DEFAULT_LOCALE,
+      source: "fallback",
+      reason: "latin-fallback",
+    };
+  }
+
+  return {
+    locale: null,
+  };
+}
+
 export function detectLocaleForChar(
   char: string,
   previousLocale?: string | null,
@@ -228,50 +351,12 @@ export function detectLocaleForChar(
   allowLatinLocaleCarry = true,
   allowJapaneseHanCarry = true,
 ): string | null {
-  if (regex.hiragana.test(char) || regex.katakana.test(char)) {
-    return "ja";
-  }
-  if (regex.hangul.test(char)) {
-    return "ko";
-  }
-  if (regex.arabic.test(char)) {
-    return "ar";
-  }
-  if (regex.cyrillic.test(char)) {
-    return "ru";
-  }
-  if (regex.devanagari.test(char)) {
-    return "hi";
-  }
-  if (regex.thai.test(char)) {
-    return "th";
-  }
-
-  if (regex.han.test(char)) {
-    if (allowJapaneseHanCarry && previousLocale && previousLocale.startsWith("ja")) {
-      return previousLocale;
-    }
-    return context.hanHint ?? DEFAULT_HAN_TAG;
-  }
-
-  if (regex.latin.test(char)) {
-    const hintedLocale = detectLatinLocale(char, context);
-    if (hintedLocale !== DEFAULT_LOCALE) {
-      return hintedLocale;
-    }
-    if (
-      allowLatinLocaleCarry &&
-      previousLocale &&
-      isLatinLocale(previousLocale, context) &&
-      previousLocale !== DEFAULT_LOCALE
-    ) {
-      return previousLocale;
-    }
-    if (context.latinHint) {
-      return context.latinHint;
-    }
-    return DEFAULT_LOCALE;
-  }
-
-  return null;
+  return detectLocaleForCharTrace(
+    char,
+    previousLocale,
+    options,
+    context,
+    allowLatinLocaleCarry,
+    allowJapaneseHanCarry,
+  ).locale;
 }

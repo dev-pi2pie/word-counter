@@ -2,7 +2,7 @@
 title: "detector policy refactor and inspect command"
 created-date: 2026-03-25
 modified-date: 2026-03-25
-status: active
+status: completed
 agent: Codex
 ---
 
@@ -145,15 +145,15 @@ Validation for this phase:
 
 ### Phase 3 - Library Inspector Surface and Detector Subpath Coverage
 
-- [ ] Add `inspectTextWithDetector` as a first-class async detector-subpath entrypoint that returns structured data instead of requiring `detectorDebug` callback capture.
-- [ ] Add and export the settled inspector types needed for the detector-subpath contract:
+- [x] Add `inspectTextWithDetector` as a first-class async detector-subpath entrypoint that returns structured data instead of requiring `detectorDebug` callback capture.
+- [x] Add and export the settled inspector types needed for the detector-subpath contract:
   - `DetectorInspectOptions`
   - `DetectorInspectView`
   - `DetectorInspectResult`
   - inspector result/supporting types required by the schema contract
-- [ ] Keep existing `detectorDebug` types/helpers public and documented as additive runtime-debug helpers rather than replacing them in this phase.
-- [ ] Update package export/type coverage so the detector subpath is verified as a published surface, not only the root package.
-- [ ] Update detector-subpath documentation to explain:
+- [x] Keep existing `detectorDebug` types/helpers public and documented as additive runtime-debug helpers rather than replacing them in this phase.
+- [x] Update package export/type coverage so the detector subpath is verified as a published surface, not only the root package.
+- [x] Update detector-subpath documentation to explain:
   - when to use the root package vs `./detector`
   - that detector entrypoints are async
   - how `detectorDebug` differs from the new inspector entrypoint
@@ -167,24 +167,24 @@ Validation for this phase:
 
 ### Phase 4 - CLI Inspect Command and Input Validation
 
-- [ ] Add the `inspect` subcommand without coupling it to counting-mode flags such as `--mode`, `--section`, or `--total-of`.
-- [ ] Implement first-version option support for:
+- [x] Add the `inspect` subcommand without coupling it to counting-mode flags such as `--mode`, `--section`, or `--total-of`.
+- [x] Implement first-version option support for:
   - `--view pipeline|engine`
   - `--format standard|json`
   - `--detector wasm|regex`
   - positional text input
   - one `--path <file>` input
-- [ ] Enforce the settled validation rules for:
+- [x] Enforce the settled validation rules for:
   - missing input
   - mixed positional text plus `--path`
   - directory paths
   - unreadable files
   - unsupported detector/view combinations
   - unsupported `--format raw`
-- [ ] Ensure regex inspection is limited to `pipeline` and uses the deterministic chunk/source/reason contract settled in research.
-- [ ] Ensure engine view is WASM-only and surfaces engine-native values plus remapped public tags without pipeline projection.
-- [ ] Implement standard-format output with stable section labels and bounded previews that match the schema guidance.
-- [ ] Implement JSON output for both supported inspect views so the CLI contract matches the schema contract and detector/view validation rules.
+- [x] Ensure regex inspection is limited to `pipeline` and uses the deterministic chunk/source/reason contract settled in research.
+- [x] Ensure engine view is WASM-only and surfaces engine-native values plus remapped public tags without pipeline projection.
+- [x] Implement standard-format output with stable section labels and bounded previews that match the schema guidance.
+- [x] Implement JSON output for both supported inspect views so the CLI contract matches the schema contract and detector/view validation rules.
 
 Validation for this phase:
 
@@ -202,10 +202,10 @@ Validation for this phase:
 
 ### Phase 5 - Compatibility Closure, Docs, and Regression Audit
 
-- [ ] Recheck that existing counting flows, detector evidence, and debug JSON remain additive-only relative to the new inspector work.
-- [ ] Update README or detector-facing usage docs where the new inspect command and detector-subpath inspector need discoverability.
-- [ ] Add or update job records under `docs/plans/jobs/` when implementation phases land.
-- [ ] Run a regression audit across CLI, library, and published type surfaces before closing the plan.
+- [x] Recheck that existing counting flows, detector evidence, and debug JSON remain additive-only relative to the new inspector work.
+- [x] Update README or detector-facing usage docs where the new inspect command and detector-subpath inspector need discoverability.
+- [x] Add or update job records under `docs/plans/jobs/` when implementation phases land.
+- [x] Run a regression audit across CLI, library, and published type surfaces before closing the plan.
 
 Validation for this phase:
 
@@ -216,13 +216,13 @@ Validation for this phase:
 ## Compatibility Gates
 
 - [x] Default counting behavior remains unchanged when `inspect` is not used.
-- [ ] Existing `--debug --detector wasm --detector-evidence` behavior remains the canonical runtime debug surface for counting flows.
+- [x] Existing `--debug --detector wasm --detector-evidence` behavior remains the canonical runtime debug surface for counting flows.
 - [x] The base regex/script chunk segmentation contract remains unchanged in this plan.
-- [ ] `qualityGate` is not added to new inspector payloads.
+- [x] `qualityGate` is not added to new inspector payloads.
 - [x] Existing counting/debug/evidence payloads that currently expose gate state gain `contentGate` without losing the temporary `qualityGate` compatibility alias during this phase.
-- [ ] `inspect` remains single-input only in this phase and fails clearly instead of partially supporting batch or directory inputs.
-- [ ] `inspect` does not introduce `raw` output semantics or new `--section` behavior in this phase.
-- [ ] Regex inspection does not imitate WASM confidence/reliability fields where no engine-native equivalent exists.
+- [x] `inspect` remains single-input only in this phase and fails clearly instead of partially supporting batch or directory inputs.
+- [x] `inspect` does not introduce `raw` output semantics or new `--section` behavior in this phase.
+- [x] Regex inspection does not imitate WASM confidence/reliability fields where no engine-native equivalent exists.
 
 ## Validation
 
@@ -250,3 +250,4 @@ Validation for this phase:
 ## Related Jobs
 
 - `docs/plans/jobs/2026-03-25-detector-policy-phase1-phase2-implementation.md`
+- `docs/plans/jobs/2026-03-25-detector-inspect-phase3-phase4-implementation.md`

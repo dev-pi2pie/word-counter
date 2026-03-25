@@ -1,6 +1,7 @@
 import { Command } from "commander";
 import { createDebugChannel } from "./cli/debug/channel";
 import { executeDoctorCommand, isExplicitDoctorInvocation } from "./cli/doctor/run";
+import { executeInspectCommand, isExplicitInspectInvocation } from "./cli/inspect/run";
 import { configureProgramOptions } from "./cli/program/options";
 import { getFormattedVersionLabel } from "./cli/program/version";
 import { resolveBatchJobsLimit } from "./cli/batch/jobs/limits";
@@ -31,6 +32,11 @@ export async function runCli(
     return;
   }
 
+  if (isExplicitInspectInvocation(argv)) {
+    await executeInspectCommand({ argv });
+    return;
+  }
+
   const program = new Command();
   const parseMode = (value: string): WordCounterMode => {
     const normalized = normalizeMode(value);
@@ -44,7 +50,10 @@ export async function runCli(
     .name("word-counter")
     .description("Locale-aware word counting powered by Intl.Segmenter.")
     .version(getFormattedVersionLabel(), "-v, --version", "output the version number")
-    .addHelpText("after", "\nCommands:\n  doctor [options]      report runtime diagnostics for this host");
+    .addHelpText(
+      "after",
+      "\nCommands:\n  inspect [options] [text...]  inspect detector behavior without count output\n  doctor [options]             report runtime diagnostics for this host",
+    );
 
   configureProgramOptions(program, parseMode);
 

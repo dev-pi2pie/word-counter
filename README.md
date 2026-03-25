@@ -103,6 +103,15 @@ word-counter --detector wasm "This sentence should clearly be detected as Englis
 word-counter --detector wasm "漢字測試需要更多內容才能觸發偵測"
 ```
 
+Inspect detector behavior without count output:
+
+```bash
+word-counter inspect "こんにちは、世界！これはテストです。"
+word-counter inspect --view engine "This sentence should clearly be detected as English for the wasm detector path."
+word-counter inspect --detector regex --format json "こんにちは、世界！これはテストです。"
+word-counter inspect --path ./examples/yaml-basic.md
+```
+
 Detector mode notes:
 
 - `--detector regex` is the default behavior.
@@ -113,6 +122,34 @@ Detector mode notes:
 - Very short chunks stay on the original `und-*` fallback.
 - Low-confidence or unsupported detector results fall back to `und-*`.
 - Technical-noise-heavy Latin windows stay conservative and may remain `und-Latn` even when the detector produces a wrong-but-confident language guess.
+- `word-counter inspect` is single-input only in the first version:
+  - positional text input
+  - one `--path <file>`
+  - no batch or directory inspect mode yet
+
+### Detector Subpath (`@dev-pi2pie/word-counter/detector`)
+
+Use the detector subpath when you need async detector-aware APIs directly in library code.
+
+```ts
+import {
+  inspectTextWithDetector,
+  segmentTextByLocaleWithDetector,
+  wordCounterWithDetector,
+} from "@dev-pi2pie/word-counter/detector";
+
+const inspectResult = await inspectTextWithDetector("こんにちは、世界！これはテストです。", {
+  detector: "wasm",
+  view: "pipeline",
+});
+```
+
+Detector subpath notes:
+
+- detector entrypoints are async
+- use the root package for normal counting when you do not need detector-specific control
+- use `detectorDebug` for counting-flow runtime diagnostics
+- use `inspectTextWithDetector()` for direct detector diagnosis as structured data
 
 Collect non-words (emoji/symbols/punctuation):
 

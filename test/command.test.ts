@@ -559,6 +559,201 @@ describe("detector mode", () => {
   });
 });
 
+describe("inspect command", () => {
+  test("supports default wasm pipeline inspection", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const output = await captureCli(["inspect", "こんにちは、世界！これはテストです。"]);
+
+    expect(output.exitCode).toBe(0);
+    expect(output.stdout).toContain("Detector inspect");
+    expect(output.stdout).toContain("View: pipeline");
+    expect(output.stdout).toContain("Detector: wasm");
+  });
+
+  test("supports wasm engine inspection", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const output = await captureCli([
+      "inspect",
+      "--view",
+      "engine",
+      "こんにちは、世界！これはテストです。",
+    ]);
+
+    expect(output.exitCode).toBe(0);
+    expect(output.stdout).toContain("View: engine");
+    expect(output.stdout.some((line) => line.includes("Route tag: und-Hani"))).toBeTrue();
+  });
+
+  test("bounds standard engine inspection output to previews", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const root = await makeTempFixture("inspect-engine-preview");
+    const filePath = join(root, "large.txt");
+    const longText = "This sentence should clearly be detected as English for the wasm detector path. ".repeat(
+      8,
+    );
+    await writeFile(filePath, longText);
+
+    const output = await captureCli([
+      "inspect",
+      "--view",
+      "engine",
+      "--path",
+      filePath,
+    ]);
+
+    expect(output.exitCode).toBe(0);
+    expect(output.stdout.some((line) => line.startsWith("Sample text preview: "))).toBeTrue();
+    expect(output.stdout.some((line) => line === "Sample text truncated: true")).toBeTrue();
+    expect(output.stdout.some((line) => line.includes(longText))).toBeFalse();
+  });
+
+  test("supports regex pipeline inspection in json format", async () => {
+    const output = await captureCli([
+      "inspect",
+      "--detector",
+      "regex",
+      "--view",
+      "pipeline",
+      "--format",
+      "json",
+      "こんにちは、世界！これはテストです。",
+    ]);
+
+    expect(output.exitCode).toBe(0);
+    const parsed = JSON.parse(output.stdout[0] ?? "{}");
+    expect(parsed.detector).toBe("regex");
+    expect(parsed.view).toBe("pipeline");
+    expect(parsed.chunks[1]?.reason).toBe("han-fallback-after-boundary");
+    expect(parsed.windows).toBeUndefined();
+  });
+
+  test("supports inspect --path for one regular file", async () => {
+    const root = await makeTempFixture("inspect-path");
+    const filePath = join(root, "sample.txt");
+    await writeFile(filePath, "Hello world");
+
+    const output = await captureCli([
+      "inspect",
+      "--detector",
+      "regex",
+      "--format",
+      "json",
+      "--path",
+      filePath,
+    ]);
+
+    expect(output.exitCode).toBe(0);
+    const parsed = JSON.parse(output.stdout[0] ?? "{}");
+    expect(parsed.input.sourceType).toBe("path");
+    expect(parsed.input.path).toBe(filePath);
+  });
+
+  test("returns valid empty inspect result for empty path input", async () => {
+    const root = await makeTempFixture("inspect-empty-path");
+    const filePath = join(root, "empty.txt");
+    await writeFile(filePath, "");
+
+    const output = await captureCli([
+      "inspect",
+      "--format",
+      "json",
+      "--path",
+      filePath,
+    ]);
+
+    expect(output.exitCode).toBe(0);
+    const parsed = JSON.parse(output.stdout[0] ?? "{}");
+    expect(parsed.decision).toEqual({
+      kind: "empty",
+      notes: ["No detector-eligible content was present."],
+    });
+  });
+
+  test("returns valid empty inspect result for whitespace-only path input", async () => {
+    const root = await makeTempFixture("inspect-whitespace-path");
+    const filePath = join(root, "blank.txt");
+    await writeFile(filePath, " \n\t ");
+
+    const output = await captureCli([
+      "inspect",
+      "--detector",
+      "regex",
+      "--format",
+      "json",
+      "--path",
+      filePath,
+    ]);
+
+    expect(output.exitCode).toBe(0);
+    const parsed = JSON.parse(output.stdout[0] ?? "{}");
+    expect(parsed.decision).toEqual({
+      kind: "empty",
+      notes: ["No detector-eligible content was present."],
+    });
+  });
+
+  test("rejects missing inspect input", async () => {
+    const output = await captureCli(["inspect"]);
+
+    expect(output.exitCode).toBe(1);
+    expect(output.stderr.some((line) => line.includes("No inspect input provided."))).toBeTrue();
+  });
+
+  test("rejects mixed positional text and path inspect input", async () => {
+    const root = await makeTempFixture("inspect-mixed-input");
+    const filePath = join(root, "sample.txt");
+    await writeFile(filePath, "Hello world");
+
+    const output = await captureCli(["inspect", "--path", filePath, "Hello"]);
+
+    expect(output.exitCode).toBe(1);
+    expect(
+      output.stderr.some((line) =>
+        line.includes("`inspect` accepts either positional text or one `--path <file>`, not both."),
+      ),
+    ).toBeTrue();
+  });
+
+  test("rejects inspect path directories", async () => {
+    const root = await makeTempFixture("inspect-directory");
+
+    const output = await captureCli(["inspect", "--path", root]);
+
+    expect(output.exitCode).toBe(1);
+    expect(output.stderr.some((line) => line.includes("`inspect --path` requires a regular file."))).toBeTrue();
+  });
+
+  test("rejects unsupported inspect detector and view combinations", async () => {
+    const output = await captureCli([
+      "inspect",
+      "--detector",
+      "regex",
+      "--view",
+      "engine",
+      "Hello world",
+    ]);
+
+    expect(output.exitCode).toBe(1);
+    expect(output.stderr.some((line) => line.includes("`--view engine` requires `--detector wasm`."))).toBeTrue();
+  });
+
+  test("rejects inspect raw format", async () => {
+    const output = await captureCli(["inspect", "--format", "raw", "Hello world"]);
+
+    expect(output.exitCode).toBe(1);
+    expect(output.stderr.some((line) => line.includes("`inspect` does not support `--format raw`."))).toBeTrue();
+  });
+});
+
 describe("batch aggregation", () => {
   test("keeps merged breakdown order deterministic across files", async () => {
     const root = await makeTempFixture("batch-aggregate-order");

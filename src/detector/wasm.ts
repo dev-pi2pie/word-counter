@@ -20,10 +20,13 @@ import {
   type DetectorWindow,
   type DetectorRouteTag,
 } from "./policy";
+import { createInspectChunk, createInspectInput, createInspectPreview, segmentTextByLocaleWithTrace } from "./inspect-helpers";
+import type { DetectorInspectOptions, DetectorInspectResult, DetectorInspectWindow } from "./inspect-types";
 import { detectWithWhatlangWasm, WASM_DETECTOR_RUNTIME_UNAVAILABLE_MESSAGE } from "./whatlang-wasm";
 import { getDetectorFallbackTag, remapWhatlangResult } from "./whatlang-map";
 import type {
   DetectorCountSectionsOptions,
+  DetectorResult,
   DetectorLocaleOptions,
   DetectorWordCounterOptions,
 } from "./types";
@@ -176,6 +179,55 @@ function buildEvidenceSample(
   };
 }
 
+type ExecutedEngineSample = {
+  rawResult: Awaited<ReturnType<typeof detectWithWhatlangWasm>> | null;
+  rawRemapped: DetectorResult | null;
+  normalizedResult: Awaited<ReturnType<typeof detectWithWhatlangWasm>> | null;
+  normalizedRemapped: DetectorResult | null;
+};
+
+type ResolvedDetectorWindow = {
+  resolvedLocale: string;
+  sample: DetectorDiagnosticSample;
+  eligibility: DetectorEligibilityResult;
+  contentGate: DetectorContentGateResult;
+  engineExecuted: boolean;
+  engineReason?: "notEligible";
+  rawResult: Awaited<ReturnType<typeof detectWithWhatlangWasm>> | null;
+  rawRemappedTag: string | null;
+  normalizedResult: Awaited<ReturnType<typeof detectWithWhatlangWasm>> | null;
+  normalizedRemappedTag: string | null;
+  decision: {
+    accepted: boolean;
+    path: "reliable" | "corroborated" | null;
+    finalTag: string;
+    finalLocales?: string[];
+    fallbackReason: DetectorFallbackReason | null;
+  };
+};
+
+async function executeEngineSample(
+  sample: DetectorDiagnosticSample,
+  routeTag: DetectorRouteTag,
+): Promise<ExecutedEngineSample> {
+  const rawResult = await detectWithWhatlangWasm(sample.text, routeTag);
+  const rawRemapped = rawResult ? remapWhatlangResult(rawResult, routeTag) : null;
+  const normalizedResult =
+    sample.normalizedApplied && sample.normalizedText.length > 0
+      ? await detectWithWhatlangWasm(sample.normalizedText, routeTag)
+      : null;
+  const normalizedRemapped = normalizedResult
+    ? remapWhatlangResult(normalizedResult, routeTag)
+    : null;
+
+  return {
+    rawResult,
+    rawRemapped,
+    normalizedResult,
+    normalizedRemapped,
+  };
+}
+
 function emitDetectorWindowEvidence({
   window,
   windowIndex,
@@ -301,7 +353,7 @@ async function resolveWindowLocale(
   chunks: LocaleChunk[],
   options: DetectorLocaleOptions,
   debug?: DetectorLocaleOptions["detectorDebug"],
-): Promise<string> {
+): Promise<ResolvedDetectorWindow> {
   const routePolicy = DETECTOR_ROUTE_POLICIES[window.routeTag];
   const sample = routePolicy.buildDiagnosticSample(window, chunks);
   const eligibility = routePolicy.eligibility.evaluate(sample);
@@ -325,12 +377,13 @@ async function resolveWindowLocale(
   if (!eligibility.passed) {
     recordDetectorFallback(debug?.summary, "notEligible");
     const fallbackDebugOutcome = resolveFallbackDebugOutcome(window, options);
-    emitDetectorWindowEvidence({
-      window,
-      windowIndex,
+    const resolution: ResolvedDetectorWindow = {
+      resolvedLocale: getDetectorFallbackTag(window.routeTag),
       sample,
       eligibility,
       contentGate,
+      engineExecuted: false,
+      engineReason: "notEligible",
       rawResult: null,
       rawRemappedTag: null,
       normalizedResult: null,
@@ -344,6 +397,18 @@ async function resolveWindowLocale(
           : {}),
         fallbackReason: "notEligible",
       },
+    };
+    emitDetectorWindowEvidence({
+      window,
+      windowIndex,
+      sample: resolution.sample,
+      eligibility: resolution.eligibility,
+      contentGate: resolution.contentGate,
+      rawResult: resolution.rawResult,
+      rawRemappedTag: resolution.rawRemappedTag,
+      normalizedResult: resolution.normalizedResult,
+      normalizedRemappedTag: resolution.normalizedRemappedTag,
+      decision: resolution.decision,
       debug,
     });
     debug?.emit?.("detector.window.fallback", {
@@ -354,15 +419,11 @@ async function resolveWindowLocale(
         : {}),
       reason: "notEligible",
     });
-    return window.routeTag;
+    return resolution;
   }
 
-  const rawResult = await detectWithWhatlangWasm(sample.text, window.routeTag);
-  const rawRemapped = rawResult ? remapWhatlangResult(rawResult, window.routeTag) : null;
-  const normalizedResult =
-    sample.normalizedApplied && sample.normalizedText.length > 0
-      ? await detectWithWhatlangWasm(sample.normalizedText, window.routeTag)
-      : null;
+  const { rawResult, rawRemapped, normalizedResult, normalizedRemapped } =
+    await executeEngineSample(sample, window.routeTag);
   debug?.emit?.(
     "detector.window.sample",
     {
@@ -379,9 +440,6 @@ async function resolveWindowLocale(
     },
     { verbosity: "verbose" },
   );
-  const normalizedRemapped = normalizedResult
-    ? remapWhatlangResult(normalizedResult, window.routeTag)
-    : null;
   debug?.emit?.(
     "detector.window.candidates",
     {
@@ -397,12 +455,12 @@ async function resolveWindowLocale(
   if (candidates.length === 0) {
     recordDetectorFallback(debug?.summary, "noCandidate");
     const fallbackDebugOutcome = resolveFallbackDebugOutcome(window, options);
-    emitDetectorWindowEvidence({
-      window,
-      windowIndex,
+    const resolution: ResolvedDetectorWindow = {
+      resolvedLocale: getDetectorFallbackTag(window.routeTag),
       sample,
       eligibility,
       contentGate,
+      engineExecuted: true,
       rawResult,
       rawRemappedTag: rawRemapped?.tag ?? null,
       normalizedResult,
@@ -416,6 +474,18 @@ async function resolveWindowLocale(
           : {}),
         fallbackReason: "noCandidate",
       },
+    };
+    emitDetectorWindowEvidence({
+      window,
+      windowIndex,
+      sample: resolution.sample,
+      eligibility: resolution.eligibility,
+      contentGate: resolution.contentGate,
+      rawResult: resolution.rawResult,
+      rawRemappedTag: resolution.rawRemappedTag,
+      normalizedResult: resolution.normalizedResult,
+      normalizedRemappedTag: resolution.normalizedRemappedTag,
+      decision: resolution.decision,
       debug,
     });
     debug?.emit?.("detector.window.fallback", {
@@ -426,7 +496,7 @@ async function resolveWindowLocale(
         : {}),
       reason: "noCandidate",
     });
-    return getDetectorFallbackTag(window.routeTag);
+    return resolution;
   }
 
   const strongestCandidate = candidates.reduce((best, current) => {
@@ -442,12 +512,12 @@ async function resolveWindowLocale(
     routePolicy.accept(strongestCandidate)
   ) {
     recordDetectorAccepted(debug?.summary, "reliable");
-    emitDetectorWindowEvidence({
-      window,
-      windowIndex,
+    const resolution: ResolvedDetectorWindow = {
+      resolvedLocale: strongestCandidate.tag,
       sample,
       eligibility,
       contentGate,
+      engineExecuted: true,
       rawResult,
       rawRemappedTag: rawRemapped?.tag ?? null,
       normalizedResult,
@@ -458,6 +528,18 @@ async function resolveWindowLocale(
         finalTag: strongestCandidate.tag,
         fallbackReason: null,
       },
+    };
+    emitDetectorWindowEvidence({
+      window,
+      windowIndex,
+      sample: resolution.sample,
+      eligibility: resolution.eligibility,
+      contentGate: resolution.contentGate,
+      rawResult: resolution.rawResult,
+      rawRemappedTag: resolution.rawRemappedTag,
+      normalizedResult: resolution.normalizedResult,
+      normalizedRemappedTag: resolution.normalizedRemappedTag,
+      decision: resolution.decision,
       debug,
     });
     debug?.emit?.("detector.window.accepted", {
@@ -467,7 +549,7 @@ async function resolveWindowLocale(
       confidence: strongestCandidate.confidence ?? null,
       reliable: strongestCandidate.reliable ?? null,
     });
-    return strongestCandidate.tag;
+    return resolution;
   }
 
   if (
@@ -479,12 +561,12 @@ async function resolveWindowLocale(
     const corroborated = routePolicy.acceptCorroborated(rawRemapped, normalizedRemapped);
     if (corroborated.accepted) {
       recordDetectorAccepted(debug?.summary, "corroborated");
-      emitDetectorWindowEvidence({
-        window,
-        windowIndex,
+      const resolution: ResolvedDetectorWindow = {
+        resolvedLocale: rawRemapped.tag,
         sample,
         eligibility,
         contentGate,
+        engineExecuted: true,
         rawResult,
         rawRemappedTag: rawRemapped.tag,
         normalizedResult,
@@ -495,6 +577,18 @@ async function resolveWindowLocale(
           finalTag: rawRemapped.tag,
           fallbackReason: null,
         },
+      };
+      emitDetectorWindowEvidence({
+        window,
+        windowIndex,
+        sample: resolution.sample,
+        eligibility: resolution.eligibility,
+        contentGate: resolution.contentGate,
+        rawResult: resolution.rawResult,
+        rawRemappedTag: resolution.rawRemappedTag,
+        normalizedResult: resolution.normalizedResult,
+        normalizedRemappedTag: resolution.normalizedRemappedTag,
+        decision: resolution.decision,
         debug,
       });
       debug?.emit?.("detector.window.accepted", {
@@ -504,18 +598,18 @@ async function resolveWindowLocale(
         confidence: corroborated.confidence,
         reliable: corroborated.hasReliableCorroboration,
       });
-      return rawRemapped.tag;
+      return resolution;
     }
 
     if (corroborated.reason === "unreliable") {
       recordDetectorFallback(debug?.summary, "corroborationUnreliable");
       const fallbackDebugOutcome = resolveFallbackDebugOutcome(window, options);
-      emitDetectorWindowEvidence({
-        window,
-        windowIndex,
+      const resolution: ResolvedDetectorWindow = {
+        resolvedLocale: getDetectorFallbackTag(window.routeTag),
         sample,
         eligibility,
         contentGate,
+        engineExecuted: true,
         rawResult,
         rawRemappedTag: rawRemapped.tag,
         normalizedResult,
@@ -529,6 +623,18 @@ async function resolveWindowLocale(
             : {}),
           fallbackReason: "corroborationUnreliable",
         },
+      };
+      emitDetectorWindowEvidence({
+        window,
+        windowIndex,
+        sample: resolution.sample,
+        eligibility: resolution.eligibility,
+        contentGate: resolution.contentGate,
+        rawResult: resolution.rawResult,
+        rawRemappedTag: resolution.rawRemappedTag,
+        normalizedResult: resolution.normalizedResult,
+        normalizedRemappedTag: resolution.normalizedRemappedTag,
+        decision: resolution.decision,
         debug,
       });
       debug?.emit?.("detector.window.fallback", {
@@ -539,19 +645,19 @@ async function resolveWindowLocale(
           : {}),
         reason: "corroborationUnreliable",
       });
-      return getDetectorFallbackTag(window.routeTag);
+      return resolution;
     }
   }
 
   const fallbackReason = contentGate.passed ? "belowThreshold" : "qualityGate";
   recordDetectorFallback(debug?.summary, fallbackReason);
   const fallbackDebugOutcome = resolveFallbackDebugOutcome(window, options);
-  emitDetectorWindowEvidence({
-    window,
-    windowIndex,
+  const resolution: ResolvedDetectorWindow = {
+    resolvedLocale: getDetectorFallbackTag(window.routeTag),
     sample,
     eligibility,
     contentGate,
+    engineExecuted: true,
     rawResult,
     rawRemappedTag: rawRemapped?.tag ?? null,
     normalizedResult,
@@ -565,6 +671,18 @@ async function resolveWindowLocale(
         : {}),
       fallbackReason,
     },
+  };
+  emitDetectorWindowEvidence({
+    window,
+    windowIndex,
+    sample: resolution.sample,
+    eligibility: resolution.eligibility,
+    contentGate: resolution.contentGate,
+    rawResult: resolution.rawResult,
+    rawRemappedTag: resolution.rawRemappedTag,
+    normalizedResult: resolution.normalizedResult,
+    normalizedRemappedTag: resolution.normalizedRemappedTag,
+    decision: resolution.decision,
     debug,
   });
   debug?.emit?.("detector.window.fallback", {
@@ -575,7 +693,7 @@ async function resolveWindowLocale(
       : {}),
     reason: fallbackReason,
   });
-  return getDetectorFallbackTag(window.routeTag);
+  return resolution;
 }
 
 export { WASM_DETECTOR_RUNTIME_UNAVAILABLE_MESSAGE };
@@ -593,7 +711,7 @@ export async function segmentTextByLocaleWithWasmDetector(
   const windows = buildDetectorWindows(chunks);
 
   for (const [windowIndex, window] of windows.entries()) {
-    const resolvedLocale = await resolveWindowLocale(
+    const resolution = await resolveWindowLocale(
       window,
       windowIndex,
       chunks,
@@ -607,7 +725,7 @@ export async function segmentTextByLocaleWithWasmDetector(
       }
       resolved[index] = {
         ...chunk,
-        locale: resolvedLocale,
+        locale: resolution.resolvedLocale,
       };
     }
   }
@@ -633,4 +751,177 @@ export async function countSectionsWithWasmDetector(
   options: DetectorCountSectionsOptions = {},
 ) {
   return countSectionsWithResolvedDetector(input, section, options);
+}
+
+export async function inspectTextWithWasmDetector(
+  text: string,
+  options: DetectorInspectOptions = {},
+): Promise<DetectorInspectResult> {
+  const input = createInspectInput(text, options.input);
+  const tracedChunks = segmentTextByLocaleWithTrace(text, createDeferredLatinPreSegmentOptions(options));
+  const chunks = tracedChunks.map(({ locale, text: chunkText }) => ({
+    locale,
+    text: chunkText,
+  }));
+  const windows = buildDetectorWindows(chunks);
+
+  if (options.view === "engine") {
+    if (windows.length === 0) {
+      return {
+        schemaVersion: 1,
+        kind: "detector-inspect",
+        view: "engine",
+        detector: "wasm",
+        input,
+        sample: {
+          text: "",
+          textLength: 0,
+          normalizedText: "",
+          normalizedApplied: false,
+          textSource: "focus",
+        },
+        decision: {
+          kind: "empty",
+          notes: ["No detector-eligible content was present."],
+        },
+      };
+    }
+
+    const window = windows[0]!;
+    const sample = DETECTOR_ROUTE_POLICIES[window.routeTag].buildDiagnosticSample(window, chunks);
+    const { rawResult, rawRemapped, normalizedResult, normalizedRemapped } =
+      await executeEngineSample(sample, window.routeTag);
+
+    if (!rawResult) {
+      return {
+        schemaVersion: 1,
+        kind: "detector-inspect",
+        view: "engine",
+        detector: "wasm",
+        input,
+        routeTag: window.routeTag,
+        sample: {
+          text: sample.text,
+          textLength: sample.text.length,
+          normalizedText: sample.normalizedText,
+          normalizedApplied: sample.normalizedApplied,
+          textSource: sample.textSource,
+          ...(sample.borrowedContext ? { borrowedContext: sample.borrowedContext } : {}),
+        },
+      };
+    }
+
+    return {
+      schemaVersion: 1,
+      kind: "detector-inspect",
+      view: "engine",
+      detector: "wasm",
+      input,
+      routeTag: window.routeTag,
+      sample: {
+        text: sample.text,
+        textLength: sample.text.length,
+        normalizedText: sample.normalizedText,
+        normalizedApplied: sample.normalizedApplied,
+        textSource: sample.textSource,
+        ...(sample.borrowedContext ? { borrowedContext: sample.borrowedContext } : {}),
+      },
+      engine: {
+        name: "whatlang-wasm",
+        raw: rawResult,
+        ...(normalizedResult ? { normalized: normalizedResult } : {}),
+        remapped: {
+          rawTag: rawRemapped?.tag ?? null,
+          normalizedTag: normalizedRemapped?.tag ?? null,
+        },
+      },
+    };
+  }
+
+  if (text.trim().length === 0) {
+    return {
+      schemaVersion: 1,
+      kind: "detector-inspect",
+      view: "pipeline",
+      detector: "wasm",
+      input,
+      chunks: [],
+      windows: [],
+      decision: {
+        kind: "empty",
+        notes: ["No detector-eligible content was present."],
+      },
+      resolvedChunks: [],
+    };
+  }
+
+  const resolved = [...chunks];
+  const resolvedWindows: Array<ResolvedDetectorWindow & { window: DetectorWindow; windowIndex: number }> = [];
+
+  for (const [windowIndex, window] of windows.entries()) {
+    const resolution = await resolveWindowLocale(window, windowIndex, chunks, options);
+    resolvedWindows.push({
+      ...resolution,
+      window,
+      windowIndex,
+    });
+    for (let index = window.startIndex; index <= window.endIndex; index += 1) {
+      const chunk = resolved[index];
+      if (!chunk) {
+        continue;
+      }
+      resolved[index] = {
+        ...chunk,
+        locale: resolution.resolvedLocale,
+      };
+    }
+  }
+
+  const hintRelabeled = reapplyResolvedLatinHintRules(resolved, chunks, options);
+  const finalResolved = reapplyDeferredLatinFallback(hintRelabeled, options);
+
+  return {
+    schemaVersion: 1,
+    kind: "detector-inspect",
+    view: "pipeline",
+    detector: "wasm",
+    input,
+    chunks: tracedChunks.map((chunk, index) =>
+      createInspectChunk(index, chunk, {
+        source: chunk.source,
+      }),
+    ),
+    windows: resolvedWindows.map(({ window, windowIndex, sample, eligibility, contentGate, engineExecuted, engineReason, decision }) => {
+      const focusPreview = createInspectPreview(sample.focusText);
+      const samplePreview = createInspectPreview(sample.text);
+      const normalizedPreview = createInspectPreview(sample.normalizedText);
+      const inspectWindow: DetectorInspectWindow = {
+        windowIndex,
+        routeTag: window.routeTag,
+        chunkRange: {
+          start: window.startIndex,
+          end: window.endIndex,
+        },
+        focusTextPreview: focusPreview.textPreview,
+        focusTextPreviewTruncated: focusPreview.textPreviewTruncated,
+        diagnosticSample: {
+          textPreview: samplePreview.textPreview,
+          textPreviewTruncated: samplePreview.textPreviewTruncated,
+          normalizedTextPreview: normalizedPreview.textPreview,
+          normalizedTextPreviewTruncated: normalizedPreview.textPreviewTruncated,
+          normalizedApplied: sample.normalizedApplied,
+          ...(sample.borrowedContext ? { borrowedContext: sample.borrowedContext } : {}),
+        },
+        eligibility,
+        contentGate,
+        engine: {
+          executed: engineExecuted,
+          ...(engineReason ? { reason: engineReason } : {}),
+        },
+        decision,
+      };
+      return inspectWindow;
+    }),
+    resolvedChunks: finalResolved.map((chunk, index) => createInspectChunk(index, chunk)),
+  };
 }

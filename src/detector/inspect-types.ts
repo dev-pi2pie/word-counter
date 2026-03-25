@@ -1,4 +1,4 @@
-import type { DetectorResult, DetectorMode } from "./types";
+import type { DetectorResult, DetectorMode, DetectorLocaleOptions } from "./types";
 import type {
   DetectorBorrowedContext,
   DetectorContentGateResult,
@@ -9,6 +9,17 @@ export type DetectorInspectSchemaVersion = 1;
 export type DetectorInspectKind = "detector-inspect";
 export type DetectorInspectView = "engine" | "pipeline";
 export type DetectorInspectInputSourceType = "inline" | "path";
+
+export type DetectorInspectInputOptions = {
+  sourceType?: DetectorInspectInputSourceType;
+  path?: string;
+};
+
+export interface DetectorInspectOptions extends DetectorLocaleOptions {
+  detector?: DetectorMode;
+  view?: DetectorInspectView;
+  input?: DetectorInspectInputOptions;
+}
 
 export type DetectorInspectInput = {
   sourceType: DetectorInspectInputSourceType;

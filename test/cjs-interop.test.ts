@@ -25,4 +25,9 @@ describe("CJS wrapper interop", () => {
       "WASM detector runtime is unavailable. Run `bun run build:wasm` to generate it.",
     );
   });
+
+  test("detector wrapper exports inspect helpers", () => {
+    expect(typeof detectorCjs.inspectTextWithDetector).toBe("function");
+    expect(typeof detectorCjs.createDetectorDebugSummary).toBe("function");
+  });
 });
