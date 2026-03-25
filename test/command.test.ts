@@ -295,6 +295,15 @@ describe("detector mode", () => {
     expect(eventNames.includes("detector.window.start")).toBeTrue();
     expect(eventNames.includes("detector.window.accepted")).toBeTrue();
     expect(eventNames.includes("detector.summary")).toBeTrue();
+
+    const sampleEvents = findDebugEvents(output.stderr, "detector.window.sample");
+    expect(sampleEvents.length).toBe(1);
+    expect(sampleEvents[0]?.contentGate).toEqual({
+      applied: true,
+      passed: true,
+      policy: "latinProse",
+    });
+    expect(sampleEvents[0]?.qualityGate).toBe(true);
   });
 
   test("rejects --detector-evidence without --debug", async () => {
@@ -373,6 +382,12 @@ describe("detector mode", () => {
     expect(evidence.normalizedText).toBeUndefined();
     expect(String(evidence.textPreview)).not.toContain("\n");
     expect(String(evidence.textPreview)).not.toContain("  ");
+    expect(evidence.contentGate).toEqual({
+      applied: true,
+      passed: true,
+      policy: "latinProse",
+    });
+    expect(evidence.qualityGate).toBe(true);
   });
 
   test("reports hinted Latin fallback tags in detector evidence", async () => {
@@ -429,6 +444,35 @@ describe("detector mode", () => {
     expect(String(evidence.text)).toContain("\n\n");
     expect(evidence.textPreview).toBeUndefined();
     expect(evidence.normalizedPreview).toBeUndefined();
+  });
+
+  test("reports borrowed Japanese context in detector evidence for mixed Hani windows", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const output = await captureCli([
+      "--detector",
+      "wasm",
+      "--format",
+      "raw",
+      "--debug",
+      "--verbose",
+      "--detector-evidence",
+      "こんにちは、世界！これはテストです。",
+    ]);
+
+    const evidenceEvents = findDebugEvents(output.stderr, "detector.window.evidence");
+    expect(evidenceEvents.length).toBe(1);
+    const evidence = evidenceEvents[0]!;
+    expect(evidence.textSource).toBe("borrowed-context");
+    expect(evidence.borrowedContext).toEqual({ leftChunkIndex: 0, rightChunkIndex: 2 });
+    expect(evidence.text).toBe("こんにちは、世界！これはテストです。");
+    expect(evidence.normalizedText).toBe("世界");
+    expect(evidence.eligible).toBe(true);
+    const decision = evidence.decision as Record<string, unknown> | undefined;
+    expect(decision?.accepted).toBe(true);
+    expect(decision?.finalTag).toBe("ja");
   });
 
   test("keeps detector evidence window counts stable across output modes", async () => {

@@ -1,7 +1,8 @@
 ---
 title: "detector policy refactor and inspect command"
 created-date: 2026-03-25
-status: draft
+modified-date: 2026-03-25
+status: active
 agent: Codex
 ---
 
@@ -96,17 +97,17 @@ word-counter inspect [--detector wasm|regex] [--view pipeline|engine] [--format 
 
 ### Phase 1 - Detector Policy Extraction
 
-- [ ] Introduce a route-aware detector policy abstraction under `src/detector/` that isolates:
+- [x] Introduce a route-aware detector policy abstraction under `src/detector/` that isolates:
   - route eligibility thresholds
   - sample normalization
   - optional diagnostic-context borrowing
   - content gate evaluation
   - acceptance and corroborated acceptance
   - fallback tag selection
-- [ ] Refactor the current WASM decision path to use those policy objects instead of inline branching.
-- [ ] Replace new internal `qualityGate`-style decisions with a structured `contentGate` result and thread that structure through all new detector-state outputs.
-- [ ] Emit `contentGate` anywhere new counting/debug/evidence payload generation surfaces detector gate state, while retaining `qualityGate` only as a temporary compatibility alias for existing debug/evidence consumers.
-- [ ] Add focused unit coverage for policy behavior on at least:
+- [x] Refactor the current WASM decision path to use those policy objects instead of inline branching.
+- [x] Replace new internal `qualityGate`-style decisions with a structured `contentGate` result and thread that structure through all new detector-state outputs.
+- [x] Emit `contentGate` anywhere new counting/debug/evidence payload generation surfaces detector gate state, while retaining `qualityGate` only as a temporary compatibility alias for existing debug/evidence consumers.
+- [x] Add focused unit coverage for policy behavior on at least:
   - `und-Latn` content-gated windows
   - `und-Hani` windows that remain ineligible
   - accepted vs fallback WASM decisions
@@ -120,14 +121,14 @@ Validation for this phase:
 
 ### Phase 2 - Hani Diagnostic Context and Inspector Data Model
 
-- [ ] Implement conservative adjacent-`ja` context borrowing for `und-Hani` diagnostic samples without changing base chunk segmentation output.
-- [ ] Keep detector projection scoped to the original ambiguous span even when borrowed context is used for diagnosis.
-- [ ] Add the shared inspector result container and detector-specific data types for:
+- [x] Implement conservative adjacent-`ja` context borrowing for `und-Hani` diagnostic samples without changing base chunk segmentation output.
+- [x] Keep detector projection scoped to the original ambiguous span even when borrowed context is used for diagnosis.
+- [x] Add the shared inspector result container and detector-specific data types for:
   - `engine` view
   - WASM `pipeline` view
   - regex `pipeline` view
   - empty inspect results
-- [ ] Add `docs/schemas/detector-inspector-output-contract.md` with:
+- [x] Add `docs/schemas/detector-inspector-output-contract.md` with:
   - top-level container rules
   - `engine` and `pipeline` JSON shapes
   - detector/view validation boundaries
@@ -214,11 +215,11 @@ Validation for this phase:
 
 ## Compatibility Gates
 
-- [ ] Default counting behavior remains unchanged when `inspect` is not used.
+- [x] Default counting behavior remains unchanged when `inspect` is not used.
 - [ ] Existing `--debug --detector wasm --detector-evidence` behavior remains the canonical runtime debug surface for counting flows.
-- [ ] The base regex/script chunk segmentation contract remains unchanged in this plan.
+- [x] The base regex/script chunk segmentation contract remains unchanged in this plan.
 - [ ] `qualityGate` is not added to new inspector payloads.
-- [ ] Existing counting/debug/evidence payloads that currently expose gate state gain `contentGate` without losing the temporary `qualityGate` compatibility alias during this phase.
+- [x] Existing counting/debug/evidence payloads that currently expose gate state gain `contentGate` without losing the temporary `qualityGate` compatibility alias during this phase.
 - [ ] `inspect` remains single-input only in this phase and fails clearly instead of partially supporting batch or directory inputs.
 - [ ] `inspect` does not introduce `raw` output semantics or new `--section` behavior in this phase.
 - [ ] Regex inspection does not imitate WASM confidence/reliability fields where no engine-native equivalent exists.
@@ -245,3 +246,7 @@ Validation for this phase:
 - `docs/researches/research-2026-03-24-wasm-latin-detector-quality-false-positives.md`
 - `docs/researches/research-2026-03-24-wasm-latin-tag-interaction.md`
 - `docs/researches/research-2026-02-18-wasm-language-detector-spike.md`
+
+## Related Jobs
+
+- `docs/plans/jobs/2026-03-25-detector-policy-phase1-phase2-implementation.md`

@@ -368,6 +368,46 @@ describe("detector entrypoint", () => {
     );
   });
 
+  test("borrows adjacent Japanese context for mixed und-Hani wasm windows", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const chunks = await segmentTextByLocaleWithDetector("こんにちは、世界！これはテストです。", {
+      detector: "wasm",
+    });
+
+    expect(chunks.map((chunk) => chunk.locale)).toEqual(["ja"]);
+    expect(chunks[0]?.text).toBe("こんにちは、世界！これはテストです。");
+  });
+
+  test("borrows one-sided Japanese context for mixed und-Hani wasm windows", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const chunks = await segmentTextByLocaleWithDetector("こんにちは、世界！", {
+      detector: "wasm",
+    });
+
+    expect(chunks.map((chunk) => chunk.locale)).toEqual(["ja", "und-Hani"]);
+    expect(chunks[0]?.text).toBe("こんにちは、");
+    expect(chunks[1]?.text).toBe("世界！");
+  });
+
+  test("does not borrow Japanese context across a competing Latin chunk", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const chunks = await segmentTextByLocaleWithDetector("こんにちは Hello 世界", {
+      detector: "wasm",
+    });
+
+    expect(chunks.map((chunk) => chunk.locale)).toEqual(["ja", "und-Latn", "und-Hani"]);
+    expect(chunks[2]?.text).toBe("世界");
+  });
+
   test("segments text through detector entrypoint", async () => {
     const chunks = await segmentTextByLocaleWithDetector("Hello 世界", { detector: "regex" });
 

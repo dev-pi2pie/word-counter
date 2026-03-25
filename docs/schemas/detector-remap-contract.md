@@ -1,7 +1,7 @@
 ---
 title: "Detector Remap Contract (Draft)"
 created-date: 2026-03-23
-modified-date: 2026-03-23
+modified-date: 2026-03-25
 status: draft
 agent: Codex
 ---
@@ -35,6 +35,7 @@ The detector only runs for ambiguous script routes.
   - minimum script-bearing characters: `12`
 
 Script-bearing characters mean characters in the relevant script only.
+For `und-Hani`, detector-only borrowed adjacent Japanese context may also contribute `Hiragana` and `Katakana` characters to the eligibility count.
 Whitespace, punctuation, symbols, and digits do not count toward the threshold.
 
 If a chunk is below the threshold, it stays on the original `und-*` route.
@@ -102,7 +103,8 @@ Allowed remaps:
 
 Rules:
 
-- The detector result must report `Mandarin` script from `whatlang`.
+- `cmn` must report `Mandarin` script from `whatlang`.
+- `jpn` may report `Mandarin`, `Hiragana`, or `Katakana`.
 - Do not auto-emit `zh-Hans` or `zh-Hant`.
 - Unsupported languages fall back to `und-Hani`.
 
