@@ -84,7 +84,7 @@ type DetectorRoutePolicy = {
     - add an async inspector entrypoint under the detector subpath
     - return structured diagnostics as data instead of requiring callback capture
   - Recommended CLI direction:
-    - add an inspect-style command or mode that prints detector diagnostics without the normal count result
+    - add an `inspect` subcommand that prints detector diagnostics without the normal count result
     - support both direct text and `--path` inputs for markdown and plain text files
 - Keep two inspection levels distinct.
   - raw engine inspection should report direct Whatlang output with minimal remapping
@@ -99,6 +99,42 @@ type DetectorRoutePolicy = {
     - debug event stream for runtime counting diagnostics
     - inspector result objects for direct raw and pipeline diagnosis
   - Pipeline inspector payloads may reuse the same internal evidence-building logic as the debug stream, but they should be emitted as normal data objects rather than event envelopes.
+- Keep the inspect command aligned with the current CLI naming model.
+  - The recommended command shape is `word-counter inspect ...`, not `inspector`.
+  - A verb-style command aligns better with the existing `doctor` subcommand.
+  - The command should keep detector engine, inspection layer, and output format as separate dimensions:
+    - `--detector wasm|regex`
+    - `--view pipeline|engine`
+    - `--format standard|json`
+- Keep inspect output formats narrower than counting formats.
+  - The inspect command should support:
+    - `--format standard`
+    - `--format json`
+  - The inspect command should not support `--format raw` in the first version.
+  - In counting mode, `raw` means scalar output; inspector output has no equivalent single-number contract.
+- Default inspect behavior should optimize for explaining package behavior.
+  - Recommended defaults:
+    - `--detector wasm`
+    - `--view pipeline`
+    - `--format standard`
+  - `pipeline` is the better default because it remains useful even when the engine does not execute due to ineligibility or fallback.
+- Support regex inspection only at the pipeline layer in the first version.
+  - `--detector wasm --view engine` is valid.
+  - `--detector wasm --view pipeline` is valid.
+  - `--detector regex --view pipeline` is valid.
+  - `--detector regex --view engine` should be rejected because regex does not expose an engine-native confidence/reliability judgment layer.
+- Define `--view` as the inspection-layer selector, not as a detector selector.
+  - `engine` means:
+    - show what the detector engine returned for the sampled text
+    - include route tag, sampled text, raw engine values, and remapped public tags
+    - do not include full package acceptance/fallback projection
+  - `pipeline` means:
+    - show how the package built chunks and windows
+    - show borrowed context and normalization when applicable
+    - show content gate result
+    - show engine execution or skip reason
+    - show acceptance path or fallback reason
+    - show final locale projection back onto the resolved chunks
 - If `detectorDebug` remains part of the public option types, export a stable helper surface for it.
   - Export the debug context and summary types from the detector subpath.
   - Export a helper for creating a summary collector if summary emission remains supported in library code.
@@ -119,6 +155,7 @@ Recommended scope:
 - refactor inline WASM decision logic into route-aware detector policy objects
 - add detector-only context expansion for `und-Hani` windows in mixed Japanese cases
 - add inspect-only detector surfaces for CLI and library usage
+- add `docs/schemas/detector-inspector-output-contract.md` as the inspector result contract
 - update detector subpath docs and published type coverage
 
 Recommended non-goals for that plan:
@@ -181,12 +218,72 @@ Recommended non-goals for that plan:
 - The inspect-only CLI should be a new subcommand, not an additional top-level counting mode.
   - A subcommand keeps result contracts separate from normal counting output.
   - A subcommand also avoids awkward validation rules between inspection-only output and existing counting flags such as `--mode`, `--section`, and `--total-of`.
-  - The recommended first-version direction is a dedicated detector-focused command, for example `word-counter detector-inspect ...`, with output modes tailored for diagnostics rather than counting summaries.
+  - The recommended first-version direction is `word-counter inspect ...`, with output modes tailored for diagnostics rather than counting summaries.
+
+## Recommended Inspect Command Contract
+
+Recommended first-version CLI shape:
+
+```bash
+word-counter inspect [--detector wasm|regex] [--view pipeline|engine] [--format standard|json] <text-or-path>
+```
+
+Recommended defaults:
+
+- `--detector wasm`
+- `--view pipeline`
+- `--format standard`
+
+Recommended validation rules:
+
+- `--view engine` requires `--detector wasm`
+- `--detector regex` is supported only with `--view pipeline`
+- `--format raw` is invalid under `inspect`
+
+Recommended semantics:
+
+- `--view engine`
+  - detector-engine-centered diagnosis
+  - for WASM only in the first version
+  - suitable for understanding raw Whatlang output and remap behavior
+- `--view pipeline`
+  - package-behavior-centered diagnosis
+  - supported for both `wasm` and `regex`
+  - suitable for understanding chunking, windowing, normalization, gating, and final locale projection
+
+Recommended regex pipeline payload direction:
+
+- show final chunk order and locale assignment
+- show source or reason such as:
+  - script detection
+  - Latin hint rule
+  - explicit Latin hint
+  - Han fallback after boundary
+- do not imitate WASM confidence or reliability fields where none exist
+
+## Recommended Inspector Schema Direction
+
+The implementation plan should include a dedicated schema task item for:
+
+- `docs/schemas/detector-inspector-output-contract.md`
+
+Recommended scope of that schema doc:
+
+- define the top-level inspector container
+- define `engine` view output
+- define `pipeline` view output
+- define detector-specific validation boundaries such as:
+  - `regex` supports `pipeline` only
+  - `wasm` supports `engine` and `pipeline`
+- define format expectations for:
+  - `standard` as human-readable text
+  - `json` as structured tool-facing output
+- record version history independently from the debug-event-stream schema so inspector evolution does not force unrelated debug schema churn
 
 ## Residual Open Questions
 
-- The exact JSON schema for raw and pipeline inspector output still needs implementation-level design, but the payload boundary and field direction above are now settled.
-- The exact subcommand spelling should be finalized in the implementation plan after checking Commander ergonomics and naming fit with the existing `doctor` subcommand.
+- The exact field-level JSON schema for `engine` and `pipeline` inspector output still needs implementation-level design, but the payload boundary and field direction above are now settled.
+- The exact standard-format text layout for `inspect` still needs implementation-level design, but the command, view model, and format boundaries above are now settled.
 
 ## Related Plans
 
