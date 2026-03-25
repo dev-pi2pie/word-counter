@@ -1,13 +1,9 @@
 import { describe, expect, test } from "bun:test";
 import { parseMarkdown, countSections } from "../src/markdown";
 
-const YAML_SAMPLE = [
-  "---",
-  "title: Hello world",
-  "summary: Short note",
-  "---",
-  "Body text",
-].join("\n");
+const YAML_SAMPLE = ["---", "title: Hello world", "summary: Short note", "---", "Body text"].join(
+  "\n",
+);
 
 describe("parseMarkdown", () => {
   test("parses YAML frontmatter", () => {
@@ -43,7 +39,7 @@ describe("parseMarkdown", () => {
   });
 
   test("detects TOML fences", () => {
-    const input = ["+++", "title = \"Hello\"", "+++", "Body"].join("\n");
+    const input = ["+++", 'title = "Hello"', "+++", "Body"].join("\n");
     const result = parseMarkdown(input);
     expect(result.frontmatterType).toBe("toml");
     expect(result.data?.title).toBe("Hello");
@@ -52,11 +48,11 @@ describe("parseMarkdown", () => {
   test("parses TOML tables and arrays", () => {
     const input = [
       "+++",
-      "title = \"Hello\"",
-      "tags = [\"a\", \"b\"]",
-      "params.author = \"Ada\"",
+      'title = "Hello"',
+      'tags = ["a", "b"]',
+      'params.author = "Ada"',
       "[params]",
-      "author = \"Ada\"",
+      'author = "Ada"',
       "+++",
       "Body",
     ].join("\n");
@@ -69,7 +65,7 @@ describe("parseMarkdown", () => {
   test("parses TOML inline tables", () => {
     const input = [
       "+++",
-      "author = { name = \"Ada\", role = \"Editor\", tags = [\"a\", \"b\"] }",
+      'author = { name = "Ada", role = "Editor", tags = ["a", "b"] }',
       "+++",
       "Body",
     ].join("\n");
@@ -82,8 +78,8 @@ describe("parseMarkdown", () => {
   test("parses TOML multiline strings and escapes", () => {
     const input = [
       "+++",
-      "title = \"Hello\\nWorld\"",
-      "summary = \"\"\"Line1\\nLine2\"\"\" # note",
+      'title = "Hello\\nWorld"',
+      'summary = """Line1\\nLine2""" # note',
       "note = '''LineA",
       "LineB'''",
       "+++",
@@ -96,7 +92,7 @@ describe("parseMarkdown", () => {
   });
 
   test("parses TOML arrays of tables (single entry)", () => {
-    const input = ["+++", "[[items]]", "name = \"bad\"", "+++", "Body"].join("\n");
+    const input = ["+++", "[[items]]", 'name = "bad"', "+++", "Body"].join("\n");
     const result = parseMarkdown(input);
     expect(result.data?.items).toBe("name=bad");
   });
@@ -105,9 +101,9 @@ describe("parseMarkdown", () => {
     const input = [
       "+++",
       "[[authors]]",
-      "name = \"Ada\"",
+      'name = "Ada"',
       "[[authors]]",
-      "name = \"Grace\"",
+      'name = "Grace"',
       "+++",
       "Body",
     ].join("\n");

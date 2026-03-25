@@ -109,7 +109,9 @@ export async function countBatchInputsWithWorkerPool(
   const safeRequestedJobs = Number.isFinite(options.jobs) ? Math.floor(options.jobs) : 1;
   const workerCount = Math.max(1, Math.min(options.filePaths.length, safeRequestedJobs));
   const workers: Worker[] = [];
-  const completedEntries: Array<CompletedEntry | undefined> = new Array(options.filePaths.length);
+  const completedEntries: Array<CompletedEntry | undefined> = Array.from({
+    length: options.filePaths.length,
+  });
   const pendingTasks = new Map<number, PendingTask>();
   const requestedShutdownWorkers = new Set<number>();
   let nextIndex = 0;
@@ -235,7 +237,7 @@ export async function countBatchInputsWithWorkerPool(
             value.event,
             {
               path: pending.path,
-              ...(value.details ?? {}),
+              ...value.details,
             },
             {
               verbosity: value.verbosity,

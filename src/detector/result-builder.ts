@@ -98,9 +98,7 @@ export function buildWordCounterResultFromChunks(
     };
   }
 
-  const analyzed = chunks.map((chunk) =>
-    analyzeChunk(chunk, collectNonWords, includeWhitespace),
-  );
+  const analyzed = chunks.map((chunk) => analyzeChunk(chunk, collectNonWords, includeWhitespace));
   const wordsTotal = analyzed.reduce((sum, chunk) => sum + chunk.words, 0);
   const nonWordsTotal = collectNonWords
     ? analyzed.reduce((sum, chunk) => {
@@ -118,7 +116,9 @@ export function buildWordCounterResultFromChunks(
     return sum + chunkTotal;
   }, 0);
 
-  const counts = collectNonWords ? { words: wordsTotal, nonWords: nonWordsTotal, total } : undefined;
+  const counts = collectNonWords
+    ? { words: wordsTotal, nonWords: nonWordsTotal, total }
+    : undefined;
 
   if (mode === "segments") {
     const items: ChunkWithSegments[] = analyzed.map((chunk) => ({

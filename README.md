@@ -101,18 +101,94 @@ Enable the optional WASM detector for ambiguous Latin and Han routes:
 ```bash
 word-counter --detector wasm "This sentence should clearly be detected as English for the wasm detector path."
 word-counter --detector wasm "漢字測試需要更多內容才能觸發偵測"
+word-counter --detector wasm --content-gate strict "Internationalization documentation remains understandable."
+word-counter --detector wasm --content-gate loose "四字成語"
+word-counter --detector wasm --content-gate off "mode: debug\ntee: true\npath: logs\nUse this for testing."
+```
+
+Inspect detector behavior without count output:
+
+```bash
+word-counter inspect "こんにちは、世界！これはテストです。"
+word-counter inspect --view engine "This sentence should clearly be detected as English for the wasm detector path."
+word-counter inspect --detector regex -f json "こんにちは、世界！これはテストです。"
+word-counter inspect --detector regex -f json --pretty "こんにちは、世界！これはテストです。"
+word-counter inspect --detector wasm --content-gate off "mode: debug\ntee: true\npath: logs\nUse this for testing."
+word-counter inspect -p ./examples/yaml-basic.md
+word-counter inspect -p ./examples/test-case-multi-files-support
+word-counter inspect -p ./examples/test-case-multi-files-support --section content -f json --pretty
 ```
 
 Detector mode notes:
 
 - `--detector regex` is the default behavior.
 - `--detector wasm` only runs for ambiguous `und-Latn` and `und-Hani` chunks.
+- `--content-gate default|strict|loose|off` configures the shared detector policy mode used by the WASM detector path.
+  - `default`: current fixture-backed project policy
+  - `strict`: raises detector eligibility thresholds and makes more borderline windows fall back
+  - `loose`: lowers detector eligibility thresholds and makes more borderline windows eligible or upgradable
+  - `off`: bypasses `contentGate` evaluation only
+- mode behavior differs by route:
+  - `und-Latn`: `default|strict|loose` affect both eligibility and the Latin prose-style `contentGate`
+  - `und-Hani`: `default|strict|loose` affect eligibility only, while `contentGate` still reports `policy=none`
+- current Hani behavior:
+  - `default`: keeps the current Hani diagnostic-sample threshold
+  - `strict`: raises the Hani diagnostic-sample threshold
+  - `loose`: uses a short-window Han-focused threshold so idiom-length samples such as `四字成語` can become eligible
+  - `off`: keeps the same Hani eligibility thresholds as `default`
 - `--detector regex` keeps the original script/regex chunk-first detection path.
 - `--detector wasm` uses a detector-oriented ambiguous-window scoring pass before accepted tags are projected back onto the counting chunks.
 - In `--detector wasm` mode, Latin hint rules and explicit Latin hint flags are deferred until after detector evaluation and only relabel unresolved `und-Latn` output.
 - Very short chunks stay on the original `und-*` fallback.
 - Low-confidence or unsupported detector results fall back to `und-*`.
 - Technical-noise-heavy Latin windows stay conservative and may remain `und-Latn` even when the detector produces a wrong-but-confident language guess.
+- inspect/debug disclosure uses `contentGate` as the canonical gate field.
+- legacy debug/evidence payloads still emit `qualityGate` as a compatibility alias derived from `contentGate.passed`.
+- for practical verification, use `inspect` to compare direct mode outcomes across `default`, `strict`, `loose`, and `off`; use `--debug --detector-evidence` when you specifically need counting-flow event details or legacy `qualityGate` compatibility
+- `word-counter inspect` supports:
+  - positional text input
+  - one direct `-p, --path <file>` input
+  - repeated `-p, --path` inputs for batch inspect
+  - directory inputs in default `--path-mode auto`
+  - literal file-only path handling in `--path-mode manual`
+  - `--section all|frontmatter|content`
+- batch inspect keeps counting-style path acquisition but not counting aggregation:
+  - no inspect `--merged`
+  - no inspect `--per-file`
+  - no inspect `--jobs`
+
+### Detector Subpath (`@dev-pi2pie/word-counter/detector`)
+
+Use the detector subpath when you need async detector-aware APIs directly in library code.
+
+```ts
+import {
+  inspectTextWithDetector,
+  segmentTextByLocaleWithDetector,
+  wordCounterWithDetector,
+} from "@dev-pi2pie/word-counter/detector";
+
+const inspectResult = await inspectTextWithDetector("こんにちは、世界！これはテストです。", {
+  detector: "wasm",
+  view: "pipeline",
+});
+const countResult = await wordCounterWithDetector(
+  "Internationalization documentation remains understandable.",
+  {
+    detector: "wasm",
+    contentGate: { mode: "strict" },
+  },
+);
+```
+
+Detector subpath notes:
+
+- detector entrypoints are async
+- use the root package for normal counting when you do not need detector-specific control
+- detector-subpath APIs that execute detector policy also accept:
+  - `contentGate: { mode: "default" | "strict" | "loose" | "off" }`
+- use `detectorDebug` for counting-flow runtime diagnostics
+- use `inspectTextWithDetector()` for direct detector diagnosis as structured data
 
 Collect non-words (emoji/symbols/punctuation):
 
@@ -500,6 +576,7 @@ Import from `@dev-pi2pie/word-counter/detector` for the explicit detector-enable
 | `wordCounterWithDetector`     | function | Async detector-aware counting entrypoint.       |
 | `segmentTextByLocaleWithDetector` | function | Async detector-aware locale segmentation.  |
 | `countSectionsWithDetector`   | function | Async detector-aware section counting.          |
+| `inspectTextWithDetector`     | function | Async detector-aware inspect entrypoint.        |
 | `DEFAULT_DETECTOR_MODE`       | value    | Current default detector mode (`regex`).        |
 | `DETECTOR_MODES`              | value    | Supported detector modes.                       |
 

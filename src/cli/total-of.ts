@@ -40,7 +40,10 @@ function createTotalOfCounts(): TotalOfCounts {
   };
 }
 
-function collectNonWordCounts(target: TotalOfCounts, nonWords: NonWordCollection | undefined): void {
+function collectNonWordCounts(
+  target: TotalOfCounts,
+  nonWords: NonWordCollection | undefined,
+): void {
   if (!nonWords) {
     return;
   }
@@ -88,9 +91,7 @@ function parseTotalOfToken(token: string): TotalOfPart {
   if (canonical) {
     return canonical;
   }
-  throw new Error(
-    `Invalid --total-of part: ${token}. Allowed: ${TOTAL_OF_PARTS.join(", ")}.`,
-  );
+  throw new Error(`Invalid --total-of part: ${token}. Allowed: ${TOTAL_OF_PARTS.join(", ")}.`);
 }
 
 export function parseTotalOfOption(value: string): TotalOfPart[] {

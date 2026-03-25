@@ -33,7 +33,8 @@ function clamp(value: number, min: number, max: number): number {
 function buildProgressBar(completed: number, total: number): string {
   const safeTotal = Math.max(total, 1);
   const ratio = clamp(completed / safeTotal, 0, 1);
-  const filled = completed >= safeTotal ? PROGRESS_BAR_WIDTH : Math.floor(ratio * PROGRESS_BAR_WIDTH);
+  const filled =
+    completed >= safeTotal ? PROGRESS_BAR_WIDTH : Math.floor(ratio * PROGRESS_BAR_WIDTH);
   const empty = PROGRESS_BAR_WIDTH - filled;
   return `${FILLED_BAR_CHAR.repeat(filled)}${EMPTY_BAR_CHAR.repeat(empty)}`;
 }

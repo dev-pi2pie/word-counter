@@ -1,0 +1,12 @@
+{
+  "env": {
+    "builtin": true
+  },
+  "ignorePatterns": [
+    "coverage/**",
+    "dist/**",
+    "generated/**",
+    "node_modules/**",
+    "examples/playground/**"
+  ]
+}

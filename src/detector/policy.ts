@@ -1,48 +1,100 @@
 import { DEFAULT_HAN_TAG, DEFAULT_LOCALE } from "../wc/locale-detect";
+import type { LocaleChunk } from "../wc/types";
+import type { DetectorContentGateMode, DetectorResult } from "./types";
 
 export const LATIN_WASM_MIN_SCRIPT_CHARS = 24;
 export const HANI_WASM_MIN_SCRIPT_CHARS = 12;
 export const LATIN_WASM_MIN_CONFIDENCE = 0.75;
 export const HANI_WASM_MIN_CONFIDENCE = 0.9;
 export const LATIN_WASM_CORROBORATED_MIN_CONFIDENCE = 0.7;
+const LATIN_WASM_STRICT_MIN_SCRIPT_CHARS = 30;
+const LATIN_WASM_LOOSE_MIN_SCRIPT_CHARS = 20;
+const HANI_WASM_STRICT_MIN_SCRIPT_CHARS = 16;
+const HANI_WASM_LOOSE_MIN_FOCUS_HAN_CHARS = 4;
 
 const LATIN_SCRIPT_REGEX = /\p{Script=Latin}/u;
 const HAN_SCRIPT_REGEX = /\p{Script=Han}/u;
+const HANI_DIAGNOSTIC_SCRIPT_REGEX = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u;
 const LATIN_WORD_REGEX = /\p{Script=Latin}+/gu;
+const WHITESPACE_REGEX = /\s/u;
+const JAPANESE_CONTEXT_LOCALE = "ja";
 
 export type DetectorRouteTag = typeof DEFAULT_LOCALE | typeof DEFAULT_HAN_TAG;
+export type DetectorContentGatePolicy = "latinProse" | "none";
+export type DetectorDiagnosticTextSource = "focus" | "borrowed-context";
+
+export type DetectorWindow = {
+  routeTag: DetectorRouteTag;
+  startIndex: number;
+  endIndex: number;
+  text: string;
+};
+
+export type DetectorBorrowedContext = {
+  leftChunkIndex?: number;
+  rightChunkIndex?: number;
+};
+
+export type DetectorDiagnosticSample = {
+  focusText: string;
+  text: string;
+  normalizedText: string;
+  normalizedApplied: boolean;
+  textSource: DetectorDiagnosticTextSource;
+  borrowedContext?: DetectorBorrowedContext;
+};
+
+export type DetectorEligibilityResult = {
+  scriptChars: number;
+  minScriptChars: number;
+  passed: boolean;
+};
+
+export type DetectorContentGateResult = {
+  applied: boolean;
+  passed: boolean;
+  policy: DetectorContentGatePolicy;
+  mode: DetectorContentGateMode;
+};
+
+export type DetectorCorroboratedAcceptance =
+  | {
+      accepted: true;
+      confidence: number;
+      hasReliableCorroboration: true;
+    }
+  | {
+      accepted: false;
+      confidence: number;
+      hasReliableCorroboration: boolean;
+      reason: "mismatch" | "belowThreshold" | "unreliable";
+    };
 
 export type DetectorRoutePolicy = {
   routeTag: DetectorRouteTag;
-  minScriptChars: number;
-  minConfidence: number;
-  requireReliable: boolean;
+  eligibility: {
+    evaluate: (
+      sample: DetectorDiagnosticSample,
+      mode?: DetectorContentGateMode,
+    ) => DetectorEligibilityResult;
+  };
+  buildDiagnosticSample: (
+    window: DetectorWindow,
+    chunks: LocaleChunk[],
+  ) => DetectorDiagnosticSample;
+  evaluateContentGate: (
+    sample: DetectorDiagnosticSample,
+    mode?: DetectorContentGateMode,
+  ) => DetectorContentGateResult;
+  accept: (candidate: DetectorResult) => boolean;
+  acceptCorroborated?: (
+    raw: DetectorResult,
+    normalized: DetectorResult,
+  ) => DetectorCorroboratedAcceptance;
+  fallbackTag: string;
 };
 
-export const DETECTOR_ROUTE_POLICIES: Record<DetectorRouteTag, DetectorRoutePolicy> = {
-  [DEFAULT_LOCALE]: {
-    routeTag: DEFAULT_LOCALE,
-    minScriptChars: LATIN_WASM_MIN_SCRIPT_CHARS,
-    minConfidence: LATIN_WASM_MIN_CONFIDENCE,
-    requireReliable: true,
-  },
-  [DEFAULT_HAN_TAG]: {
-    routeTag: DEFAULT_HAN_TAG,
-    minScriptChars: HANI_WASM_MIN_SCRIPT_CHARS,
-    minConfidence: HANI_WASM_MIN_CONFIDENCE,
-    requireReliable: true,
-  },
-};
-
-export function isAmbiguousDetectorRoute(locale: string): locale is DetectorRouteTag {
-  return locale === DEFAULT_LOCALE || locale === DEFAULT_HAN_TAG;
-}
-
-export function countScriptBearingCharsForRoute(
-  text: string,
-  routeTag: DetectorRouteTag,
-): number {
-  const matcher = routeTag === DEFAULT_HAN_TAG ? HAN_SCRIPT_REGEX : LATIN_SCRIPT_REGEX;
+function countMatchingChars(text: string, matcher: RegExp): number {
   let count = 0;
   for (const char of text) {
     if (matcher.test(char)) {
@@ -52,29 +104,73 @@ export function countScriptBearingCharsForRoute(
   return count;
 }
 
-export function shouldRunWasmDetector(text: string, routeTag: DetectorRouteTag): boolean {
-  const policy = DETECTOR_ROUTE_POLICIES[routeTag];
-  return countScriptBearingCharsForRoute(text, routeTag) >= policy.minScriptChars;
+function getSampleScriptMatcher(routeTag: DetectorRouteTag): RegExp {
+  return routeTag === DEFAULT_HAN_TAG ? HAN_SCRIPT_REGEX : LATIN_SCRIPT_REGEX;
 }
 
-export function normalizeDetectorSampleForRoute(
-  text: string,
-  routeTag: DetectorRouteTag,
-): string {
-  const matcher = routeTag === DEFAULT_HAN_TAG ? HAN_SCRIPT_REGEX : LATIN_SCRIPT_REGEX;
+function getEligibilityScriptMatcher(routeTag: DetectorRouteTag): RegExp {
+  return routeTag === DEFAULT_HAN_TAG ? HANI_DIAGNOSTIC_SCRIPT_REGEX : LATIN_SCRIPT_REGEX;
+}
+
+function normalizeSampleText(text: string, routeTag: DetectorRouteTag): string {
+  const matcher = getSampleScriptMatcher(routeTag);
   return [...text]
     .map((char) => {
-      if (matcher.test(char)) {
+      if (matcher.test(char) || WHITESPACE_REGEX.test(char)) {
         return char;
-      }
-      if (/\s/u.test(char)) {
-        return " ";
       }
       return " ";
     })
     .join("")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function buildFocusOnlyDiagnosticSample(window: DetectorWindow): DetectorDiagnosticSample {
+  const normalizedText = normalizeSampleText(window.text, window.routeTag);
+  return {
+    focusText: window.text,
+    text: window.text,
+    normalizedText,
+    normalizedApplied: normalizedText !== window.text,
+    textSource: "focus",
+  };
+}
+
+function buildHaniDiagnosticSample(
+  window: DetectorWindow,
+  chunks: LocaleChunk[],
+): DetectorDiagnosticSample {
+  const borrowedContext: DetectorBorrowedContext = {};
+  const sampleParts: string[] = [];
+
+  const leftChunk = chunks[window.startIndex - 1];
+  if (leftChunk?.locale === JAPANESE_CONTEXT_LOCALE) {
+    borrowedContext.leftChunkIndex = window.startIndex - 1;
+    sampleParts.push(leftChunk.text);
+  }
+
+  sampleParts.push(window.text);
+
+  const rightChunk = chunks[window.endIndex + 1];
+  if (rightChunk?.locale === JAPANESE_CONTEXT_LOCALE) {
+    borrowedContext.rightChunkIndex = window.endIndex + 1;
+    sampleParts.push(rightChunk.text);
+  }
+
+  const text = sampleParts.join("");
+  const normalizedText = normalizeSampleText(text, window.routeTag);
+  const borrowed =
+    borrowedContext.leftChunkIndex !== undefined || borrowedContext.rightChunkIndex !== undefined;
+
+  return {
+    focusText: window.text,
+    text,
+    normalizedText,
+    normalizedApplied: normalizedText !== text,
+    textSource: borrowed ? "borrowed-context" : "focus",
+    ...(borrowed ? { borrowedContext } : {}),
+  };
 }
 
 function countLatinWords(text: string): number {
@@ -103,7 +199,7 @@ function isTechnicalLikeLatinLine(line: string, latinWords: number): boolean {
     return true;
   }
 
-  if (/^[\-\*\d.)\s]*[\p{L}\p{N}_.-]+:\s+\S/iu.test(trimmed) && latinWords <= 8) {
+  if (/^[-*\d.)\s]*[\p{L}\p{N}_.-]+:\s+\S/iu.test(trimmed) && latinWords <= 8) {
     return true;
   }
 
@@ -126,13 +222,22 @@ function shouldTreatLatinProseBlockAsSentenceLike(
   return lineCount <= 1 ? latinWords >= 5 : latinWords >= 8;
 }
 
-export function shouldAcceptLatinDetectorWindow(
+function evaluateLatinContentGate(
   text: string,
   normalizedSample: string,
-): boolean {
+  mode: Exclude<DetectorContentGateMode, "off">,
+): DetectorContentGateResult {
+  const minNormalizedLatinWords = mode === "strict" ? 5 : 4;
+  const minProseWords = mode === "strict" ? 5 : mode === "loose" ? 3 : 4;
+  const technicalWordSlack = mode === "loose" ? 2 : 0;
   const normalizedLatinWords = countLatinWords(normalizedSample);
-  if (normalizedLatinWords < 4) {
-    return false;
+  if (normalizedLatinWords < minNormalizedLatinWords) {
+    return {
+      applied: true,
+      passed: false,
+      policy: "latinProse",
+      mode,
+    };
   }
 
   let proseWords = 0;
@@ -182,5 +287,203 @@ export function shouldAcceptLatinDetectorWindow(
   }
 
   flushProseBlock();
-  return proseWords >= 4 && proseWords >= technicalWords;
+  return {
+    applied: true,
+    passed: proseWords >= minProseWords && proseWords + technicalWordSlack >= technicalWords,
+    policy: "latinProse",
+    mode,
+  };
+}
+
+function evaluateEligibility(
+  sample: DetectorDiagnosticSample,
+  routeTag: DetectorRouteTag,
+  minScriptChars: number,
+): DetectorEligibilityResult {
+  const scriptChars = countMatchingChars(sample.text, getEligibilityScriptMatcher(routeTag));
+  return {
+    scriptChars,
+    minScriptChars,
+    passed: scriptChars >= minScriptChars,
+  };
+}
+
+function getLatinEligibilityMinScriptChars(mode: DetectorContentGateMode = "default"): number {
+  if (mode === "strict") {
+    return LATIN_WASM_STRICT_MIN_SCRIPT_CHARS;
+  }
+
+  if (mode === "loose") {
+    return LATIN_WASM_LOOSE_MIN_SCRIPT_CHARS;
+  }
+
+  return LATIN_WASM_MIN_SCRIPT_CHARS;
+}
+
+function evaluateHaniEligibility(
+  sample: DetectorDiagnosticSample,
+  mode: DetectorContentGateMode = "default",
+): DetectorEligibilityResult {
+  if (mode === "loose") {
+    const scriptChars = countMatchingChars(sample.focusText, HAN_SCRIPT_REGEX);
+    return {
+      scriptChars,
+      minScriptChars: HANI_WASM_LOOSE_MIN_FOCUS_HAN_CHARS,
+      passed: scriptChars >= HANI_WASM_LOOSE_MIN_FOCUS_HAN_CHARS,
+    };
+  }
+
+  const minScriptChars =
+    mode === "strict" ? HANI_WASM_STRICT_MIN_SCRIPT_CHARS : HANI_WASM_MIN_SCRIPT_CHARS;
+  return evaluateEligibility(sample, DEFAULT_HAN_TAG, minScriptChars);
+}
+
+function shouldAcceptCandidate(
+  confidence: number | undefined,
+  reliable: boolean | undefined,
+  minConfidence: number,
+): boolean {
+  if (reliable !== true) {
+    return false;
+  }
+
+  if (confidence === undefined) {
+    return false;
+  }
+
+  return confidence >= minConfidence;
+}
+
+function evaluateLatinCorroboratedAcceptance(
+  raw: DetectorResult,
+  normalized: DetectorResult,
+): DetectorCorroboratedAcceptance {
+  if (raw.tag !== normalized.tag) {
+    return {
+      accepted: false,
+      confidence: Math.max(raw.confidence ?? 0, normalized.confidence ?? 0),
+      hasReliableCorroboration: raw.reliable === true || normalized.reliable === true,
+      reason: "mismatch",
+    };
+  }
+
+  const confidence = Math.max(raw.confidence ?? 0, normalized.confidence ?? 0);
+  const hasReliableCorroboration = raw.reliable === true || normalized.reliable === true;
+
+  if (!hasReliableCorroboration && confidence >= LATIN_WASM_CORROBORATED_MIN_CONFIDENCE) {
+    return {
+      accepted: false,
+      confidence,
+      hasReliableCorroboration,
+      reason: "unreliable",
+    };
+  }
+
+  if (confidence < LATIN_WASM_CORROBORATED_MIN_CONFIDENCE) {
+    return {
+      accepted: false,
+      confidence,
+      hasReliableCorroboration,
+      reason: "belowThreshold",
+    };
+  }
+
+  if (!hasReliableCorroboration) {
+    return {
+      accepted: false,
+      confidence,
+      hasReliableCorroboration,
+      reason: "unreliable",
+    };
+  }
+
+  return {
+    accepted: true,
+    confidence,
+    hasReliableCorroboration: true,
+  };
+}
+
+function createLatinRoutePolicy(): DetectorRoutePolicy {
+  return {
+    routeTag: DEFAULT_LOCALE,
+    eligibility: {
+      evaluate(sample, mode = "default") {
+        return evaluateEligibility(sample, DEFAULT_LOCALE, getLatinEligibilityMinScriptChars(mode));
+      },
+    },
+    buildDiagnosticSample(window) {
+      return buildFocusOnlyDiagnosticSample(window);
+    },
+    evaluateContentGate(sample, mode = "default") {
+      if (mode === "off") {
+        return {
+          applied: false,
+          passed: true,
+          policy: "none",
+          mode,
+        };
+      }
+
+      return evaluateLatinContentGate(sample.text, sample.normalizedText, mode);
+    },
+    accept(candidate) {
+      return shouldAcceptCandidate(
+        candidate.confidence,
+        candidate.reliable,
+        LATIN_WASM_MIN_CONFIDENCE,
+      );
+    },
+    acceptCorroborated(raw, normalized) {
+      return evaluateLatinCorroboratedAcceptance(raw, normalized);
+    },
+    fallbackTag: DEFAULT_LOCALE,
+  };
+}
+
+function createHaniRoutePolicy(): DetectorRoutePolicy {
+  return {
+    routeTag: DEFAULT_HAN_TAG,
+    eligibility: {
+      evaluate(sample, mode = "default") {
+        return evaluateHaniEligibility(sample, mode);
+      },
+    },
+    buildDiagnosticSample(window, chunks) {
+      return buildHaniDiagnosticSample(window, chunks);
+    },
+    evaluateContentGate(_sample, mode = "default") {
+      return {
+        applied: false,
+        passed: true,
+        policy: "none",
+        mode,
+      };
+    },
+    accept(candidate) {
+      return shouldAcceptCandidate(
+        candidate.confidence,
+        candidate.reliable,
+        HANI_WASM_MIN_CONFIDENCE,
+      );
+    },
+    fallbackTag: DEFAULT_HAN_TAG,
+  };
+}
+
+export const DETECTOR_ROUTE_POLICIES: Record<DetectorRouteTag, DetectorRoutePolicy> = {
+  [DEFAULT_LOCALE]: createLatinRoutePolicy(),
+  [DEFAULT_HAN_TAG]: createHaniRoutePolicy(),
+};
+
+export function isAmbiguousDetectorRoute(locale: string): locale is DetectorRouteTag {
+  return locale === DEFAULT_LOCALE || locale === DEFAULT_HAN_TAG;
+}
+
+export function countScriptBearingCharsForRoute(text: string, routeTag: DetectorRouteTag): number {
+  return countMatchingChars(text, getEligibilityScriptMatcher(routeTag));
+}
+
+export function normalizeDetectorSampleForRoute(text: string, routeTag: DetectorRouteTag): string {
+  return normalizeSampleText(text, routeTag);
 }

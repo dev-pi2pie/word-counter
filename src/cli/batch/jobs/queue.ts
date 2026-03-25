@@ -9,7 +9,7 @@ export async function runBoundedQueue<T>(
 
   const safeRequestedJobs = Number.isFinite(requestedJobs) ? Math.floor(requestedJobs) : 1;
   const concurrency = Math.max(1, Math.min(total, safeRequestedJobs));
-  const results: T[] = new Array(total);
+  const results: Array<T | undefined> = Array.from({ length: total });
   let nextIndex = 0;
 
   const runWorker = async (): Promise<void> => {
@@ -25,5 +25,8 @@ export async function runBoundedQueue<T>(
   };
 
   await Promise.all(Array.from({ length: concurrency }, () => runWorker()));
-  return results;
+  if (results.some((result) => result === undefined)) {
+    throw new Error("Bounded queue completed with missing results.");
+  }
+  return results as T[];
 }

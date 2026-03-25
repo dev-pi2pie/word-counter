@@ -76,9 +76,8 @@ try {
   process.exit(1);
 }
 
-const files = Array.isArray(payload) && payload[0] && Array.isArray(payload[0].files)
-  ? payload[0].files
-  : [];
+const files =
+  Array.isArray(payload) && payload[0] && Array.isArray(payload[0].files) ? payload[0].files : [];
 
 const presentPaths = new Set(
   files

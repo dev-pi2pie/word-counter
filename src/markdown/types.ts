@@ -7,13 +7,7 @@ export interface ParsedMarkdown {
   frontmatterType: FrontmatterType | null;
 }
 
-export type SectionMode =
-  | "all"
-  | "split"
-  | "frontmatter"
-  | "content"
-  | "per-key"
-  | "split-per-key";
+export type SectionMode = "all" | "split" | "frontmatter" | "content" | "per-key" | "split-per-key";
 
 export interface SectionedResult {
   section: SectionMode;

@@ -47,7 +47,9 @@ function renderNonWords(nonWords: NonWordCollection | undefined, verbose: boolea
   }
 
   if (verbose) {
-    const whitespace = nonWords.whitespace ? ` whitespace=${JSON.stringify(nonWords.whitespace)}` : "";
+    const whitespace = nonWords.whitespace
+      ? ` whitespace=${JSON.stringify(nonWords.whitespace)}`
+      : "";
     console.log(
       pc.yellow(
         `Non-words: emoji=${JSON.stringify(nonWords.emoji)} symbols=${JSON.stringify(
@@ -155,9 +157,7 @@ function buildSectionLabel(
   }
 
   if (sectionMode === "split") {
-    return source === "frontmatter"
-      ? `[Frontmatter] (${totalLabel})`
-      : `[Content] (${totalLabel})`;
+    return source === "frontmatter" ? `[Frontmatter] (${totalLabel})` : `[Content] (${totalLabel})`;
   }
 
   if (sectionMode === "per-key") {
@@ -248,16 +248,14 @@ export function reportSkipped(skipped: BatchSkip[]): void {
 export function renderPerFileStandard(
   summary: BatchSummary,
   labels: TotalLabels,
-  resolveTotalOfOverride?: (result: WordCounterResult | SectionedResult) => TotalOfOverride | undefined,
+  resolveTotalOfOverride?: (
+    result: WordCounterResult | SectionedResult,
+  ) => TotalOfOverride | undefined,
 ): void {
   for (const file of summary.files) {
     console.log(pc.bold(`[File] ${toDisplayPath(file.path)}`));
     if (isSectionedResult(file.result)) {
-      renderStandardSectionedResult(
-        file.result,
-        labels,
-        resolveTotalOfOverride?.(file.result),
-      );
+      renderStandardSectionedResult(file.result, labels, resolveTotalOfOverride?.(file.result));
       continue;
     }
 
@@ -274,5 +272,9 @@ export function renderPerFileStandard(
     return;
   }
 
-  renderStandardResult(summary.aggregate, labels.overall, resolveTotalOfOverride?.(summary.aggregate));
+  renderStandardResult(
+    summary.aggregate,
+    labels.overall,
+    resolveTotalOfOverride?.(summary.aggregate),
+  );
 }

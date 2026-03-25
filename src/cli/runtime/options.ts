@@ -1,8 +1,5 @@
 import { readFileSync } from "node:fs";
-import {
-  requiresNonWordCollection,
-  requiresWhitespaceCollection,
-} from "../total-of";
+import { requiresNonWordCollection, requiresWhitespaceCollection } from "../total-of";
 import type { BatchScope } from "../types";
 import type { LatinHintRule } from "../../wc";
 import type { CliActionOptions, ResolvedCountRunOptions } from "./types";
@@ -68,7 +65,9 @@ export function resolveBatchScope(argv: string[]): BatchScope {
   return scope;
 }
 
-export function resolveDebugReportPathOption(rawValue: string | boolean | undefined): string | undefined {
+export function resolveDebugReportPathOption(
+  rawValue: string | boolean | undefined,
+): string | undefined {
   if (rawValue === undefined || rawValue === false) {
     return undefined;
   }
@@ -100,15 +99,9 @@ export function parseInlineLatinHintRule(value: string): LatinHintRule {
   return { tag, pattern };
 }
 
-function parseLatinHintsFileRule(
-  value: unknown,
-  index: number,
-  sourcePath: string,
-): LatinHintRule {
+function parseLatinHintsFileRule(value: unknown, index: number, sourcePath: string): LatinHintRule {
   if (typeof value !== "object" || value === null) {
-    throw new Error(
-      `Invalid Latin hint rule at ${sourcePath}#${index}: rule must be an object.`,
-    );
+    throw new Error(`Invalid Latin hint rule at ${sourcePath}#${index}: rule must be an object.`);
   }
 
   const tag = "tag" in value ? value.tag : undefined;
@@ -122,9 +115,7 @@ function parseLatinHintsFileRule(
   }
 
   if (typeof pattern !== "string") {
-    throw new Error(
-      `Invalid Latin hint rule at ${sourcePath}#${index}: pattern must be a string.`,
-    );
+    throw new Error(`Invalid Latin hint rule at ${sourcePath}#${index}: pattern must be a string.`);
   }
 
   if (priority !== undefined && (typeof priority !== "number" || !Number.isFinite(priority))) {
@@ -202,6 +193,12 @@ export function resolveCountRunOptions(options: CliActionOptions): ResolvedCount
     shouldNormalizeBaseOutput,
     wcOptions: {
       detector: detectorMode,
+      contentGate:
+        options.contentGate === undefined
+          ? undefined
+          : {
+              mode: options.contentGate,
+            },
       mode: options.mode,
       latinLanguageHint: options.latinLanguage,
       latinTagHint: options.latinTag,

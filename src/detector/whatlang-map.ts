@@ -39,13 +39,20 @@ function hasSupportedScript(result: WhatlangWasmResult, routeTag: DetectorRouteT
     return result.script === "Latin";
   }
 
-  return result.script === "Mandarin";
+  if (result.lang === "cmn") {
+    return result.script === "Mandarin";
+  }
+
+  if (result.lang === "jpn") {
+    return (
+      result.script === "Mandarin" || result.script === "Hiragana" || result.script === "Katakana"
+    );
+  }
+
+  return false;
 }
 
-function remapLanguageTag(
-  lang: string,
-  routeTag: DetectorRouteTag,
-): string | undefined {
+function remapLanguageTag(lang: string, routeTag: DetectorRouteTag): string | undefined {
   if (routeTag === DEFAULT_LOCALE) {
     return LATIN_LANGUAGE_TAGS[lang];
   }

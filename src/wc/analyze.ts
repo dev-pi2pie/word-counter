@@ -25,9 +25,7 @@ export function analyzeChunk(
 ): ChunkAnalysis {
   const segmenter = getSegmenter(chunk.locale);
   const segments: string[] = [];
-  const nonWords: NonWordCollection | null = collectNonWords
-    ? createNonWordCollection()
-    : null;
+  const nonWords: NonWordCollection | null = collectNonWords ? createNonWordCollection() : null;
   for (const part of segmenter.segment(chunk.text)) {
     if (part.isWordLike) {
       segments.push(part.segment);
@@ -56,9 +54,7 @@ export function analyzeCharChunk(
   includeWhitespace?: boolean,
 ): CharChunkAnalysis {
   const segmenter = getSegmenter(chunk.locale);
-  const nonWords: NonWordCollection | null = collectNonWords
-    ? createNonWordCollection()
-    : null;
+  const nonWords: NonWordCollection | null = collectNonWords ? createNonWordCollection() : null;
   let chars = 0;
   let wordChars = 0;
   let nonWordChars = 0;
@@ -137,9 +133,7 @@ export function aggregateCharsByLocale(
   return order.map((locale) => map.get(locale)!);
 }
 
-export function aggregateByLocale(
-  chunks: ChunkAnalysis[]
-): CollectorBreakdown[] {
+export function aggregateByLocale(chunks: ChunkAnalysis[]): CollectorBreakdown[] {
   const order: string[] = [];
   const map = new Map<string, CollectorBreakdown>();
 

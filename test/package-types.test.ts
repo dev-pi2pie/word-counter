@@ -9,9 +9,7 @@ const require = createRequire(import.meta.url);
 const tscEntrypoint = require.resolve("typescript/bin/tsc");
 
 afterEach(async () => {
-  await Promise.all(
-    tempRoots.splice(0).map((path) => rm(path, { recursive: true, force: true })),
-  );
+  await Promise.all(tempRoots.splice(0).map((path) => rm(path, { recursive: true, force: true })));
 });
 
 async function makeTypecheckFixture(): Promise<string> {
@@ -34,6 +32,60 @@ describe("published package types", () => {
         "wc('Hello world');",
         "wordCounter('Hello world');",
         "countSections('Hello world', 'all');",
+      ].join("\n"),
+    );
+
+    const result = spawnSync(
+      process.execPath,
+      [
+        tscEntrypoint,
+        "--noEmit",
+        "--pretty",
+        "false",
+        "--module",
+        "NodeNext",
+        "--moduleResolution",
+        "NodeNext",
+        "--target",
+        "ES2022",
+        "--skipLibCheck",
+        entryPath,
+      ],
+      {
+        cwd: process.cwd(),
+        encoding: "utf8",
+      },
+    );
+
+    expect(result.status).toBe(0);
+    expect(result.stderr).toBe("");
+  });
+
+  test("detector subpath exports inspect API and types", async () => {
+    const fixtureRoot = await makeTypecheckFixture();
+    const entryPath = join(fixtureRoot, "detector-imports.mts");
+
+    await writeFile(
+      entryPath,
+      [
+        "import {",
+        "  countSectionsWithDetector,",
+        "  inspectTextWithDetector,",
+        "  segmentTextByLocaleWithDetector,",
+        "  wordCounterWithDetector,",
+        "  type DetectorInspectOptions,",
+        "  type DetectorInspectResult,",
+        "} from '@dev-pi2pie/word-counter/detector';",
+        "const options: DetectorInspectOptions = {",
+        "  detector: 'regex',",
+        "  view: 'pipeline',",
+        "  contentGate: { mode: 'strict' },",
+        "};",
+        "const resultPromise: Promise<DetectorInspectResult> = inspectTextWithDetector('Hello world', options);",
+        "segmentTextByLocaleWithDetector('Hello world', { detector: 'regex', contentGate: { mode: 'loose' } });",
+        "wordCounterWithDetector('Hello world', { detector: 'wasm', contentGate: { mode: 'off' } });",
+        "countSectionsWithDetector('Hello world', 'all', { detector: 'regex', contentGate: { mode: 'default' } });",
+        "void resultPromise;",
       ].join("\n"),
     );
 

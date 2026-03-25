@@ -6,6 +6,11 @@ import type { DetectorDebugContext } from "./debug";
 export type DetectorMode = "regex" | "wasm";
 
 export type DetectorSource = "script" | "hint" | "wasm";
+export type DetectorContentGateMode = "default" | "strict" | "loose" | "off";
+
+export interface DetectorContentGateOptions {
+  mode?: DetectorContentGateMode;
+}
 
 export interface DetectorResult {
   tag: string;
@@ -17,13 +22,12 @@ export interface DetectorResult {
 export interface DetectorRuntimeOptions {
   detector?: DetectorMode;
   detectorDebug?: DetectorDebugContext;
+  contentGate?: DetectorContentGateOptions;
 }
 
 export interface DetectorLocaleOptions extends LocaleDetectOptions, DetectorRuntimeOptions {}
 
-export interface DetectorWordCounterOptions
-  extends WordCounterOptions,
-    DetectorRuntimeOptions {}
+export interface DetectorWordCounterOptions extends WordCounterOptions, DetectorRuntimeOptions {}
 
 export type DetectorCountSectionsOptions = DetectorWordCounterOptions;
 

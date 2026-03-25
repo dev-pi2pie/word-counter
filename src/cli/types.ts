@@ -10,9 +10,18 @@ export type BatchSkip = {
   reason: string;
 };
 
+export type BatchResolvedSkip = BatchSkip & {
+  source: "direct" | "directory";
+};
+
 export type BatchFileInput = {
   path: string;
   content: string;
+};
+
+export type BatchResolvedFile = {
+  path: string;
+  source: "direct" | "directory";
 };
 
 export type BatchFileResult = {

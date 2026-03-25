@@ -1,10 +1,7 @@
 import type { SectionedResult } from "../../markdown";
 import { buildDebugSection } from "../output/debug-json";
 import { countSections } from "../../markdown";
-import {
-  countSectionsWithDetector,
-  wordCounterWithDetector,
-} from "../../detector";
+import { countSectionsWithDetector, wordCounterWithDetector } from "../../detector";
 import { createDetectorDebugSummary } from "../../detector/debug";
 import {
   getTotalLabels,
@@ -52,7 +49,9 @@ export async function executeSingleCount({
   }
 
   const detectorDebugSummary =
-    resolved.detectorMode === "wasm" ? createDetectorDebugSummary(resolved.detectorMode) : undefined;
+    resolved.detectorMode === "wasm"
+      ? createDetectorDebugSummary(resolved.detectorMode)
+      : undefined;
   const detectorDebug =
     detectorDebugSummary && debug.enabled
       ? {

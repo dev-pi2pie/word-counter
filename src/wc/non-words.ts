@@ -41,10 +41,7 @@ export function addNonWord(
   collection.counts.punctuation += 1;
 }
 
-export function addWhitespace(
-  collection: NonWordCollection,
-  segment: string,
-): number {
+export function addWhitespace(collection: NonWordCollection, segment: string): number {
   let whitespace = collection.whitespace;
   let count = 0;
   for (const char of segment) {
@@ -81,9 +78,7 @@ export function addWhitespace(
   return count;
 }
 
-export function classifyNonWordSegment(
-  segment: string,
-): "emoji" | "symbol" | "punctuation" | null {
+export function classifyNonWordSegment(segment: string): "emoji" | "symbol" | "punctuation" | null {
   const hasEmojiVariationSelector = segment.includes("\uFE0F");
   if (
     keycapEmojiRegex.test(segment) ||

@@ -2,16 +2,22 @@ import type { SectionMode } from "../markdown";
 import type { LocaleChunk } from "../wc/types";
 import {
   countSectionsWithRegexDetector,
+  inspectTextWithRegexDetector,
   segmentTextByLocaleWithRegexDetector,
   wordCounterWithRegexDetector,
 } from "./none";
 import {
   countSectionsWithWasmDetector,
+  inspectTextWithWasmDetector,
   segmentTextByLocaleWithWasmDetector,
   WASM_DETECTOR_RUNTIME_UNAVAILABLE_MESSAGE,
   wordCounterWithWasmDetector,
 } from "./wasm";
+import { inspectTextWithDetector } from "./inspect";
+import { createDetectorDebugSummary, mergeDetectorDebugSummaries } from "./debug";
 import type {
+  DetectorContentGateMode,
+  DetectorContentGateOptions,
   DetectorCountSectionsOptions,
   DetectorLocaleOptions,
   DetectorMode,
@@ -21,6 +27,8 @@ import type {
 } from "./types";
 
 export type {
+  DetectorContentGateMode,
+  DetectorContentGateOptions,
   DetectorCountSections,
   DetectorCountSectionsOptions,
   DetectorCountResult,
@@ -31,6 +39,31 @@ export type {
   DetectorSource,
   DetectorWordCounterOptions,
 } from "./types";
+export type {
+  DetectorInspectChunk,
+  DetectorInspectDecision,
+  DetectorInspectEngine,
+  DetectorInspectEngineRaw,
+  DetectorInspectEngineResult,
+  DetectorInspectInput,
+  DetectorInspectInputOptions,
+  DetectorInspectInputSourceType,
+  DetectorInspectKind,
+  DetectorInspectOptions,
+  DetectorInspectPipelineResult,
+  DetectorInspectResult,
+  DetectorInspectSample,
+  DetectorInspectSchemaVersion,
+  DetectorInspectView,
+  DetectorInspectWindow,
+} from "./inspect-types";
+export type {
+  DetectorDebugContext,
+  DetectorDebugSummary,
+  DetectorDebugVerbosity,
+  DetectorEvidenceConfig,
+  DetectorFallbackReason,
+} from "./debug";
 
 export const DETECTOR_MODES: DetectorMode[] = ["regex", "wasm"];
 export const DEFAULT_DETECTOR_MODE: DetectorMode = "regex";
@@ -80,6 +113,13 @@ export async function countSectionsWithDetector(
 export const DETECTOR_SOURCES: DetectorSource[] = ["script", "hint", "wasm"];
 export const DEFAULT_DETECTOR_RESULT_SOURCE: DetectorSource = "script";
 export { WASM_DETECTOR_RUNTIME_UNAVAILABLE_MESSAGE };
+export {
+  createDetectorDebugSummary,
+  inspectTextWithDetector,
+  inspectTextWithRegexDetector,
+  inspectTextWithWasmDetector,
+  mergeDetectorDebugSummaries,
+};
 
 export function createDetectorResult(
   tag: string,

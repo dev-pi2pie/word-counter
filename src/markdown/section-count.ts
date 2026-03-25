@@ -74,7 +74,8 @@ export function countSections(
   const frontmatterText = parsed.frontmatter ?? "";
   const contentText = parsed.content ?? "";
 
-  let items: Array<{ name: string; source: "frontmatter" | "content"; result: WordCounterResult }> = [];
+  let items: Array<{ name: string; source: "frontmatter" | "content"; result: WordCounterResult }> =
+    [];
 
   if (section === "frontmatter") {
     items = buildSingleItem("frontmatter", frontmatterText, mode, options, "frontmatter");

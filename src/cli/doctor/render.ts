@@ -78,10 +78,7 @@ function renderStandardDoctorReport(report: DoctorReport): void {
   }
 }
 
-export function renderDoctorReport(
-  report: DoctorReport,
-  options: RenderDoctorReportOptions,
-): void {
+export function renderDoctorReport(report: DoctorReport, options: RenderDoctorReportOptions): void {
   if (options.format === "json") {
     console.log(JSON.stringify(report, null, options.pretty ? 2 : 0));
     return;

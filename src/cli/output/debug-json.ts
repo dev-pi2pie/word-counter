@@ -6,9 +6,7 @@ type DebugSection = {
   detector?: DetectorDebugSummary;
 };
 
-export function buildDebugSection(
-  input: DebugSection,
-): DebugSection | undefined {
+export function buildDebugSection(input: DebugSection): DebugSection | undefined {
   const output: DebugSection = {};
 
   if (input.skipped && input.skipped.length > 0) {

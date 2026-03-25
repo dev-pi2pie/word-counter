@@ -1,6 +1,6 @@
 import { parseMarkdown } from "../markdown";
 import type { SectionMode, SectionedResult } from "../markdown";
-import type { WordCounterMode, WordCounterResult } from "../wc/types";
+import type { WordCounterResult } from "../wc/types";
 import type { DetectorCountSectionsOptions } from "./types";
 import { wordCounterWithDetector } from "./index";
 
@@ -60,7 +60,6 @@ export async function countSectionsWithResolvedDetector(
   section: SectionMode,
   options: DetectorCountSectionsOptions = {},
 ): Promise<SectionedResult> {
-  const mode: WordCounterMode = options.mode ?? "chunk";
   if (section === "all") {
     const result = await wordCounterWithDetector(input, options);
     return {
@@ -75,7 +74,8 @@ export async function countSectionsWithResolvedDetector(
   const frontmatterText = parsed.frontmatter ?? "";
   const contentText = parsed.content ?? "";
 
-  let items: Array<{ name: string; source: "frontmatter" | "content"; result: WordCounterResult }> = [];
+  let items: Array<{ name: string; source: "frontmatter" | "content"; result: WordCounterResult }> =
+    [];
 
   if (section === "frontmatter") {
     items = await buildSingleItem("frontmatter", frontmatterText, options, "frontmatter");
