@@ -8,51 +8,38 @@ agent: codex
 
 ## Goal
 
-Determine whether the detector `contentGate` should become user-configurable after the current detector-policy and inspect work, and if so, define the safest product surface for that configuration.
+Settle whether `contentGate` should be exposed as a user-configurable policy surface now that detector-policy, inspect, inspect-batch, and recent refactor work are complete.
 
 ## Key Findings
 
-- The current detector-policy work intentionally keeps `contentGate` internal-first.
-  - The recent detector-policy and inspect research settled the architectural split from `qualityGate` to `contentGate`.
-  - That work did not settle any user-facing strictness controls.
-- Exposing `contentGate` too early would freeze semantics that are still route-asymmetric.
-  - `und-Latn` currently has the meaningful content-gate policy.
-  - `und-Hani` currently uses `contentGate` mostly as a structured “not applied” state.
-  - A single global user control would therefore affect Latin behavior much more than Han behavior in the current design.
-- Inspect output should exist first before policy-strength controls are exposed.
-  - Without the `inspect` command and inspector schema in place, users cannot easily understand what stricter or looser policy actually changed.
-  - Inspect output will provide the observability needed to make policy controls explainable and testable.
-- The likely user stories are real, but they are different enough that a single loose knob may be misleading.
-  - Some users will want stricter fallback to avoid false positives on technical prose.
-  - Some users will want looser acceptance for prose-heavy mixed content.
-  - Some users may want to bypass the gate completely for experimentation.
-- A global on/off control is much easier to document than a route-specific tuning matrix, but it may still be too coarse.
-  - If exposed, the first version should likely be a small discrete mode set rather than numeric thresholds.
-  - Numeric threshold controls would leak internal policy mechanics and be harder to keep stable across releases.
+- The implementation prerequisites are already in place.
+  - route-aware detector policy objects exist
+  - inspect library and CLI surfaces exist
+  - inspect batch mode exists
+  - the recent TypeScript refactor lowered follow-up implementation risk
+- `contentGate` should already be treated as part of the public diagnostic story.
+  - `contentGate` is the canonical gate field for current inspect and debug disclosure
+  - `qualityGate` still needs to remain as a compatibility alias only in legacy payloads that already exposed that older field
+- The main remaining question is not observability.
+  - inspect and debug output now make gate behavior explainable
+  - users can see whether the gate applied, which policy ran, and whether it passed
+- Route asymmetry still exists, but it does not block a first public configuration surface if the contract is explicit.
+  - some detector routes meaningfully apply `contentGate`
+  - other routes should accept the configured mode but report that the gate was not applied
+- A small discrete mode set is still the safest public contract.
+  - it is easier to explain than numeric thresholds
+  - it leaves room for fixture-backed internal tuning without exposing raw detector heuristics
 
-## Implications or Recommendations
+## Settled Decision
 
-- Do not fold configurable `contentGate` behavior into the current detector-policy/inspect implementation plan.
-  - It is a separate product/API decision.
-  - It depends on having the new inspect tooling available first.
-- Research this as a separate follow-up track after the first inspect prototype is implemented.
-- Prefer discrete policy modes over low-level threshold exposure if any user-facing control is added.
-- The recommended first public surface, if the follow-up implementation ever proceeds, is:
-  - available in both CLI and library forms
-  - global for all applicable routes
-  - based on one small mode set:
-    - `default`
-    - `strict`
-    - `loose`
-    - `off`
-- Treat `off` as a potentially sharp tool.
-  - It should be researched carefully before exposure because it can deliberately increase wrong-but-confident detector upgrades.
-- Make inspect output the primary explanation surface for any future gate control.
-  - If a mode changes acceptance behavior, inspect output should show the applied policy mode and resulting `contentGate` evaluation.
+- Implement user-configurable `contentGate` behavior.
+- Expose the same mode set in both CLI and library forms.
+- Use `contentGate` as the canonical gate field in inspect and debug output.
+- Keep `qualityGate` only as a compatibility alias in legacy payloads that already expose it.
+- Keep the public surface mode-based, not threshold-based.
+- Keep the configuration global in the first version, not route-specific.
 
-## Recommended First-Version Candidate Contract
-
-If configurable `contentGate` behavior is implemented in a later phase, the recommended v1 contract is:
+## Recommended First-Version Contract
 
 Library:
 
@@ -68,77 +55,55 @@ CLI:
 --content-gate default|strict|loose|off
 ```
 
-Recommended v1 scope rules:
+## Recommended First-Version Rules
 
-- expose the same mode set in CLI and library forms
-- keep the mode global, not route-specific
-- non-applicable routes must not reject the configured mode
-- non-applicable routes must no-op the configured mode for decision behavior
-- non-applicable routes must disclose that no-op state in inspect/debug output with `contentGate.applied = false` and `contentGate.policy = "none"`
-- on routes where `contentGate` is meaningful:
-  - apply the configured mode normally
-  - current expectation: mostly Latin-gated detector routes
-- on routes where `contentGate` is not meaningful:
-  - never reject the configured mode as invalid
-  - always treat the configured mode as a no-op for decision behavior
-  - keep inspect/debug disclosure truthful by reporting the configured mode while `contentGate.applied = false` and `contentGate.policy = "none"`
-- do not expose low-level thresholds or route-specific tuning in v1
+- `default` is the current fixture-backed project policy.
+- `strict` tightens acceptance so more borderline detector windows fall back.
+- `loose` relaxes acceptance so more borderline detector windows may upgrade.
+- `off` bypasses `contentGate` evaluation only.
+- `off` does not disable route eligibility, corroboration, or fallback-tag behavior.
+- Non-applicable routes must accept the configured mode without error.
+- Non-applicable routes must report honest no-op behavior in inspect and debug output:
+  - `contentGate.applied = false`
+  - `contentGate.policy = "none"`
+- Routes where `contentGate` is meaningful should apply the selected mode normally and disclose the resulting evaluation.
+- New diagnostic surfaces should use `contentGate` as the canonical field.
+- Legacy debug/evidence payloads that already exposed `qualityGate` should continue to emit the derived compatibility alias during the compatibility window.
 
-## Recommended Mode Semantics
+## Why This Should Be Implemented Now
 
-The follow-up implementation plan should use these semantics unless later evidence forces a change:
+- The project now has the inspect and debug surfaces needed to explain the behavior clearly.
+- The internal detector-policy split means the work can be implemented without reopening the broader detector architecture.
+- A mode-based contract is concrete enough to document and test now.
+- Users who need stricter, looser, or disabled gate behavior no longer need to rely on forks or internal-only changes.
 
-| Mode | Meaning | Expected bias |
-| --- | --- | --- |
-| `default` | current project policy | balanced against the existing fixture-backed contract |
-| `strict` | tighten acceptance so more borderline windows fall back | safer against false positives |
-| `loose` | relax acceptance so more borderline windows may upgrade | more permissive for prose-heavy mixed input |
-| `off` | bypass `contentGate` evaluation only | leaves other detector-policy rules intact |
+## Follow-Up Planning Constraints
 
-Additional first-version rules:
+The follow-up implementation plan should keep these boundaries:
 
-- `off` disables only `contentGate`
-  - it does not disable route eligibility rules
-  - it does not disable corroboration rules
-  - it does not disable fallback-tag behavior
-- `strict` and `loose` should be defined by fixture-backed behavior, not numeric thresholds in the public contract
-- inspect output should disclose the active policy mode whenever it affects decision reporting
-
-## Remaining Research Questions
-
-- Should `contentGate` be configurable at all, or should the project keep detector policy fixed and fixture-backed?
-- What exact fixture-backed behavior table should define `strict` and `loose`?
-- Should mode disclosure appear in both `engine` and `pipeline` inspect output, or only where package policy is actually applied?
-- Should the configuration surface live under detector options directly, or under the dedicated nested `contentGate` object shown above?
-
-## Recommended Future Research Scope
-
-The follow-up research should include:
-
-- user-story framing for why a configurable gate is needed
-- comparison of CLI and library ergonomics
-- fixture-backed behavior tables for candidate modes
-- compatibility impact assessment
-- inspect/debug disclosure expectations for active policy mode
-
-The follow-up research should stay out of:
-
-- broad detector engine selection work
-- inspect batch mode
-- changes to the base regex/script segmentation contract
-
-## Recommended Timing
-
-- finish the current detector-policy and inspect implementation first
-- let the single-input inspect prototype stabilize
-- then open the follow-up implementation plan for configurable `contentGate` behavior if the inspect prototype reveals a clear user need
+- define mode behavior through fixture-backed outcomes, not public numeric thresholds
+- cover both CLI and library surfaces in one contract
+- preserve `contentGate` as the canonical diagnostic field
+- preserve `qualityGate` only as a compatibility alias where it already exists
+- keep first-version behavior global, with truthful no-op reporting on non-applicable routes
+- avoid route-specific tuning or threshold exposure in v1
 
 ## Related Plans
 
 - `docs/plans/plan-2026-03-25-detector-policy-and-inspect-command.md`
+- `docs/plans/plan-2026-03-25-inspect-batch-command.md`
+- `docs/plans/plan-2026-03-25-typescript-structure-modularization.md`
 
 ## Related Research
 
 - `docs/researches/research-2026-03-25-detector-policy-and-inspector-surface.md`
+- `docs/researches/research-2026-03-25-inspect-batch-mode.md`
 - `docs/researches/research-2026-03-24-wasm-latin-detector-quality-false-positives.md`
 - `docs/researches/research-2026-03-24-detector-evidence-debug-surface.md`
+
+## Related Job Records
+
+- `docs/plans/jobs/2026-03-25-detector-policy-phase1-phase2-implementation.md`
+- `docs/plans/jobs/2026-03-25-detector-inspect-phase3-phase4-implementation.md`
+- `docs/plans/jobs/2026-03-25-inspect-batch-phase1-phase2-implementation.md`
+- `docs/plans/jobs/2026-03-25-typescript-structure-phase5-phase6-implementation.md`
