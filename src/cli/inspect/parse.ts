@@ -1,4 +1,5 @@
 import type { DetectorInspectView } from "../../detector/inspect-types";
+import type { DetectorContentGateMode } from "../../detector";
 import type { PathMode } from "../types";
 import type {
   InspectDetectorMode,
@@ -37,6 +38,21 @@ function parseFormat(rawValue: string | undefined): InspectOutputFormat | null {
   return null;
 }
 
+function parseContentGateMode(rawValue: string | undefined): DetectorContentGateMode | null {
+  if (rawValue === undefined) {
+    return "default";
+  }
+  if (
+    rawValue === "default" ||
+    rawValue === "strict" ||
+    rawValue === "loose" ||
+    rawValue === "off"
+  ) {
+    return rawValue;
+  }
+  return null;
+}
+
 function parsePathMode(rawValue: string | undefined): PathMode | null {
   if (rawValue === undefined) {
     return "auto";
@@ -51,10 +67,18 @@ function isSupportedInspectSectionMode(value: string): value is InspectSectionMo
   return value === "all" || value === "frontmatter" || value === "content";
 }
 
+function isInvalidInspectDetectorViewCombination(
+  detector: InspectDetectorMode,
+  view: DetectorInspectView,
+): boolean {
+  return view === "engine" && detector === "regex";
+}
+
 export function validateInspectInvocation(argv: string[]): ValidInspectInvocation {
   const inspectIndex = argv.findIndex((token, index) => index >= 2 && token === "inspect");
   const tokens = inspectIndex >= 0 ? argv.slice(inspectIndex + 1) : [];
   let detector: InspectDetectorMode = "wasm";
+  let contentGateMode: DetectorContentGateMode = "default";
   let view: DetectorInspectView = "pipeline";
   let format: InspectOutputFormat = "standard";
   let pretty = false;
@@ -69,6 +93,7 @@ export function validateInspectInvocation(argv: string[]): ValidInspectInvocatio
   let expects:
     | "detector"
     | "view"
+    | "contentGate"
     | "format"
     | "section"
     | "pathMode"
@@ -83,6 +108,7 @@ export function validateInspectInvocation(argv: string[]): ValidInspectInvocatio
     kind:
       | "detector"
       | "view"
+      | "contentGate"
       | "format"
       | "section"
       | "pathMode"
@@ -107,6 +133,15 @@ export function validateInspectInvocation(argv: string[]): ValidInspectInvocatio
         return "`--view` must be `pipeline` or `engine`.";
       }
       view = parsed;
+      return null;
+    }
+
+    if (kind === "contentGate") {
+      const parsed = parseContentGateMode(value);
+      if (parsed === null) {
+        return "`--content-gate` must be `default`, `strict`, `loose`, or `off`.";
+      }
+      contentGateMode = parsed;
       return null;
     }
 
@@ -197,6 +232,7 @@ export function validateInspectInvocation(argv: string[]): ValidInspectInvocatio
 
     if (
       token === "--detector" ||
+      token === "--content-gate" ||
       token === "--view" ||
       token === "--format" ||
       token === "-f" ||
@@ -211,26 +247,29 @@ export function validateInspectInvocation(argv: string[]): ValidInspectInvocatio
       expects =
         token === "-p"
           ? "path"
-          : token === "-f"
-            ? "format"
-            : token === "--path-mode"
-              ? "pathMode"
-              : token === "--include-ext"
-                ? "includeExt"
-                : token === "--exclude-ext"
-                  ? "excludeExt"
-                  : (token.slice(2) as
-                      | "detector"
-                      | "view"
-                      | "format"
-                      | "section"
-                      | "path"
-                      | "regex");
+          : token === "--content-gate"
+            ? "contentGate"
+            : token === "-f"
+              ? "format"
+              : token === "--path-mode"
+                ? "pathMode"
+                : token === "--include-ext"
+                  ? "includeExt"
+                  : token === "--exclude-ext"
+                    ? "excludeExt"
+                    : (token.slice(2) as
+                        | "detector"
+                        | "view"
+                        | "format"
+                        | "section"
+                        | "path"
+                        | "regex");
       continue;
     }
 
     if (
       token.startsWith("--detector=") ||
+      token.startsWith("--content-gate=") ||
       token.startsWith("--view=") ||
       token.startsWith("--format=") ||
       token.startsWith("--section=") ||
@@ -257,9 +296,31 @@ export function validateInspectInvocation(argv: string[]): ValidInspectInvocatio
             ? "includeExt"
             : optionName === "exclude-ext"
               ? "excludeExt"
-              : (optionName as "detector" | "view" | "format" | "section" | "path" | "regex");
+              : (optionName as
+                  | "detector"
+                  | "content-gate"
+                  | "view"
+                  | "format"
+                  | "section"
+                  | "path"
+                  | "regex");
+      const normalizedNamedOption =
+        normalizedOption === "content-gate" ? "contentGate" : normalizedOption;
 
-      const error = consumeValue(normalizedOption, value);
+      const error = consumeValue(
+        normalizedNamedOption as
+          | "detector"
+          | "contentGate"
+          | "view"
+          | "format"
+          | "section"
+          | "path"
+          | "regex"
+          | "pathMode"
+          | "includeExt"
+          | "excludeExt",
+        value,
+      );
       if (error) {
         return { ok: false, message: error };
       }
@@ -280,11 +341,13 @@ export function validateInspectInvocation(argv: string[]): ValidInspectInvocatio
     const optionName =
       expects === "pathMode"
         ? "path-mode"
-        : expects === "includeExt"
-          ? "include-ext"
-          : expects === "excludeExt"
-            ? "exclude-ext"
-            : expects;
+        : expects === "contentGate"
+          ? "content-gate"
+          : expects === "includeExt"
+            ? "include-ext"
+            : expects === "excludeExt"
+              ? "exclude-ext"
+              : expects;
     return {
       ok: false,
       message: `\`--${optionName}\` requires a value.`,
@@ -305,7 +368,7 @@ export function validateInspectInvocation(argv: string[]): ValidInspectInvocatio
     };
   }
 
-  if ((view as DetectorInspectView) === "engine" && (detector as InspectDetectorMode) === "regex") {
+  if (isInvalidInspectDetectorViewCombination(detector, view)) {
     return {
       ok: false,
       message: "`--view engine` requires `--detector wasm`.",
@@ -315,6 +378,7 @@ export function validateInspectInvocation(argv: string[]): ValidInspectInvocatio
   return {
     ok: true,
     detector,
+    contentGateMode,
     view,
     format,
     pretty,

@@ -4,7 +4,7 @@ import { collectExtensionOption } from "../path/filter";
 import { parseTotalOfOption } from "../total-of";
 import type { PathMode } from "../types";
 import type { OutputFormat } from "../runtime/types";
-import type { DetectorMode } from "../../detector";
+import type { DetectorContentGateMode, DetectorMode } from "../../detector";
 import type { WordCounterMode } from "../../wc";
 
 const MODE_CHOICES: WordCounterMode[] = [
@@ -15,6 +15,7 @@ const MODE_CHOICES: WordCounterMode[] = [
   "char-collector",
 ];
 const DETECTOR_CHOICES: DetectorMode[] = ["regex", "wasm"];
+const CONTENT_GATE_CHOICES: DetectorContentGateMode[] = ["default", "strict", "loose", "off"];
 const FORMAT_CHOICES: OutputFormat[] = ["standard", "raw", "json"];
 const SECTION_CHOICES: SectionMode[] = [
   "all",
@@ -72,6 +73,12 @@ export function configureProgramOptions(
       new Option("--detector <mode>", "locale detector mode")
         .choices(DETECTOR_CHOICES)
         .default("regex"),
+    )
+    .addOption(
+      new Option(
+        "--content-gate <mode>",
+        "detector content gate policy mode (default, strict, loose, off)",
+      ).choices(CONTENT_GATE_CHOICES),
     )
     .addOption(
       new Option(

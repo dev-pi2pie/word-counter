@@ -3,7 +3,11 @@ import type { ProgressOutputStream } from "../progress/reporter";
 import type { TotalOfPart } from "../total-of";
 import type { PathMode } from "../types";
 import type { DoctorRuntimeOverrides } from "../doctor/types";
-import type { DetectorMode, DetectorWordCounterOptions } from "../../detector";
+import type {
+  DetectorContentGateMode,
+  DetectorMode,
+  DetectorWordCounterOptions,
+} from "../../detector";
 import type { WordCounterMode, WordCounterResult } from "../../wc";
 
 export type OutputFormat = "standard" | "raw" | "json";
@@ -14,6 +18,7 @@ export type CliActionOptions = {
   pretty: boolean;
   section: SectionMode;
   detector: DetectorMode;
+  contentGate?: DetectorContentGateMode;
   latinLanguage?: string;
   latinTag?: string;
   latinLocale?: string;

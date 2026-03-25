@@ -1,6 +1,6 @@
 import { DEFAULT_HAN_TAG, DEFAULT_LOCALE } from "../wc/locale-detect";
 import type { LocaleChunk } from "../wc/types";
-import type { DetectorResult } from "./types";
+import type { DetectorContentGateMode, DetectorResult } from "./types";
 
 export const LATIN_WASM_MIN_SCRIPT_CHARS = 24;
 export const HANI_WASM_MIN_SCRIPT_CHARS = 12;
@@ -75,7 +75,10 @@ export type DetectorRoutePolicy = {
     window: DetectorWindow,
     chunks: LocaleChunk[],
   ) => DetectorDiagnosticSample;
-  evaluateContentGate: (sample: DetectorDiagnosticSample) => DetectorContentGateResult;
+  evaluateContentGate: (
+    sample: DetectorDiagnosticSample,
+    mode?: DetectorContentGateMode,
+  ) => DetectorContentGateResult;
   accept: (candidate: DetectorResult) => boolean;
   acceptCorroborated?: (
     raw: DetectorResult,
@@ -212,10 +215,21 @@ function shouldTreatLatinProseBlockAsSentenceLike(
   return lineCount <= 1 ? latinWords >= 5 : latinWords >= 8;
 }
 
-function shouldAcceptLatinDetectorWindow(text: string, normalizedSample: string): boolean {
+function evaluateLatinContentGate(
+  text: string,
+  normalizedSample: string,
+  mode: Exclude<DetectorContentGateMode, "off">,
+): DetectorContentGateResult {
+  const minNormalizedLatinWords = mode === "strict" ? 5 : 4;
+  const minProseWords = mode === "strict" ? 5 : mode === "loose" ? 3 : 4;
+  const technicalWordSlack = mode === "loose" ? 2 : 0;
   const normalizedLatinWords = countLatinWords(normalizedSample);
-  if (normalizedLatinWords < 4) {
-    return false;
+  if (normalizedLatinWords < minNormalizedLatinWords) {
+    return {
+      applied: true,
+      passed: false,
+      policy: "latinProse",
+    };
   }
 
   let proseWords = 0;
@@ -265,7 +279,11 @@ function shouldAcceptLatinDetectorWindow(text: string, normalizedSample: string)
   }
 
   flushProseBlock();
-  return proseWords >= 4 && proseWords >= technicalWords;
+  return {
+    applied: true,
+    passed: proseWords >= minProseWords && proseWords + technicalWordSlack >= technicalWords,
+    policy: "latinProse",
+  };
 }
 
 function evaluateEligibility(
@@ -359,12 +377,16 @@ function createLatinRoutePolicy(): DetectorRoutePolicy {
     buildDiagnosticSample(window) {
       return buildFocusOnlyDiagnosticSample(window);
     },
-    evaluateContentGate(sample) {
-      return {
-        applied: true,
-        passed: shouldAcceptLatinDetectorWindow(sample.text, sample.normalizedText),
-        policy: "latinProse",
-      };
+    evaluateContentGate(sample, mode = "default") {
+      if (mode === "off") {
+        return {
+          applied: false,
+          passed: true,
+          policy: "none",
+        };
+      }
+
+      return evaluateLatinContentGate(sample.text, sample.normalizedText, mode);
     },
     accept(candidate) {
       return shouldAcceptCandidate(

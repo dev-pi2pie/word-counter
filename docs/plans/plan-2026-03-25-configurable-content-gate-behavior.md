@@ -82,15 +82,15 @@ contentGate?: {
 
 ### Phase 1 - Public Contract And Option Plumbing
 
-- [ ] Add a public `contentGate.mode` option shape to the detector-subpath option types consumed by:
+- [x] Add a public `contentGate.mode` option shape to the detector-subpath option types consumed by:
   - `wordCounterWithDetector`
   - `segmentTextByLocaleWithDetector`
   - `countSectionsWithDetector`
   - `inspectTextWithDetector`
-- [ ] Add CLI parsing and validation for `--content-gate default|strict|loose|off`.
-- [ ] Define how the configured mode flows from detector-subpath options and CLI options into detector-policy execution.
-- [ ] Preserve current behavior when the option is omitted so `default` remains the effective behavior.
-- [ ] Reject unsupported mode values with clear CLI and library validation behavior.
+- [x] Add CLI parsing and validation for `--content-gate default|strict|loose|off`.
+- [x] Define how the configured mode flows from detector-subpath options and CLI options into detector-policy execution.
+- [x] Preserve current behavior when the option is omitted so `default` remains the effective behavior.
+- [x] Reject unsupported mode values with clear CLI and library validation behavior.
 
 Validation for this phase:
 
@@ -101,11 +101,11 @@ Validation for this phase:
 
 ### Phase 2 - Detector Policy Mode Semantics
 
-- [ ] Extend route-aware detector policy evaluation so `contentGate` can apply `default`, `strict`, `loose`, and `off`.
-- [ ] Define fixture-backed behavior differences for `strict` and `loose` on routes where `contentGate` is meaningful.
-- [ ] Ensure `off` bypasses only `contentGate` evaluation and leaves route eligibility, corroboration, and fallback intact.
-- [ ] Ensure non-applicable routes accept the configured mode while remaining truthful no-op evaluations.
-- [ ] Keep policy implementation internal and avoid exposing raw thresholds in the public contract.
+- [x] Extend route-aware detector policy evaluation so `contentGate` can apply `default`, `strict`, `loose`, and `off`.
+- [x] Define fixture-backed behavior differences for `strict` and `loose` on routes where `contentGate` is meaningful.
+- [x] Ensure `off` bypasses only `contentGate` evaluation and leaves route eligibility, corroboration, and fallback intact.
+- [x] Ensure non-applicable routes accept the configured mode while remaining truthful no-op evaluations.
+- [x] Keep policy implementation internal and avoid exposing raw thresholds in the public contract.
 
 Validation for this phase:
 
@@ -189,3 +189,7 @@ Validation for this phase:
 - `docs/researches/research-2026-03-25-inspect-batch-mode.md`
 - `docs/researches/research-2026-03-24-wasm-latin-detector-quality-false-positives.md`
 - `docs/researches/research-2026-03-24-detector-evidence-debug-surface.md`
+
+## Related Jobs
+
+- `docs/plans/jobs/2026-03-25-configurable-content-gate-phase1-phase2-implementation.md`

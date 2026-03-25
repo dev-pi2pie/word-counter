@@ -47,6 +47,9 @@ export async function runInspectBatch(
   for (const file of loaded.files) {
     const result = await inspectTextWithDetector(selectInspectText(file.text, validated.section), {
       detector: validated.detector,
+      contentGate: {
+        mode: validated.contentGateMode,
+      },
       view: validated.view,
       input: {
         sourceType: "path",

@@ -153,6 +153,49 @@ describe("inspect command", () => {
     expect(parsed.view).toBe("pipeline");
   });
 
+  test("supports inspect --content-gate for explicit mode selection", async () => {
+    const output = await captureCli([
+      "inspect",
+      "--detector",
+      "regex",
+      "--content-gate",
+      "loose",
+      "--format",
+      "json",
+      "こんにちは、世界！これはテストです。",
+    ]);
+
+    expect(output.exitCode).toBe(0);
+    const parsed = JSON.parse(output.stdout[0] ?? "{}");
+    expect(parsed.detector).toBe("regex");
+    expect(parsed.view).toBe("pipeline");
+  });
+
+  test("threads inspect --content-gate into wasm pipeline evaluation", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const output = await captureCli([
+      "inspect",
+      "--detector",
+      "wasm",
+      "--content-gate",
+      "off",
+      "--format",
+      "json",
+      ["mode: debug", "tee: true", "path: logs", "Use this for testing."].join("\n"),
+    ]);
+
+    expect(output.exitCode).toBe(0);
+    const parsed = JSON.parse(output.stdout[0] ?? "{}");
+    expect(parsed.windows?.[0]?.contentGate).toEqual({
+      applied: false,
+      passed: true,
+      policy: "none",
+    });
+  });
+
   test("returns valid empty inspect result for empty path input", async () => {
     const root = await makeTempFixture("inspect-empty-path");
     const filePath = join(root, "empty.txt");
@@ -196,6 +239,17 @@ describe("inspect command", () => {
 
     expect(output.exitCode).toBe(1);
     expect(output.stderr.some((line) => line.includes("No inspect input provided."))).toBeTrue();
+  });
+
+  test("rejects invalid inspect --content-gate values", async () => {
+    const output = await captureCli(["inspect", "--content-gate", "aggressive", "Hello world"]);
+
+    expect(output.exitCode).toBe(1);
+    expect(
+      output.stderr.some((line) =>
+        line.includes("`--content-gate` must be `default`, `strict`, `loose`, or `off`."),
+      ),
+    ).toBeTrue();
   });
 
   test("rejects mixed positional text and path inspect input", async () => {

@@ -28,5 +28,5 @@ export async function runBoundedQueue<T>(
   if (results.some((result) => result === undefined)) {
     throw new Error("Bounded queue completed with missing results.");
   }
-  return results;
+  return results as T[];
 }

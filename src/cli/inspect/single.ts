@@ -8,6 +8,9 @@ export async function runSingleInspect(
 ): Promise<void> {
   const result = await inspectTextWithDetector(input.text, {
     detector: validated.detector,
+    contentGate: {
+      mode: validated.contentGateMode,
+    },
     view: validated.view,
     input: {
       sourceType: input.sourceType,

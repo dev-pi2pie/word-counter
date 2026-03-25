@@ -193,6 +193,12 @@ export function resolveCountRunOptions(options: CliActionOptions): ResolvedCount
     shouldNormalizeBaseOutput,
     wcOptions: {
       detector: detectorMode,
+      contentGate:
+        options.contentGate === undefined
+          ? undefined
+          : {
+              mode: options.contentGate,
+            },
       mode: options.mode,
       latinLanguageHint: options.latinLanguage,
       latinTagHint: options.latinTag,

@@ -20,6 +20,51 @@ describe("detector entrypoint", () => {
     expect(result.total).toBe(2);
   });
 
+  test("accepts content gate options across detector subpath runtime entrypoints", async () => {
+    const countResult = await wordCounterWithDetector("Hello world", {
+      detector: "regex",
+      contentGate: { mode: "off" },
+    });
+    const chunks = await segmentTextByLocaleWithDetector("Hello world", {
+      detector: "regex",
+      contentGate: { mode: "loose" },
+    });
+    const sections = await countSectionsWithDetector("Hello world", "all", {
+      detector: "regex",
+      contentGate: { mode: "strict" },
+    });
+
+    expect(countResult.total).toBe(2);
+    expect(chunks.map((chunk) => chunk.locale)).toEqual(["und-Latn"]);
+    expect(sections.total).toBe(2);
+  });
+
+  test("threads content gate mode through wasm detector subpath runtime execution", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const sampleEvents: Array<Record<string, unknown>> = [];
+    await wordCounterWithDetector("Internationalization documentation remains understandable.", {
+      detector: "wasm",
+      contentGate: { mode: "strict" },
+      detectorDebug: {
+        emit(event, details) {
+          if (event === "detector.window.sample") {
+            sampleEvents.push(details ?? {});
+          }
+        },
+      },
+    });
+
+    expect(sampleEvents).toHaveLength(1);
+    expect(sampleEvents[0]?.contentGate).toEqual({
+      applied: true,
+      passed: false,
+      policy: "latinProse",
+    });
+  });
+
   test("keeps short ambiguous Latin chunks on und-Latn in wasm mode", async () => {
     const result = await wordCounterWithDetector("Hello world", { detector: "wasm" });
 

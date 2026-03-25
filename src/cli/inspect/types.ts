@@ -1,5 +1,6 @@
 import type { SectionMode } from "../../markdown";
 import type { DetectorInspectResult } from "../../detector";
+import type { DetectorContentGateMode } from "../../detector";
 import type { DetectorInspectView } from "../../detector/inspect-types";
 import type { BatchResolvedFile, BatchSkip, PathMode } from "../types";
 
@@ -15,6 +16,7 @@ export type ParsedInspectInvocation = {
   ok: true;
   help?: false;
   detector: InspectDetectorMode;
+  contentGateMode: DetectorContentGateMode;
   view: DetectorInspectView;
   format: InspectOutputFormat;
   pretty: boolean;

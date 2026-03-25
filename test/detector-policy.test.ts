@@ -58,6 +58,88 @@ describe("detector route policies", () => {
     });
   });
 
+  test("supports default, strict, loose, and off content gate modes on Latin routes", () => {
+    const latinPolicy = DETECTOR_ROUTE_POLICIES[DEFAULT_LOCALE];
+    const shortProseSample = latinPolicy.buildDiagnosticSample(
+      {
+        routeTag: DEFAULT_LOCALE,
+        startIndex: 0,
+        endIndex: 0,
+        text: "Readers understand this behavior.",
+      },
+      [],
+    );
+    const mixedSample = latinPolicy.buildDiagnosticSample(
+      {
+        routeTag: DEFAULT_LOCALE,
+        startIndex: 0,
+        endIndex: 0,
+        text: ["mode: debug", "tee: true", "path: logs", "Use this for testing."].join("\n"),
+      },
+      [],
+    );
+
+    expect(latinPolicy.evaluateContentGate(shortProseSample, "default")).toEqual({
+      applied: true,
+      passed: true,
+      policy: "latinProse",
+    });
+    expect(latinPolicy.evaluateContentGate(shortProseSample, "strict")).toEqual({
+      applied: true,
+      passed: false,
+      policy: "latinProse",
+    });
+    expect(latinPolicy.evaluateContentGate(mixedSample, "default")).toEqual({
+      applied: true,
+      passed: false,
+      policy: "latinProse",
+    });
+    expect(latinPolicy.evaluateContentGate(mixedSample, "loose")).toEqual({
+      applied: true,
+      passed: true,
+      policy: "latinProse",
+    });
+    expect(latinPolicy.evaluateContentGate(mixedSample, "off")).toEqual({
+      applied: false,
+      passed: true,
+      policy: "none",
+    });
+  });
+
+  test("keeps non-applicable routes as no-op content gate evaluations for every mode", () => {
+    const haniPolicy = DETECTOR_ROUTE_POLICIES[DEFAULT_HAN_TAG];
+    const haniSample = haniPolicy.buildDiagnosticSample(
+      {
+        routeTag: DEFAULT_HAN_TAG,
+        startIndex: 0,
+        endIndex: 0,
+        text: "世界！",
+      },
+      [],
+    );
+
+    expect(haniPolicy.evaluateContentGate(haniSample, "default")).toEqual({
+      applied: false,
+      passed: true,
+      policy: "none",
+    });
+    expect(haniPolicy.evaluateContentGate(haniSample, "strict")).toEqual({
+      applied: false,
+      passed: true,
+      policy: "none",
+    });
+    expect(haniPolicy.evaluateContentGate(haniSample, "loose")).toEqual({
+      applied: false,
+      passed: true,
+      policy: "none",
+    });
+    expect(haniPolicy.evaluateContentGate(haniSample, "off")).toEqual({
+      applied: false,
+      passed: true,
+      policy: "none",
+    });
+  });
+
   test("borrows directly adjacent Japanese context for Hani diagnostic samples", () => {
     const haniPolicy = DETECTOR_ROUTE_POLICIES[DEFAULT_HAN_TAG];
     const chunks: LocaleChunk[] = [

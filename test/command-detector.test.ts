@@ -20,6 +20,64 @@ describe("detector mode", () => {
     expect(JSON.parse(output.stdout[0] ?? "{}")).toMatchObject({ total: 2 });
   });
 
+  test("accepts explicit content gate mode on the counting CLI", async () => {
+    const output = await captureCli([
+      "--detector",
+      "regex",
+      "--content-gate",
+      "strict",
+      "--format",
+      "json",
+      "Hello world",
+    ]);
+
+    expect(output.exitCode).toBe(0);
+    expect(JSON.parse(output.stdout[0] ?? "{}")).toMatchObject({ total: 2 });
+  });
+
+  test("threads content gate mode into wasm counting policy evaluation", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const output = await captureCli([
+      "--detector",
+      "wasm",
+      "--content-gate",
+      "strict",
+      "--format",
+      "raw",
+      "--debug",
+      "--verbose",
+      "Internationalization documentation remains understandable.",
+    ]);
+
+    expect(output.exitCode).toBe(0);
+    const sampleEvents = findDebugEvents(output.stderr, "detector.window.sample");
+    expect(sampleEvents).toHaveLength(1);
+    expect(sampleEvents[0]?.contentGate).toEqual({
+      applied: true,
+      passed: false,
+      policy: "latinProse",
+    });
+  });
+
+  test("rejects invalid content gate modes on the counting CLI", async () => {
+    const result = spawnSync(
+      process.execPath,
+      ["run", "src/bin.ts", "--content-gate", "aggressive", "Hello world"],
+      {
+        cwd: process.cwd(),
+        encoding: "utf8",
+      },
+    );
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain(
+      "option '--content-gate <mode>' argument 'aggressive' is invalid",
+    );
+  });
+
   test("supports wasm detector mode for long ambiguous Latin text", async () => {
     if (!hasWasmDetectorRuntime()) {
       return;

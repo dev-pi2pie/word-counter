@@ -133,4 +133,82 @@ describe("detector inspect library API", () => {
     expect(window?.decision.fallbackReason).toBe("noCandidate");
     expect(result.resolvedChunks.map((chunk) => chunk.locale)).toEqual(["und-Latn"]);
   });
+
+  test("applies strict and off content gate modes in wasm pipeline inspection", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const text = "Readers understand this behavior.";
+    const defaultResult = await inspectTextWithDetector(text, {
+      detector: "wasm",
+      view: "pipeline",
+    });
+    const strictResult = await inspectTextWithDetector(text, {
+      detector: "wasm",
+      view: "pipeline",
+      contentGate: { mode: "strict" },
+    });
+    const offResult = await inspectTextWithDetector(text, {
+      detector: "wasm",
+      view: "pipeline",
+      contentGate: { mode: "off" },
+    });
+
+    if (
+      defaultResult.view !== "pipeline" ||
+      strictResult.view !== "pipeline" ||
+      offResult.view !== "pipeline"
+    ) {
+      throw new Error("Expected pipeline inspect result.");
+    }
+
+    expect(defaultResult.windows?.[0]?.contentGate).toEqual({
+      applied: true,
+      passed: true,
+      policy: "latinProse",
+    });
+    expect(strictResult.windows?.[0]?.contentGate).toEqual({
+      applied: true,
+      passed: false,
+      policy: "latinProse",
+    });
+    expect(offResult.windows?.[0]?.contentGate).toEqual({
+      applied: false,
+      passed: true,
+      policy: "none",
+    });
+  });
+
+  test("applies loose content gate mode in wasm pipeline inspection", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const text = ["mode: debug", "tee: true", "path: logs", "Use this for testing."].join("\n");
+    const defaultResult = await inspectTextWithDetector(text, {
+      detector: "wasm",
+      view: "pipeline",
+    });
+    const looseResult = await inspectTextWithDetector(text, {
+      detector: "wasm",
+      view: "pipeline",
+      contentGate: { mode: "loose" },
+    });
+
+    if (defaultResult.view !== "pipeline" || looseResult.view !== "pipeline") {
+      throw new Error("Expected pipeline inspect result.");
+    }
+
+    expect(defaultResult.windows?.[0]?.contentGate).toEqual({
+      applied: true,
+      passed: false,
+      policy: "latinProse",
+    });
+    expect(looseResult.windows?.[0]?.contentGate).toEqual({
+      applied: true,
+      passed: true,
+      policy: "latinProse",
+    });
+  });
 });
