@@ -1,141 +1,21 @@
-import { type Dirent } from "node:fs";
-import { readdir, stat } from "node:fs/promises";
+import { stat } from "node:fs/promises";
 import { resolve as resolvePath } from "node:path";
-import { appendAll } from "../../utils/append-all";
-import type { DebugChannel } from "../debug/channel";
-import type { BatchResolvedFile, BatchResolvedSkip, BatchSkip, PathMode } from "../types";
+import type { BatchResolvedFile, BatchResolvedSkip, BatchSkip } from "../types";
 import {
   buildDirectoryRegexFilter,
   buildDirectoryExtensionFilter,
   type DirectoryRegexFilter,
-  type DirectoryExtensionFilter,
-  shouldIncludeFromDirectory,
-  shouldIncludeFromDirectoryRegex,
-  toDirectoryRelativePath,
 } from "./filter";
-
-type ResolveBatchFilePathOptions = {
-  pathMode: PathMode;
-  recursive: boolean;
-  extensionFilter?: DirectoryExtensionFilter;
-  directoryRegexPattern?: string;
-  debug?: DebugChannel;
-};
-
-type PathResolveDebugStats = {
-  dedupeAccepted: number;
-  dedupeDuplicates: number;
-  filterExcluded: number;
-  regexExcluded: number;
-  directoryIncluded: number;
-};
-
-async function expandDirectory(
-  rootPath: string,
-  directoryPath: string,
-  recursive: boolean,
-  extensionFilter: DirectoryExtensionFilter,
-  regexFilter: DirectoryRegexFilter,
-  skipped: BatchResolvedSkip[],
-  recordRegexExcluded: (filePath: string) => boolean,
-  debug: DebugChannel,
-  stats: PathResolveDebugStats,
-): Promise<string[]> {
-  let entries: Dirent[];
-  try {
-    entries = await readdir(directoryPath, { withFileTypes: true, encoding: "utf8" });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    skipped.push({ path: directoryPath, reason: `directory read failed: ${message}`, source: "directory" });
-    debug.emit("path.resolve.expand.read_failed", {
-      directory: directoryPath,
-      reason: `directory read failed: ${message}`,
-    });
-    return [];
-  }
-
-  const sortedEntries = entries.slice().sort((left, right) => left.name.localeCompare(right.name));
-  const files: string[] = [];
-  debug.emit("path.resolve.expand.start", {
-    directory: directoryPath,
-    entries: sortedEntries.length,
-    recursive,
-  });
-
-  for (const entry of sortedEntries) {
-    const entryPath = resolvePath(directoryPath, entry.name);
-
-    if (entry.isFile()) {
-      if (!shouldIncludeFromDirectory(entryPath, extensionFilter)) {
-        skipped.push({ path: entryPath, reason: "extension excluded", source: "directory" });
-        debug.emit(
-          "path.resolve.filter.excluded",
-          {
-            path: entryPath,
-            reason: "extension excluded",
-          },
-          { verbosity: "verbose" },
-        );
-        stats.filterExcluded += 1;
-        continue;
-      }
-
-      const relativePath = toDirectoryRelativePath(rootPath, entryPath);
-      if (!shouldIncludeFromDirectoryRegex(relativePath, regexFilter)) {
-        if (recordRegexExcluded(entryPath)) {
-          debug.emit(
-            "path.resolve.regex.excluded",
-            {
-              path: entryPath,
-              relativePath,
-              pattern: regexFilter.sourcePattern,
-              reason: "regex excluded",
-            },
-            { verbosity: "verbose" },
-          );
-          stats.regexExcluded += 1;
-        }
-        continue;
-      }
-
-      files.push(entryPath);
-      stats.directoryIncluded += 1;
-      debug.emit(
-        "path.resolve.expand.include",
-        {
-          path: entryPath,
-          source: "directory",
-        },
-        { verbosity: "verbose" },
-      );
-      continue;
-    }
-
-    if (!entry.isDirectory() || !recursive) {
-      continue;
-    }
-
-    const nestedFiles = await expandDirectory(
-      rootPath,
-      entryPath,
-      recursive,
-      extensionFilter,
-      regexFilter,
-      skipped,
-      recordRegexExcluded,
-      debug,
-      stats,
-    );
-    appendAll(files, nestedFiles);
-  }
-
-  debug.emit("path.resolve.expand.complete", {
-    directory: directoryPath,
-    files: files.length,
-  });
-
-  return files;
-}
+import {
+  createPathResolveDebugStats,
+  emitPathResolveSummaries,
+  resolvePathDebugChannel,
+} from "./resolve-debug";
+import { expandDirectory } from "./resolve-directory";
+import type {
+  PathResolveDebugStats,
+  ResolveBatchFilePathOptions,
+} from "./resolve-types";
 
 export async function resolveBatchFileEntries(
   pathInputs: string[],
@@ -144,28 +24,11 @@ export async function resolveBatchFileEntries(
   const skipped: BatchResolvedSkip[] = [];
   const regexExcludedPaths = new Set<string>();
   const resolvedFiles = new Map<string, BatchResolvedFile>();
-  const stats: PathResolveDebugStats = {
-    dedupeAccepted: 0,
-    dedupeDuplicates: 0,
-    filterExcluded: 0,
-    regexExcluded: 0,
-    directoryIncluded: 0,
-  };
+  const stats: PathResolveDebugStats = createPathResolveDebugStats();
   const extensionFilter =
     options.extensionFilter ?? buildDirectoryExtensionFilter(undefined, undefined);
   let regexFilter: DirectoryRegexFilter | undefined;
-  const debug =
-    options.debug ??
-    ({
-      enabled: false,
-      verbosity: "compact",
-      emit() {
-        return;
-      },
-      close: async () => {
-        return;
-      },
-    } satisfies DebugChannel);
+  const debug = resolvePathDebugChannel(options.debug);
 
   debug.emit("path.resolve.inputs", {
     inputs: pathInputs.length,
@@ -261,11 +124,13 @@ export async function resolveBatchFileEntries(
         regex: effectiveRegexFilter.sourcePattern ?? null,
       });
       const files = await expandDirectory(
-        targetPath,
-        targetPath,
-        options.recursive,
-        extensionFilter,
-        effectiveRegexFilter,
+        {
+          rootPath: targetPath,
+          directoryPath: targetPath,
+          recursive: options.recursive,
+          extensionFilter,
+          regexFilter: effectiveRegexFilter,
+        },
         skipped,
         recordRegexExcluded,
         debug,
@@ -294,21 +159,7 @@ export async function resolveBatchFileEntries(
   }
 
   const files = [...resolvedFiles.values()].sort((left, right) => left.path.localeCompare(right.path));
-  debug.emit("path.resolve.filter.summary", {
-    excluded: stats.filterExcluded + stats.regexExcluded,
-    extensionExcluded: stats.filterExcluded,
-    regexExcluded: stats.regexExcluded,
-    included: stats.directoryIncluded,
-  });
-  debug.emit("path.resolve.dedupe.summary", {
-    accepted: stats.dedupeAccepted,
-    duplicates: stats.dedupeDuplicates,
-  });
-  debug.emit("path.resolve.complete", {
-    files: files.length,
-    skipped: skipped.length,
-    ordering: "absolute-path-ascending",
-  });
+  emitPathResolveSummaries(debug, stats, files.length, skipped.length);
 
   return { files, skipped };
 }

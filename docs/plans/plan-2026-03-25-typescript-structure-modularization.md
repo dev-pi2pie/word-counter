@@ -219,21 +219,21 @@ Proposed layout:
 
 ### Phase 3 - Shared Path-Resolution Split
 
-- [ ] Refactor `src/cli/path/resolve.ts` into a facade plus internal helper modules.
-- [ ] Extract directory traversal and filter application into `src/cli/path/resolve-directory.ts`.
-- [ ] Extract debug stats and debug-channel helpers into `src/cli/path/resolve-debug.ts`.
-- [ ] Extract shared types and bookkeeping helpers into `src/cli/path/resolve-types.ts` or an equivalent internal boundary.
-- [ ] Preserve ordering, skip reasons, regex-excluded accounting, and direct-vs-directory precedence exactly.
-- [ ] Keep `resolveBatchFileEntries` and `resolveBatchFilePaths` as the stable public functions in `src/cli/path/resolve.ts`.
+- [x] Refactor `src/cli/path/resolve.ts` into a facade plus internal helper modules.
+- [x] Extract directory traversal and filter application into `src/cli/path/resolve-directory.ts`.
+- [x] Extract debug stats and debug-channel helpers into `src/cli/path/resolve-debug.ts`.
+- [x] Extract shared types and bookkeeping helpers into `src/cli/path/resolve-types.ts` or an equivalent internal boundary.
+- [x] Preserve ordering, skip reasons, regex-excluded accounting, and direct-vs-directory precedence exactly.
+- [x] Keep `resolveBatchFileEntries` and `resolveBatchFilePaths` as the stable public functions in `src/cli/path/resolve.ts`.
 
 ### Phase 4 - Batch Aggregation Split
 
-- [ ] Refactor `src/cli/batch/aggregate.ts` into a facade plus merge-domain helpers.
-- [ ] Extract word-counter result merge logic into `src/cli/batch/aggregate-word-counter.ts`.
-- [ ] Extract sectioned-result grouping and ordering into `src/cli/batch/aggregate-sections.ts`.
-- [ ] Extract collector-segment stripping and compaction helpers into `src/cli/batch/aggregate-compact.ts`.
-- [ ] Keep `buildBatchSummary`, `finalizeBatchSummaryFromFileResults`, and `compactCollectorSegmentsInCountResult` exported from `src/cli/batch/aggregate.ts`.
-- [ ] Preserve output totals, section ordering, and collector-compaction behavior exactly.
+- [x] Refactor `src/cli/batch/aggregate.ts` into a facade plus merge-domain helpers.
+- [x] Extract word-counter result merge logic into `src/cli/batch/aggregate-word-counter.ts`.
+- [x] Extract sectioned-result grouping and ordering into `src/cli/batch/aggregate-sections.ts`.
+- [x] Extract collector-segment stripping and compaction helpers into `src/cli/batch/aggregate-compact.ts`.
+- [x] Keep `buildBatchSummary`, `finalizeBatchSummaryFromFileResults`, and `compactCollectorSegmentsInCountResult` exported from `src/cli/batch/aggregate.ts`.
+- [x] Preserve output totals, section ordering, and collector-compaction behavior exactly.
 
 ### Phase 5 - WASM Detector Helper Extraction
 
