@@ -241,7 +241,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v6
         with:
-          node-version: 22.18.0
+          node-version: 22.22.2
 
       - name: Setup Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -294,7 +294,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v6
         with:
-          node-version: 22.18.0
+          node-version: 22.22.2
           registry-url: https://registry.npmjs.org
 
       - name: Update npm for trusted publishing
@@ -348,7 +348,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v6
         with:
-          node-version: 22.18.0
+          node-version: 22.22.2
           registry-url: https://npm.pkg.github.com
           scope: "@${{ github.repository_owner }}"
 
