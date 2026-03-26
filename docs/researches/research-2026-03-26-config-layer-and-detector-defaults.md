@@ -98,21 +98,37 @@ built-in defaults
 
 ## Proposed Config Options
 
-| Key | Type / Values | Default | CLI / Env Mapping | Notes |
-| --- | --- | --- | --- | --- |
-| `detector` | `"regex" \| "wasm"` | `"regex"` | `--detector`, `-d` | Root default for normal counting; `inspect` should inherit this in v1. |
-| `path.mode` | `"auto" \| "manual"` | `"auto"` | `--path-mode`, `WORD_COUNTER_PATH_MODE` | Controls file-vs-directory interpretation for `--path`. |
-| `path.recursive` | `boolean` | `true` | `--recursive` / `--no-recursive`, `WORD_COUNTER_RECURSIVE` | Applies when scanning directories. |
-| `path.includeExtensions` | `string[]` | `[".md", ".markdown", ".mdx", ".mdc", ".txt"]` | `--include-ext`, `WORD_COUNTER_INCLUDE_EXT` | Directory expansion allowlist. |
-| `path.excludeExtensions` | `string[]` | `[]` | `--exclude-ext`, `WORD_COUNTER_EXCLUDE_EXT` | Directory expansion denylist. |
-| `path.detectBinary` | `boolean` | `true` | future | Keeps extensionless or unknown files from being treated as text automatically. |
-| `progress.mode` | `"auto" \| "on" \| "off"` | `"auto"` | `--progress` / `--no-progress`, `WORD_COUNTER_PROGRESS` | Matches current batch/single-input progress policy. |
-| `output.totalOf` | `("words" \| "emoji" \| "symbols" \| "punctuation" \| "whitespace")[]` | `[]` | `--total-of`, `WORD_COUNTER_TOTAL_OF` | Optional total override composition. |
-| `reporting.skippedFiles` | `boolean` | `false` | `--quiet-skips` inverse, `WORD_COUNTER_REPORT_SKIPS` | Still debug-gated in current behavior. |
-| `reporting.debugReport.path` | `string \| null` | `null` | `--debug-report`, `WORD_COUNTER_DEBUG_REPORT` | Explicit file sink when debug report is enabled. |
-| `reporting.debugReport.tee` | `boolean` | `false` | `--debug-report-tee` / `--debug-tee`, `WORD_COUNTER_DEBUG_REPORT_TEE` | Mirrors file-routed debug lines to `stderr`. |
-| `logging.level` | `"info" \| "debug"` | `"info"` | `--debug`, `WORD_COUNTER_LOG_LEVEL` | Current diagnostics gate. |
-| `logging.verbosity` | `"compact" \| "verbose"` | `"compact"` | `--verbose`, `WORD_COUNTER_LOG_VERBOSITY` | `verbose` still depends on debug mode. |
+| Key | Type / Values | Default | CLI / Env Mapping |
+| --- | --- | --- | --- |
+| `detector` | `"regex" \| "wasm"` | `"regex"` | `--detector`, `-d` |
+| `path.mode` | `"auto" \| "manual"` | `"auto"` | `--path-mode`, `WORD_COUNTER_PATH_MODE` |
+| `path.recursive` | `boolean` | `true` | `--recursive` / `--no-recursive`, `WORD_COUNTER_RECURSIVE` |
+| `path.includeExtensions` | `string[]` | `[".md", ".markdown", ".mdx", ".mdc", ".txt"]` | `--include-ext`, `WORD_COUNTER_INCLUDE_EXT` |
+| `path.excludeExtensions` | `string[]` | `[]` | `--exclude-ext`, `WORD_COUNTER_EXCLUDE_EXT` |
+| `path.detectBinary` | `boolean` | `true` | future |
+| `progress.mode` | `"auto" \| "on" \| "off"` | `"auto"` | `--progress` / `--no-progress`, `WORD_COUNTER_PROGRESS` |
+| `output.totalOf` | `("words" \| "emoji" \| "symbols" \| "punctuation" \| "whitespace")[]` | `[]` | `--total-of`, `WORD_COUNTER_TOTAL_OF` |
+| `reporting.skippedFiles` | `boolean` | `false` | `--quiet-skips` inverse, `WORD_COUNTER_REPORT_SKIPS` |
+| `reporting.debugReport.path` | `string \| null` | `null` | `--debug-report`, `WORD_COUNTER_DEBUG_REPORT` |
+| `reporting.debugReport.tee` | `boolean` | `false` | `--debug-report-tee` / `--debug-tee`, `WORD_COUNTER_DEBUG_REPORT_TEE` |
+| `logging.level` | `"info" \| "debug"` | `"info"` | `--debug`, `WORD_COUNTER_LOG_LEVEL` |
+| `logging.verbosity` | `"compact" \| "verbose"` | `"compact"` | `--verbose`, `WORD_COUNTER_LOG_VERBOSITY` |
+
+### Config Option Notes
+
+- `detector`: root default for normal counting; `inspect` should inherit this in v1.
+- `path.mode`: controls file-vs-directory interpretation for `--path`.
+- `path.recursive`: applies when scanning directories.
+- `path.includeExtensions`: directory expansion allowlist.
+- `path.excludeExtensions`: directory expansion denylist.
+- `path.detectBinary`: keeps extensionless or unknown files from being treated as text automatically.
+- `progress.mode`: matches current batch/single-input progress policy.
+- `output.totalOf`: optional total override composition.
+- `reporting.skippedFiles`: still debug-gated in current behavior.
+- `reporting.debugReport.path`: explicit file sink when debug report is enabled.
+- `reporting.debugReport.tee`: mirrors file-routed debug lines to `stderr`.
+- `logging.level`: current diagnostics gate.
+- `logging.verbosity`: `verbose` still depends on debug mode.
 
 ## Config Filenames
 
