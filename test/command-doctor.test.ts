@@ -139,7 +139,7 @@ describe("CLI doctor diagnostics", () => {
   test("returns warn with exit code 0 when runtime policy fails but capability checks pass", async () => {
     const output = await captureCli(["doctor", "--format", "json"], {
       doctorRuntime: {
-        nodeVersion: "v18.19.0",
+        nodeVersion: "v22.17.9",
       },
     });
     const parsed = JSON.parse(output.stdout[0] ?? "{}");
@@ -148,8 +148,23 @@ describe("CLI doctor diagnostics", () => {
     expect(parsed.status).toBe("warn");
     expect(parsed.runtime.meetsProjectRequirement).toBeFalse();
     expect(
-      parsed.warnings.includes("Node.js v18.19.0 is outside the supported range >=20."),
+      parsed.warnings.includes("Node.js v22.17.9 is outside the supported range >=22.18.0."),
     ).toBeTrue();
+  });
+
+  test("accepts the exact minimum supported Node.js version", async () => {
+    const output = await captureCli(["doctor", "--format", "json"], {
+      doctorRuntime: {
+        nodeVersion: "v22.18.0",
+      },
+    });
+    const parsed = JSON.parse(output.stdout[0] ?? "{}");
+
+    expect(output.exitCode).toBe(0);
+    expect(parsed.runtime.meetsProjectRequirement).toBeTrue();
+    expect(
+      parsed.warnings.some((line: string) => line.includes("supported range")),
+    ).toBeFalse();
   });
 
   test("reports rc builds as rc instead of stable", async () => {

@@ -1,0 +1,32 @@
+{
+  // Default-reference config example for word-counter.
+  "detector": "regex",
+  "contentGate": {
+    "mode": "default"
+  },
+  "inspect": {
+    "detector": "regex"
+  },
+  "path": {
+    "mode": "auto",
+    "recursive": true,
+    "includeExtensions": [".md", ".markdown", ".mdx", ".mdc", ".txt"],
+    "excludeExtensions": [],
+    "detectBinary": true
+  },
+  "progress": {
+    "mode": "auto"
+  },
+  "output": {
+    "totalOf": []
+  },
+  "reporting": {
+    "debugReport": {
+      "tee": false
+    }
+  },
+  "logging": {
+    "level": "info",
+    "verbosity": "compact"
+  }
+}

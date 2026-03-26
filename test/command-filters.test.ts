@@ -163,6 +163,7 @@ describe("regex filters", () => {
     const output = await captureCli([
       "--path",
       root,
+      "--recursive",
       "--regex",
       "^docs/.*\\.md$",
       "--format",

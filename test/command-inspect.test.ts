@@ -14,17 +14,13 @@ describe("inspect command", () => {
   const borrowedShortHaniText = "こんにちは、世界！";
   const borrowedLongHaniText = "こんにちは、世界！これはテストです。";
 
-  test("supports default wasm pipeline inspection", async () => {
-    if (!hasWasmDetectorRuntime()) {
-      return;
-    }
-
+  test("supports default regex pipeline inspection", async () => {
     const output = await captureCli(["inspect", "こんにちは、世界！これはテストです。"]);
 
     expect(output.exitCode).toBe(0);
     expect(output.stdout).toContain("Detector inspect");
     expect(output.stdout).toContain("View: pipeline");
-    expect(output.stdout).toContain("Detector: wasm");
+    expect(output.stdout).toContain("Detector: regex");
   });
 
   test("supports wasm engine inspection", async () => {
@@ -34,6 +30,8 @@ describe("inspect command", () => {
 
     const output = await captureCli([
       "inspect",
+      "--detector",
+      "wasm",
       "--view",
       "engine",
       "こんにちは、世界！これはテストです。",
@@ -55,7 +53,15 @@ describe("inspect command", () => {
       "This sentence should clearly be detected as English for the wasm detector path. ".repeat(8);
     await writeFile(filePath, longText);
 
-    const output = await captureCli(["inspect", "--view", "engine", "--path", filePath]);
+    const output = await captureCli([
+      "inspect",
+      "--detector",
+      "wasm",
+      "--view",
+      "engine",
+      "--path",
+      filePath,
+    ]);
 
     expect(output.exitCode).toBe(0);
     expect(output.stdout.some((line) => line.startsWith("Sample text preview: "))).toBeTrue();

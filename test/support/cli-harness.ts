@@ -9,6 +9,8 @@ import type { ProgressOutputStream } from "../../src/cli/progress/reporter";
 type CaptureCliOptions = {
   stderr?: ProgressOutputStream;
   doctorRuntime?: DoctorRuntimeOverrides;
+  env?: NodeJS.ProcessEnv;
+  cwd?: string;
 };
 
 type CaptureCliResult = {
@@ -64,6 +66,8 @@ export function createCliHarness() {
       await runCli(["node", "word-counter", ...args], {
         stderr: options.stderr,
         doctor: options.doctorRuntime,
+        env: options.env,
+        cwd: options.cwd,
       });
     } finally {
       exitCode = process.exitCode;

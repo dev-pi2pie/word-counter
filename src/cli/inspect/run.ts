@@ -1,3 +1,4 @@
+import { applyConfigToInspectInvocation, resolveWordCounterConfig } from "../config";
 import pc from "picocolors";
 import { runInspectBatch } from "./batch";
 import { printInspectHelp } from "./help";
@@ -10,17 +11,49 @@ export function isExplicitInspectInvocation(argv: string[]): boolean {
   return argv[2] === "inspect";
 }
 
-export async function executeInspectCommand({ argv }: ExecuteInspectCommandOptions): Promise<void> {
-  const validated = validateInspectInvocation(argv);
-  if (!validated.ok) {
-    console.error(pc.red(`error: ${validated.message}`));
+function emitConfigNotes(notes: string[]): void {
+  for (const note of notes) {
+    const warningLine = note.startsWith("Warning:") ? note : `Warning: ${note}`;
+    console.error(pc.yellow(warningLine));
+  }
+}
+
+export async function executeInspectCommand({
+  argv,
+  runtime,
+}: ExecuteInspectCommandOptions): Promise<void> {
+  const parsed = validateInspectInvocation(argv);
+  if (!parsed.ok) {
+    console.error(pc.red(`error: ${parsed.message}`));
     process.exitCode = 1;
     return;
   }
 
-  if (validated.help) {
+  if (parsed.help) {
     printInspectHelp();
     process.exitCode = 0;
+    return;
+  }
+
+  let validated = parsed;
+
+  try {
+    const resolvedConfig = await resolveWordCounterConfig({
+      env: runtime?.env,
+      cwd: runtime?.cwd,
+    });
+    validated = applyConfigToInspectInvocation(validated, resolvedConfig.config);
+    emitConfigNotes(resolvedConfig.notes);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(pc.red(`error: ${message}`));
+    process.exitCode = 1;
+    return;
+  }
+
+  if (validated.view === "engine" && validated.detector === "regex") {
+    console.error(pc.red("error: `--view engine` requires `--detector wasm`."));
+    process.exitCode = 1;
     return;
   }
 
@@ -37,6 +70,7 @@ export async function executeInspectCommand({ argv }: ExecuteInspectCommandOptio
 
     const loaded = await loadInspectBatchInputs(validated.paths, {
       pathMode: validated.pathMode,
+      pathDetectBinary: validated.pathDetectBinary,
       recursive: validated.recursive,
       includeExt: validated.includeExt,
       excludeExt: validated.excludeExt,

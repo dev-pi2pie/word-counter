@@ -19,6 +19,7 @@ export type CountBatchWithJobsOptions = {
   section: SectionMode;
   detectorMode?: DetectorMode;
   wcOptions: Parameters<typeof wordCounter>[1];
+  detectBinary?: boolean;
   preserveCollectorSegments: boolean;
   detectorEvidence?: boolean;
   debugVerbosity?: DetectorDebugVerbosity;

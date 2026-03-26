@@ -1,4 +1,10 @@
 import { Command } from "commander";
+import {
+  applyConfigToCountOptions,
+  deriveCountCliSources,
+  deriveInitialCountProgressMode,
+  resolveWordCounterConfig,
+} from "./cli/config";
 import { createDebugChannel } from "./cli/debug/channel";
 import { executeDoctorCommand, isExplicitDoctorInvocation } from "./cli/doctor/run";
 import { executeInspectCommand, isExplicitInspectInvocation } from "./cli/inspect/run";
@@ -20,6 +26,13 @@ import type { WordCounterMode } from "./wc";
 import { normalizeMode } from "./wc/mode";
 import pc from "picocolors";
 
+function emitConfigNotes(notes: string[]): void {
+  for (const note of notes) {
+    const warningLine = note.startsWith("Warning:") ? note : `Warning: ${note}`;
+    console.error(pc.yellow(warningLine));
+  }
+}
+
 export async function runCli(
   argv: string[] = process.argv,
   runtime: RunCliOptions = {},
@@ -33,7 +46,7 @@ export async function runCli(
   }
 
   if (isExplicitInspectInvocation(argv)) {
-    await executeInspectCommand({ argv });
+    await executeInspectCommand({ argv, runtime });
     return;
   }
 
@@ -57,122 +70,149 @@ export async function runCli(
 
   configureProgramOptions(program, parseMode);
 
-  program.action(async (textTokens: string[], options: CliActionOptions) => {
-    if (options.printJobsLimit) {
+  program.action(
+    async (textTokens: string[], rawOptions: CliActionOptions & { progress: boolean }) => {
+      if (rawOptions.printJobsLimit) {
+        try {
+          validateStandalonePrintJobsLimitUsage(argv);
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          program.error(pc.red(message));
+          return;
+        }
+
+        console.log(JSON.stringify(resolveBatchJobsLimit()));
+        return;
+      }
+
+      let options: CliActionOptions = {
+        ...rawOptions,
+        pathDetectBinary: rawOptions.pathDetectBinary ?? true,
+        progressMode: deriveInitialCountProgressMode(program, rawOptions.progress),
+      };
+
       try {
-        validateStandalonePrintJobsLimitUsage(argv);
+        const resolvedConfig = await resolveWordCounterConfig({
+          env: runtime.env,
+          cwd: runtime.cwd,
+        });
+        options = applyConfigToCountOptions(
+          options,
+          resolvedConfig.config,
+          deriveCountCliSources(program),
+        );
+        if (!options.quietWarnings) {
+          emitConfigNotes(resolvedConfig.notes);
+        }
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         program.error(pc.red(message));
         return;
       }
 
-      console.log(JSON.stringify(resolveBatchJobsLimit()));
-      return;
-    }
+      const debugEnabled = Boolean(options.debug);
+      const debugReportPath = resolveDebugReportPathOption(options.debugReport);
+      const debugReportEnabled = options.debugReport !== undefined && options.debugReport !== false;
 
-    const debugEnabled = Boolean(options.debug);
-    const debugReportPath = resolveDebugReportPathOption(options.debugReport);
-    const debugReportEnabled = options.debugReport !== undefined && options.debugReport !== false;
+      if (options.verbose && !debugEnabled) {
+        program.error(pc.red("`--verbose` requires `--debug`."));
+        return;
+      }
 
-    if (options.verbose && !debugEnabled) {
-      program.error(pc.red("`--verbose` requires `--debug`."));
-      return;
-    }
+      if (options.detectorEvidence && !debugEnabled) {
+        program.error(pc.red("`--detector-evidence` requires `--debug`."));
+        return;
+      }
 
-    if (options.detectorEvidence && !debugEnabled) {
-      program.error(pc.red("`--detector-evidence` requires `--debug`."));
-      return;
-    }
+      if (options.detectorEvidence && options.detector !== "wasm") {
+        program.error(pc.red("`--detector-evidence` requires `--detector wasm`."));
+        return;
+      }
 
-    if (options.detectorEvidence && options.detector !== "wasm") {
-      program.error(pc.red("`--detector-evidence` requires `--detector wasm`."));
-      return;
-    }
+      if (debugReportEnabled && !debugEnabled) {
+        program.error(pc.red("`--debug-report` requires `--debug`."));
+        return;
+      }
 
-    if (debugReportEnabled && !debugEnabled) {
-      program.error(pc.red("`--debug-report` requires `--debug`."));
-      return;
-    }
+      const teeEnabled = Boolean(options.debugReportTee || options.debugTee);
 
-    const teeEnabled = Boolean(options.debugReportTee || options.debugTee);
+      if (teeEnabled && !debugReportEnabled) {
+        program.error(
+          pc.red("`--debug-report-tee` (alias: `--debug-tee`) requires `--debug-report`."),
+        );
+        return;
+      }
 
-    if (teeEnabled && !debugReportEnabled) {
-      program.error(
-        pc.red("`--debug-report-tee` (alias: `--debug-tee`) requires `--debug-report`."),
-      );
-      return;
-    }
+      try {
+        validateSingleRegexOptionUsage(argv);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        program.error(pc.red(message));
+        return;
+      }
 
-    try {
-      validateSingleRegexOptionUsage(argv);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      program.error(pc.red(message));
-      return;
-    }
+      let debug;
+      try {
+        debug = createDebugChannel({
+          enabled: debugEnabled,
+          verbosity: options.verbose ? "verbose" : "compact",
+          report: debugReportEnabled
+            ? {
+                path: debugReportPath,
+                tee: teeEnabled,
+                autogeneratedNamePrefix: options.detectorEvidence
+                  ? "wc-detector-evidence"
+                  : "wc-debug",
+              }
+            : undefined,
+        });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        program.error(pc.red(`Failed to initialize debug diagnostics: ${message}`));
+        return;
+      }
 
-    let debug;
-    try {
-      debug = createDebugChannel({
-        enabled: debugEnabled,
-        verbosity: options.verbose ? "verbose" : "compact",
-        report: debugReportEnabled
-          ? {
-              path: debugReportPath,
-              tee: teeEnabled,
-              autogeneratedNamePrefix: options.detectorEvidence
-                ? "wc-detector-evidence"
-                : "wc-debug",
-            }
-          : undefined,
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      program.error(pc.red(`Failed to initialize debug diagnostics: ${message}`));
-      return;
-    }
+      try {
+        const resolved = resolveCountRunOptions(options);
+        if (hasPathInput(options.path)) {
+          await executeBatchCount({
+            argv,
+            options,
+            runtime,
+            resolved,
+            debug,
+            teeEnabled,
+          });
+          return;
+        }
 
-    try {
-      const resolved = resolveCountRunOptions(options);
-      if (hasPathInput(options.path)) {
-        await executeBatchCount({
-          argv,
+        await executeSingleCount({
+          textTokens,
           options,
-          runtime,
           resolved,
           debug,
-          teeEnabled,
         });
-        return;
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        if (message === "No input provided. Pass text, pipe stdin, or use --path.") {
+          program.error(pc.red(message));
+          return;
+        }
+        if (message === "No readable text-like inputs were found from --path.") {
+          program.error(pc.red(message));
+          return;
+        }
+        if (message === WASM_DETECTOR_RUNTIME_UNAVAILABLE_MESSAGE) {
+          console.error(pc.red(message));
+          process.exitCode = 1;
+          return;
+        }
+        program.error(message);
+      } finally {
+        await debug.close();
       }
-
-      await executeSingleCount({
-        textTokens,
-        options,
-        resolved,
-        debug,
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      if (message === "No input provided. Pass text, pipe stdin, or use --path.") {
-        program.error(pc.red(message));
-        return;
-      }
-      if (message === "No readable text-like inputs were found from --path.") {
-        program.error(pc.red(message));
-        return;
-      }
-      if (message === WASM_DETECTOR_RUNTIME_UNAVAILABLE_MESSAGE) {
-        console.error(pc.red(message));
-        process.exitCode = 1;
-        return;
-      }
-      program.error(message);
-    } finally {
-      await debug.close();
-    }
-  });
+    },
+  );
 
   await program.parseAsync(argv);
   if (process.exitCode === undefined) {

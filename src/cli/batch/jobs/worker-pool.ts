@@ -19,6 +19,7 @@ type CountBatchInputsWithWorkerPoolOptions = {
   section: SectionMode;
   detectorMode: DetectorMode;
   wcOptions: Parameters<typeof wordCounter>[1];
+  detectBinary: boolean;
   preserveCollectorSegments: boolean;
   detectorEvidence?: boolean;
   debugVerbosity?: DetectorDebugVerbosity;
@@ -198,6 +199,7 @@ export async function countBatchInputsWithWorkerPool(
             section: options.section,
             detectorMode: options.detectorMode,
             wcOptions: options.wcOptions,
+            detectBinary: options.detectBinary,
             preserveCollectorSegments: options.preserveCollectorSegments,
             detectorEvidence: options.detectorEvidence,
             debugVerbosity: options.debugVerbosity,

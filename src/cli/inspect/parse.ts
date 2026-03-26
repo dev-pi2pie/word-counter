@@ -10,7 +10,7 @@ import type {
 
 function parseDetector(rawValue: string | undefined): InspectDetectorMode | null {
   if (rawValue === undefined) {
-    return "wasm";
+    return "regex";
   }
   if (rawValue === "wasm" || rawValue === "regex") {
     return rawValue;
@@ -67,17 +67,10 @@ function isSupportedInspectSectionMode(value: string): value is InspectSectionMo
   return value === "all" || value === "frontmatter" || value === "content";
 }
 
-function isInvalidInspectDetectorViewCombination(
-  detector: InspectDetectorMode,
-  view: DetectorInspectView,
-): boolean {
-  return view === "engine" && detector === "regex";
-}
-
 export function validateInspectInvocation(argv: string[]): ValidInspectInvocation {
   const inspectIndex = argv.findIndex((token, index) => index >= 2 && token === "inspect");
   const tokens = inspectIndex >= 0 ? argv.slice(inspectIndex + 1) : [];
-  let detector: InspectDetectorMode = "wasm";
+  let detector: InspectDetectorMode = "regex";
   let contentGateMode: DetectorContentGateMode = "default";
   let view: DetectorInspectView = "pipeline";
   let format: InspectOutputFormat = "standard";
@@ -90,6 +83,14 @@ export function validateInspectInvocation(argv: string[]): ValidInspectInvocatio
   const excludeExt: string[] = [];
   let regex: string | undefined;
   const textTokens: string[] = [];
+  const sources = {
+    detector: false,
+    contentGate: false,
+    pathMode: false,
+    recursive: false,
+    includeExt: false,
+    excludeExt: false,
+  };
   let expects:
     | "detector"
     | "view"
@@ -124,6 +125,7 @@ export function validateInspectInvocation(argv: string[]): ValidInspectInvocatio
         return "`--detector` must be `wasm` or `regex`.";
       }
       detector = parsed;
+      sources.detector = true;
       return null;
     }
 
@@ -142,6 +144,7 @@ export function validateInspectInvocation(argv: string[]): ValidInspectInvocatio
         return "`--content-gate` must be `default`, `strict`, `loose`, or `off`.";
       }
       contentGateMode = parsed;
+      sources.contentGate = true;
       return null;
     }
 
@@ -171,6 +174,7 @@ export function validateInspectInvocation(argv: string[]): ValidInspectInvocatio
         return "`--path-mode` must be `auto` or `manual`.";
       }
       pathMode = parsed;
+      sources.pathMode = true;
       return null;
     }
 
@@ -181,11 +185,13 @@ export function validateInspectInvocation(argv: string[]): ValidInspectInvocatio
 
     if (kind === "includeExt") {
       includeExt.push(value);
+      sources.includeExt = true;
       return null;
     }
 
     if (kind === "excludeExt") {
       excludeExt.push(value);
+      sources.excludeExt = true;
       return null;
     }
 
@@ -220,8 +226,15 @@ export function validateInspectInvocation(argv: string[]): ValidInspectInvocatio
       continue;
     }
 
+    if (token === "--recursive") {
+      recursive = true;
+      sources.recursive = true;
+      continue;
+    }
+
     if (token === "--no-recursive") {
       recursive = false;
+      sources.recursive = true;
       continue;
     }
 
@@ -232,6 +245,7 @@ export function validateInspectInvocation(argv: string[]): ValidInspectInvocatio
 
     if (
       token === "--detector" ||
+      token === "-d" ||
       token === "--content-gate" ||
       token === "--view" ||
       token === "--format" ||
@@ -247,23 +261,25 @@ export function validateInspectInvocation(argv: string[]): ValidInspectInvocatio
       expects =
         token === "-p"
           ? "path"
-          : token === "--content-gate"
-            ? "contentGate"
-            : token === "-f"
-              ? "format"
-              : token === "--path-mode"
-                ? "pathMode"
-                : token === "--include-ext"
-                  ? "includeExt"
-                  : token === "--exclude-ext"
-                    ? "excludeExt"
-                    : (token.slice(2) as
-                        | "detector"
-                        | "view"
-                        | "format"
-                        | "section"
-                        | "path"
-                        | "regex");
+          : token === "-d"
+            ? "detector"
+            : token === "--content-gate"
+              ? "contentGate"
+              : token === "-f"
+                ? "format"
+                : token === "--path-mode"
+                  ? "pathMode"
+                  : token === "--include-ext"
+                    ? "includeExt"
+                    : token === "--exclude-ext"
+                      ? "excludeExt"
+                      : (token.slice(2) as
+                          | "detector"
+                          | "view"
+                          | "format"
+                          | "section"
+                          | "path"
+                          | "regex");
       continue;
     }
 
@@ -368,13 +384,6 @@ export function validateInspectInvocation(argv: string[]): ValidInspectInvocatio
     };
   }
 
-  if (isInvalidInspectDetectorViewCombination(detector, view)) {
-    return {
-      ok: false,
-      message: "`--view engine` requires `--detector wasm`.",
-    };
-  }
-
   return {
     ok: true,
     detector,
@@ -384,11 +393,13 @@ export function validateInspectInvocation(argv: string[]): ValidInspectInvocatio
     pretty,
     section,
     pathMode,
+    pathDetectBinary: true,
     recursive,
     includeExt,
     excludeExt,
     ...(regex !== undefined ? { regex } : {}),
     paths,
     textTokens,
+    sources,
   };
 }

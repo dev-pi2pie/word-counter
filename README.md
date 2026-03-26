@@ -4,7 +4,7 @@ Locale-aware word counting powered by the Web API [`Intl.Segmenter`](https://dev
 
 ## Quick Start (npx)
 
-Runtime requirement: Node.js `>=20`.
+Runtime requirement: Node.js `>=22.18.0`.
 
 Run without installing:
 
@@ -110,7 +110,7 @@ Inspect detector behavior without count output:
 
 ```bash
 word-counter inspect "こんにちは、世界！これはテストです。"
-word-counter inspect --view engine "This sentence should clearly be detected as English for the wasm detector path."
+word-counter inspect --detector wasm --view engine "This sentence should clearly be detected as English for the wasm detector path."
 word-counter inspect --detector regex -f json "こんにちは、世界！これはテストです。"
 word-counter inspect --detector regex -f json --pretty "こんにちは、世界！これはテストです。"
 word-counter inspect --detector wasm --content-gate off "mode: debug\ntee: true\npath: logs\nUse this for testing."
@@ -156,6 +156,57 @@ Detector mode notes:
   - no inspect `--merged`
   - no inspect `--per-file`
   - no inspect `--jobs`
+
+### Config Files
+
+`word-counter` supports config files in these canonical names:
+
+- `wc-intl-seg.config.toml`
+- `wc-intl-seg.config.json`
+- `wc-intl-seg.config.jsonc`
+
+Config precedence is:
+
+```text
+built-in defaults
+< user config dir / wc-intl-seg.config.{toml|jsonc|json}
+< cwd / wc-intl-seg.config.{toml|jsonc|json}
+< environment variables
+< flag options
+```
+
+Same-scope file priority is `toml > jsonc > json`.
+If lower-priority sibling config files are ignored, the CLI emits a warning.
+
+Detector config notes:
+
+- counting defaults to `regex`
+- `inspect` also defaults to `regex`
+- root `detector` controls normal counting
+- optional `inspect.detector` overrides inspect-only behavior
+- root `contentGate.mode` controls detector-policy defaults for counting
+- optional `inspect.contentGate.mode` overrides inspect-only detector-policy behavior
+- `WORD_COUNTER_CONTENT_GATE` overrides config-derived content-gate defaults
+- `--content-gate` stays the highest-precedence detector-policy override
+- `inspect --detector` only affects the current inspect invocation
+
+Examples:
+
+```bash
+word-counter -d wasm "This sentence should clearly be detected as English for the wasm detector path."
+word-counter --content-gate strict "Internationalization documentation remains understandable."
+word-counter inspect -d regex -f json "こんにちは、世界！これはテストです。"
+word-counter inspect --content-gate off "mode: debug\ntee: true\npath: logs\nUse this for testing."
+word-counter --path ./examples/test-case-multi-files-support --format json
+```
+
+Default-reference config examples live under:
+
+- `examples/wc-config/wc-intl-seg.config.toml`
+- `examples/wc-config/wc-intl-seg.config.json`
+- `examples/wc-config/wc-intl-seg.config.jsonc`
+
+For full config behavior, platform-specific user config locations, merge rules, and examples, see [`docs/config-usage-guide.md`](docs/config-usage-guide.md).
 
 ### Detector Subpath (`@dev-pi2pie/word-counter/detector`)
 
@@ -216,6 +267,7 @@ Directory scans are recursive by default:
 
 ```bash
 word-counter --path ./examples/test-case-multi-files-support
+word-counter --path ./examples/test-case-multi-files-support --recursive
 word-counter --path ./examples/test-case-multi-files-support --no-recursive
 ```
 
@@ -229,6 +281,7 @@ Progress behavior in standard batch mode:
 
 ```bash
 word-counter --path ./examples/test-case-multi-files-support
+word-counter --path ./examples/test-case-multi-files-support --progress
 word-counter --path ./examples/test-case-multi-files-support --no-progress
 word-counter --path ./examples/test-case-multi-files-support --keep-progress
 ```
@@ -250,7 +303,7 @@ Quick policy:
 - `--jobs 1`: async main-thread `load+count` baseline.
 - `--jobs > 1`: worker `load+count` with async fallback when workers are unavailable.
 - if requested `--jobs` exceeds host `suggestedMaxJobs` (from `--print-jobs-limit`), the CLI warns and runs with the suggested limit as a safety cap.
-- use `--quiet-warnings` to suppress non-fatal warning lines (for example jobs-limit advisory and worker-fallback warning).
+- use `--quiet-warnings` to suppress non-fatal warning lines (for example config discovery notes, jobs-limit advisory, and worker-fallback warning).
 
 Inspect host jobs diagnostics:
 
@@ -272,7 +325,7 @@ word-counter doctor --format json --pretty
 
 Doctor scope in v1:
 
-- checks runtime support policy against Node.js `>=20`
+- checks runtime support policy against Node.js `>=22.18.0`
 - verifies `Intl.Segmenter` availability plus word/grapheme constructor health
 - reports batch jobs host limits using the same heuristics as `--print-jobs-limit`
 - reports worker-route preflight signals and the worker-disable env toggle that affects worker availability
@@ -292,7 +345,9 @@ For full policy details, JSON parity expectations (`--misc`, `--total-of whitesp
 ### Stable Path Resolution Contract
 
 - Repeated `--path` values are accepted as mixed inputs (file + directory).
-- In `--path-mode auto` (default), directory inputs are expanded to files (recursive unless `--no-recursive`).
+- In `--path-mode auto` (default), directory inputs are expanded to files.
+  `--recursive` explicitly enables recursive traversal and overrides non-recursive config/env defaults.
+  `--no-recursive` explicitly disables recursive traversal for the current invocation.
 - In `--path-mode manual`, `--path` values are treated as literal file inputs; `--path <dir>` is not supported and is skipped as `not a regular file`.
 - Extension and regex filters apply only to files discovered from directory expansion.
 - Direct file inputs are always considered regardless of `--include-ext` / `--exclude-ext` / `--regex`.

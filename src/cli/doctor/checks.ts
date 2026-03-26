@@ -10,8 +10,12 @@ import type {
   DoctorRuntimeSummary,
 } from "./types";
 
-const REQUIRED_NODE_RANGE = ">=20";
-const REQUIRED_NODE_MAJOR = 20;
+const REQUIRED_NODE_RANGE = ">=22.18.0";
+const REQUIRED_NODE_VERSION = {
+  major: 22,
+  minor: 18,
+  patch: 0,
+} as const;
 const SAMPLE_TEXT = "Hello 世界";
 
 function normalizePackageVersion(value: string | undefined): string {
@@ -33,14 +37,43 @@ function deriveBuildChannel(packageVersion: string): DoctorBuildChannel {
   return "stable";
 }
 
-function parseNodeMajor(version: string): number | null {
-  const match = /^v?(\d+)(?:\.\d+){0,2}(?:[-+].*)?$/.exec(version.trim());
+function parseNodeVersion(version: string): {
+  major: number;
+  minor: number;
+  patch: number;
+} | null {
+  const match = /^v?(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:[-+].*)?$/.exec(version.trim());
   if (!match) {
     return null;
   }
 
   const major = Number.parseInt(match[1] ?? "", 10);
-  return Number.isFinite(major) ? major : null;
+  const minor = Number.parseInt(match[2] ?? "0", 10);
+  const patch = Number.parseInt(match[3] ?? "0", 10);
+
+  if (!Number.isFinite(major) || !Number.isFinite(minor) || !Number.isFinite(patch)) {
+    return null;
+  }
+
+  return { major, minor, patch };
+}
+
+function meetsRequiredNodeVersion(version: {
+  major: number;
+  minor: number;
+  patch: number;
+} | null): boolean {
+  if (!version) {
+    return false;
+  }
+
+  if (version.major !== REQUIRED_NODE_VERSION.major) {
+    return version.major > REQUIRED_NODE_VERSION.major;
+  }
+  if (version.minor !== REQUIRED_NODE_VERSION.minor) {
+    return version.minor > REQUIRED_NODE_VERSION.minor;
+  }
+  return version.patch >= REQUIRED_NODE_VERSION.patch;
 }
 
 function resolveRuntimeSummary(overrides: DoctorRuntimeOverrides = {}): DoctorRuntimeSummary {
@@ -48,14 +81,14 @@ function resolveRuntimeSummary(overrides: DoctorRuntimeOverrides = {}): DoctorRu
     overrides.packageVersion ?? EMBEDDED_PACKAGE_VERSION,
   );
   const nodeVersion = overrides.nodeVersion ?? process.version;
-  const major = parseNodeMajor(nodeVersion);
+  const parsedNodeVersion = parseNodeVersion(nodeVersion);
 
   return {
     packageVersion,
     buildChannel: deriveBuildChannel(packageVersion),
     requiredNodeRange: REQUIRED_NODE_RANGE,
     nodeVersion,
-    meetsProjectRequirement: major !== null && major >= REQUIRED_NODE_MAJOR,
+    meetsProjectRequirement: meetsRequiredNodeVersion(parsedNodeVersion),
     platform: overrides.platform ?? process.platform,
     arch: overrides.arch ?? process.arch,
   };

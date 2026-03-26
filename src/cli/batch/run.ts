@@ -19,6 +19,7 @@ type RunBatchCountOptions = {
   pathInputs: string[];
   batchOptions: BatchOptions;
   extensionFilter: DirectoryExtensionFilter;
+  detectBinary: boolean;
   section: SectionMode;
   wcOptions: DetectorWordCounterOptions;
   preserveCollectorSegments: boolean;
@@ -141,6 +142,7 @@ export async function runBatchCount(options: RunBatchCountOptions): Promise<Batc
           section: options.section,
           detectorMode: options.wcOptions.detector ?? "regex",
           wcOptions: options.wcOptions,
+          detectBinary: options.detectBinary,
           preserveCollectorSegments: options.preserveCollectorSegments,
           detectorEvidence: options.detectorEvidence,
           debugVerbosity: options.debug.verbosity,
@@ -175,6 +177,7 @@ export async function runBatchCount(options: RunBatchCountOptions): Promise<Batc
           section: options.section,
           detectorMode: options.wcOptions.detector ?? "regex",
           wcOptions: options.wcOptions,
+          detectBinary: options.detectBinary,
           preserveCollectorSegments: options.preserveCollectorSegments,
           detectorEvidence: options.detectorEvidence,
           debugVerbosity: options.debug.verbosity,
@@ -192,6 +195,7 @@ export async function runBatchCount(options: RunBatchCountOptions): Promise<Batc
         section: options.section,
         detectorMode: options.wcOptions.detector ?? "regex",
         wcOptions: options.wcOptions,
+        detectBinary: options.detectBinary,
         preserveCollectorSegments: options.preserveCollectorSegments,
         detectorEvidence: options.detectorEvidence,
         debugVerbosity: options.debug.verbosity,

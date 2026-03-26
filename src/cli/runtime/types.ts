@@ -3,6 +3,7 @@ import type { ProgressOutputStream } from "../progress/reporter";
 import type { TotalOfPart } from "../total-of";
 import type { PathMode } from "../types";
 import type { DoctorRuntimeOverrides } from "../doctor/types";
+import type { ConfigProgressMode } from "../config/types";
 import type {
   DetectorContentGateMode,
   DetectorMode,
@@ -35,8 +36,9 @@ export type CliActionOptions = {
   jobs: number;
   printJobsLimit?: boolean;
   pathMode: PathMode;
+  pathDetectBinary: boolean;
   recursive: boolean;
-  progress: boolean;
+  progressMode: ConfigProgressMode;
   keepProgress?: boolean;
   quietWarnings?: boolean;
   quietSkips?: boolean;
@@ -54,6 +56,8 @@ export type CliActionOptions = {
 export type RunCliOptions = {
   stderr?: ProgressOutputStream;
   doctor?: DoctorRuntimeOverrides;
+  env?: NodeJS.ProcessEnv;
+  cwd?: string;
 };
 
 export type ResolvedCountRunOptions = {
