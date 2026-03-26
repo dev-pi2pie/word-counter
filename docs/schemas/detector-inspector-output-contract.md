@@ -66,7 +66,7 @@ Preview rules:
 Current CLI shape:
 
 ```bash
-word-counter inspect [--detector wasm|regex] [--content-gate default|strict|loose|off] [--view pipeline|engine] [--format standard|json] [--pretty] [--section all|frontmatter|content] [--path-mode auto|manual] [--no-recursive] [--include-ext <exts>] [--exclude-ext <exts>] [--regex <pattern>] [-p|--path <path> ...] [text...]
+word-counter inspect [--detector wasm|regex] [--content-gate default|strict|loose|off] [--view pipeline|engine] [--format standard|json] [--pretty] [--section all|frontmatter|content] [--path-mode auto|manual] [--recursive|--no-recursive] [--include-ext <exts>] [--exclude-ext <exts>] [--regex <pattern>] [-p|--path <path> ...] [text...]
 ```
 
 Shared validation rules:
@@ -108,6 +108,7 @@ Batch/path rules:
 - in `--path-mode auto`, directory inputs are expanded using the same path-resolution contract as counting
 - in `--path-mode manual`, `--path` values are treated as literal file inputs and explicit directories become `not a regular file` failures
 - directory-expanded files honor:
+  - `--recursive`
   - `--no-recursive`
   - `--include-ext`
   - `--exclude-ext`

@@ -11,6 +11,7 @@ const INSPECT_HELP_LINES = [
   "  --pretty          pretty print inspect JSON output",
   "  --section <section>  inspect section selector (all, frontmatter, content) (default: all)",
   "  --path-mode <mode>  path resolution mode for --path inputs (auto, manual) (default: auto)",
+  "  --recursive        enable recursive directory traversal for --path directories",
   "  --no-recursive     disable recursive directory traversal for --path directories",
   "  --include-ext <exts>  comma-separated extensions to include during directory scanning",
   "  --exclude-ext <exts>  comma-separated extensions to exclude during directory scanning",

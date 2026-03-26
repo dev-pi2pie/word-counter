@@ -21,7 +21,7 @@ Document the current `--jobs` behavior, parity expectations, and a reproducible 
   - `--jobs > 1`: worker route by default
 - If requested `--jobs` exceeds host `suggestedMaxJobs`, the CLI warns and runs with `suggestedMaxJobs` as a safety cap.
 - If workers are unavailable on the host/runtime, execution falls back internally to async `load+count` while preserving deterministic output ordering.
-- Use `--quiet-warnings` to suppress non-fatal warnings such as jobs-limit advisory and worker-fallback warnings.
+- Use `--quiet-warnings` to suppress non-fatal warnings such as config discovery notes, jobs-limit advisory, and worker-fallback warnings.
 
 ## Usage
 

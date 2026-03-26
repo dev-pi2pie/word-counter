@@ -267,6 +267,7 @@ Directory scans are recursive by default:
 
 ```bash
 word-counter --path ./examples/test-case-multi-files-support
+word-counter --path ./examples/test-case-multi-files-support --recursive
 word-counter --path ./examples/test-case-multi-files-support --no-recursive
 ```
 
@@ -280,6 +281,7 @@ Progress behavior in standard batch mode:
 
 ```bash
 word-counter --path ./examples/test-case-multi-files-support
+word-counter --path ./examples/test-case-multi-files-support --progress
 word-counter --path ./examples/test-case-multi-files-support --no-progress
 word-counter --path ./examples/test-case-multi-files-support --keep-progress
 ```
@@ -301,7 +303,7 @@ Quick policy:
 - `--jobs 1`: async main-thread `load+count` baseline.
 - `--jobs > 1`: worker `load+count` with async fallback when workers are unavailable.
 - if requested `--jobs` exceeds host `suggestedMaxJobs` (from `--print-jobs-limit`), the CLI warns and runs with the suggested limit as a safety cap.
-- use `--quiet-warnings` to suppress non-fatal warning lines (for example jobs-limit advisory and worker-fallback warning).
+- use `--quiet-warnings` to suppress non-fatal warning lines (for example config discovery notes, jobs-limit advisory, and worker-fallback warning).
 
 Inspect host jobs diagnostics:
 
@@ -343,7 +345,9 @@ For full policy details, JSON parity expectations (`--misc`, `--total-of whitesp
 ### Stable Path Resolution Contract
 
 - Repeated `--path` values are accepted as mixed inputs (file + directory).
-- In `--path-mode auto` (default), directory inputs are expanded to files (recursive unless `--no-recursive`).
+- In `--path-mode auto` (default), directory inputs are expanded to files.
+  `--recursive` explicitly enables recursive traversal and overrides non-recursive config/env defaults.
+  `--no-recursive` explicitly disables recursive traversal for the current invocation.
 - In `--path-mode manual`, `--path` values are treated as literal file inputs; `--path <dir>` is not supported and is skipped as `not a regular file`.
 - Extension and regex filters apply only to files discovered from directory expansion.
 - Direct file inputs are always considered regardless of `--include-ext` / `--exclude-ext` / `--regex`.

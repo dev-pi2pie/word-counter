@@ -226,6 +226,12 @@ export function validateInspectInvocation(argv: string[]): ValidInspectInvocatio
       continue;
     }
 
+    if (token === "--recursive") {
+      recursive = true;
+      sources.recursive = true;
+      continue;
+    }
+
     if (token === "--no-recursive") {
       recursive = false;
       sources.recursive = true;

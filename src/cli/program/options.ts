@@ -131,8 +131,10 @@ export function configureProgramOptions(
       1,
     )
     .option("--print-jobs-limit", "print host jobs-limit JSON and exit (must be used alone)")
+    .option("--progress", "enable batch progress indicator")
     .option("--no-progress", "disable batch progress indicator")
     .option("--keep-progress", "keep final batch progress line visible in standard mode")
+    .option("--recursive", "enable recursive directory traversal")
     .option("--no-recursive", "disable recursive directory traversal")
     .option("--quiet-warnings", "suppress non-fatal warning diagnostics")
     .option("--quiet-skips", "suppress debug skip output and per-file json skipped field")

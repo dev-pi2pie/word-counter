@@ -101,7 +101,9 @@ export async function runCli(
           resolvedConfig.config,
           deriveCountCliSources(program),
         );
-        emitConfigNotes(resolvedConfig.notes);
+        if (!options.quietWarnings) {
+          emitConfigNotes(resolvedConfig.notes);
+        }
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         program.error(pc.red(message));

@@ -38,6 +38,41 @@ describe("CLI progress output", () => {
     expect(progress.writes).toEqual([]);
   });
 
+  test("lets --progress override config-driven progress.mode = off", async () => {
+    const root = await makeTempFixture("cli-progress-config-override");
+    await writeFile(join(root, "wc-intl-seg.config.toml"), ['[progress]', 'mode = "off"'].join("\n"));
+    await writeFile(join(root, "a.txt"), "alpha beta");
+    await writeFile(join(root, "b.txt"), "gamma delta");
+    const progress = createCapturedStream(true);
+
+    const output = await captureCli(["--path", root, "--progress"], {
+      cwd: root,
+      stderr: progress.stream,
+    });
+
+    expect(progress.writes.some((chunk) => chunk.includes("Counting files ["))).toBeTrue();
+    expect(output.stdout[0]).toBe("Total words: 4");
+  });
+
+  test("lets --progress override WORD_COUNTER_PROGRESS=off in non-tty streams", async () => {
+    const root = await makeTempFixture("cli-progress-env-override");
+    await writeFile(join(root, "a.txt"), "alpha beta");
+    await writeFile(join(root, "b.txt"), "gamma delta");
+    const progress = createCapturedStream(false);
+
+    const output = await captureCli(["--path", root, "--progress"], {
+      cwd: root,
+      env: {
+        WORD_COUNTER_PROGRESS: "off",
+      },
+      stderr: progress.stream,
+    });
+
+    expect(progress.writes.some((chunk) => chunk.includes("Counting files ["))).toBeTrue();
+    expect(progress.writes.some((chunk) => chunk.endsWith("\n"))).toBeTrue();
+    expect(output.stdout[0]).toBe("Total words: 4");
+  });
+
   test("keeps final progress line visible with --keep-progress", async () => {
     const root = await makeTempFixture("cli-progress-keep-visible");
     await writeFile(join(root, "a.txt"), "alpha beta");
