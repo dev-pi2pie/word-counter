@@ -1,6 +1,7 @@
 ---
 title: "config file support and detector default alignment"
 created-date: 2026-03-26
+modified-date: 2026-03-26
 status: draft
 agent: Codex
 ---
@@ -104,11 +105,11 @@ built-in defaults
 
 ### Phase 1 - Config Contract And Loader Boundary
 
-- [ ] Add first-version config types and normalization helpers for the settled schema keys under the CLI/runtime layer.
-- [ ] Define one config-loading boundary that is separate from markdown frontmatter parsing and does not reuse the existing TOML frontmatter parser error model.
-- [ ] Define how parsed config values are normalized before merge so `toml`, `json`, and `jsonc` land on one internal shape.
-- [ ] Add validation rules for unsupported keys, invalid enum values, invalid arrays, and invalid scalar types with clear CLI-facing error messages.
-- [ ] Update `docs/schemas/default-config.md` so it reflects the settled active contract instead of the stale `v0.1.0` wording.
+- [x] Add first-version config types and normalization helpers for the settled schema keys under the CLI/runtime layer.
+- [x] Define one config-loading boundary that is separate from markdown frontmatter parsing and does not reuse the existing TOML frontmatter parser error model.
+- [x] Define how parsed config values are normalized before merge so `toml`, `json`, and `jsonc` land on one internal shape.
+- [x] Add validation rules for unsupported keys, invalid enum values, invalid arrays, and invalid scalar types with clear CLI-facing error messages.
+- [x] Update `docs/schemas/default-config.md` so it reflects the settled active contract instead of the stale `v0.1.0` wording.
 
 Validation for this phase:
 
@@ -118,11 +119,11 @@ Validation for this phase:
 
 ### Phase 2 - Config Discovery And Same-Scope Priority
 
-- [ ] Implement platform-native user config path resolution for Linux, macOS, and Windows.
-- [ ] Implement current-working-directory config lookup using the canonical filenames.
-- [ ] Implement fixed same-scope file selection with `toml > jsonc > json`.
-- [ ] Ignore lower-priority sibling config files at the same scope after selecting the highest-priority file.
-- [ ] Surface a clear diagnostic note when lower-priority sibling config files are ignored.
+- [x] Implement platform-native user config path resolution for Linux, macOS, and Windows.
+- [x] Implement current-working-directory config lookup using the canonical filenames.
+- [x] Implement fixed same-scope file selection with `toml > jsonc > json`.
+- [x] Ignore lower-priority sibling config files at the same scope after selecting the highest-priority file.
+- [x] Surface a clear diagnostic note when lower-priority sibling config files are ignored.
 
 Validation for this phase:
 
