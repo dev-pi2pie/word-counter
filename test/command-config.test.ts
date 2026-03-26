@@ -7,6 +7,14 @@ import { hasWasmDetectorRuntime } from "./support/wasm-detector-runtime";
 const { captureCli, findDebugEvents, makeTempFixture } = createCliHarness();
 
 describe("CLI config precedence and detector defaults", () => {
+  const defaultEligibleStrictNotEligibleText = "Readers understand the feature.";
+  const inspectContentGateText = [
+    "mode: debug",
+    "tee: true",
+    "path: logs",
+    "Use this for testing.",
+  ].join("\n");
+
   test("lets cwd config override user config, env override cwd config, and CLI override env", async () => {
     const root = await makeTempFixture("cli-config-precedence");
     const userConfigDir = join(root, "user-config");
@@ -119,6 +127,248 @@ describe("CLI config precedence and detector defaults", () => {
     expect(output.exitCode).toBe(0);
     const parsed = JSON.parse(output.stdout[0] ?? "{}");
     expect(parsed.detector).toBe("wasm");
+  });
+
+  test("applies root contentGate.mode from config to counting when the CLI does not override it", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const cwd = await makeTempFixture("count-content-gate-config");
+    await writeFile(
+      join(cwd, "wc-intl-seg.config.toml"),
+      ['detector = "wasm"', "", "[contentGate]", 'mode = "strict"'].join("\n"),
+    );
+
+    const output = await captureCli(
+      ["--format", "raw", "--debug", "--detector-evidence", defaultEligibleStrictNotEligibleText],
+      { cwd },
+    );
+
+    expect(output.exitCode).toBe(0);
+    const evidence = findDebugEvents(output.stderr, "detector.window.evidence")[0];
+    expect(evidence?.contentGate).toEqual({
+      applied: true,
+      passed: false,
+      policy: "latinProse",
+      mode: "strict",
+    });
+  });
+
+  test("lets WORD_COUNTER_CONTENT_GATE override config for counting", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const cwd = await makeTempFixture("count-content-gate-env");
+    await writeFile(
+      join(cwd, "wc-intl-seg.config.toml"),
+      ['detector = "wasm"', "", "[contentGate]", 'mode = "strict"'].join("\n"),
+    );
+
+    const output = await captureCli(
+      ["--format", "raw", "--debug", "--detector-evidence", defaultEligibleStrictNotEligibleText],
+      {
+        cwd,
+        env: {
+          WORD_COUNTER_CONTENT_GATE: "off",
+        },
+      },
+    );
+
+    expect(output.exitCode).toBe(0);
+    const evidence = findDebugEvents(output.stderr, "detector.window.evidence")[0];
+    expect(evidence?.contentGate).toEqual({
+      applied: false,
+      passed: true,
+      policy: "none",
+      mode: "off",
+    });
+  });
+
+  test("keeps --content-gate as the highest-precedence override for counting", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const cwd = await makeTempFixture("count-content-gate-cli");
+    await writeFile(
+      join(cwd, "wc-intl-seg.config.toml"),
+      ['detector = "wasm"', "", "[contentGate]", 'mode = "strict"'].join("\n"),
+    );
+
+    const output = await captureCli(
+      [
+        "--content-gate",
+        "loose",
+        "--format",
+        "raw",
+        "--debug",
+        "--detector-evidence",
+        defaultEligibleStrictNotEligibleText,
+      ],
+      {
+        cwd,
+        env: {
+          WORD_COUNTER_CONTENT_GATE: "off",
+        },
+      },
+    );
+
+    expect(output.exitCode).toBe(0);
+    const evidence = findDebugEvents(output.stderr, "detector.window.evidence")[0];
+    expect(evidence?.contentGate).toEqual({
+      applied: true,
+      passed: true,
+      policy: "latinProse",
+      mode: "loose",
+    });
+  });
+
+  test("lets inspect inherit root contentGate.mode when inspect.contentGate.mode is absent", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const cwd = await makeTempFixture("inspect-root-content-gate-config");
+    await writeFile(
+      join(cwd, "wc-intl-seg.config.toml"),
+      ['detector = "wasm"', "", "[contentGate]", 'mode = "strict"'].join("\n"),
+    );
+
+    const output = await captureCli(["inspect", "--format", "json", inspectContentGateText], {
+      cwd,
+    });
+
+    expect(output.exitCode).toBe(0);
+    const parsed = JSON.parse(output.stdout[0] ?? "{}");
+    expect(parsed.detector).toBe("wasm");
+    expect(parsed.windows?.[0]?.contentGate).toEqual({
+      applied: true,
+      passed: false,
+      policy: "latinProse",
+      mode: "strict",
+    });
+  });
+
+  test("lets WORD_COUNTER_CONTENT_GATE override inspect-specific config defaults", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const cwd = await makeTempFixture("inspect-content-gate-env");
+    await writeFile(
+      join(cwd, "wc-intl-seg.config.toml"),
+      [
+        'detector = "wasm"',
+        "",
+        "[contentGate]",
+        'mode = "strict"',
+        "",
+        "[inspect.contentGate]",
+        'mode = "off"',
+      ].join("\n"),
+    );
+
+    const output = await captureCli(["inspect", "--format", "json", inspectContentGateText], {
+      cwd,
+      env: {
+        WORD_COUNTER_CONTENT_GATE: "loose",
+      },
+    });
+
+    expect(output.exitCode).toBe(0);
+    const parsed = JSON.parse(output.stdout[0] ?? "{}");
+    expect(parsed.windows?.[0]?.contentGate).toEqual({
+      applied: true,
+      passed: true,
+      policy: "latinProse",
+      mode: "loose",
+    });
+  });
+
+  test("lets inspect.contentGate.mode override the root content gate without changing counting defaults", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const cwd = await makeTempFixture("inspect-content-gate-override-config");
+    await writeFile(
+      join(cwd, "wc-intl-seg.config.toml"),
+      [
+        'detector = "wasm"',
+        "",
+        "[contentGate]",
+        'mode = "strict"',
+        "",
+        "[inspect.contentGate]",
+        'mode = "off"',
+      ].join("\n"),
+    );
+
+    const inspectOutput = await captureCli(["inspect", "--format", "json", inspectContentGateText], {
+      cwd,
+    });
+    const countOutput = await captureCli(
+      ["--format", "raw", "--debug", "--detector-evidence", defaultEligibleStrictNotEligibleText],
+      { cwd },
+    );
+
+    expect(inspectOutput.exitCode).toBe(0);
+    expect(countOutput.exitCode).toBe(0);
+    const inspectParsed = JSON.parse(inspectOutput.stdout[0] ?? "{}");
+    expect(inspectParsed.windows?.[0]?.contentGate).toEqual({
+      applied: false,
+      passed: true,
+      policy: "none",
+      mode: "off",
+    });
+    const countEvidence = findDebugEvents(countOutput.stderr, "detector.window.evidence")[0];
+    expect(countEvidence?.contentGate).toEqual({
+      applied: true,
+      passed: false,
+      policy: "latinProse",
+      mode: "strict",
+    });
+  });
+
+  test("keeps inspect --content-gate as the highest-precedence override over env and config", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const cwd = await makeTempFixture("inspect-content-gate-cli");
+    await writeFile(
+      join(cwd, "wc-intl-seg.config.toml"),
+      [
+        'detector = "wasm"',
+        "",
+        "[contentGate]",
+        'mode = "strict"',
+        "",
+        "[inspect.contentGate]",
+        'mode = "off"',
+      ].join("\n"),
+    );
+
+    const output = await captureCli(
+      ["inspect", "--content-gate", "strict", "--format", "json", inspectContentGateText],
+      {
+        cwd,
+        env: {
+          WORD_COUNTER_CONTENT_GATE: "loose",
+        },
+      },
+    );
+
+    expect(output.exitCode).toBe(0);
+    const parsed = JSON.parse(output.stdout[0] ?? "{}");
+    expect(parsed.windows?.[0]?.contentGate).toEqual({
+      applied: true,
+      passed: false,
+      policy: "latinProse",
+      mode: "strict",
+    });
   });
 
   test("keeps inspect.detector = regex incompatible with engine view", async () => {

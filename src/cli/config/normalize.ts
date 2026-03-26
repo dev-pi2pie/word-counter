@@ -1,8 +1,9 @@
-import type { DetectorMode } from "../../detector";
+import type { DetectorContentGateMode, DetectorMode } from "../../detector";
 import type { TotalOfPart } from "../total-of";
 import type { PathMode } from "../types";
 import { ConfigValidationError } from "./errors";
 import {
+  CONFIG_CONTENT_GATE_MODE_VALUES,
   CONFIG_DETECTOR_VALUES,
   CONFIG_LOG_LEVEL_VALUES,
   CONFIG_LOG_VERBOSITY_VALUES,
@@ -145,14 +146,56 @@ function normalizeInspectConfig(value: unknown, sourceLabel: string): WordCounte
     return undefined;
   }
 
-  rejectUnknownKeys(section, ["detector"], sourceLabel, ["inspect"]);
+  rejectUnknownKeys(section, ["detector", "contentGate"], sourceLabel, ["inspect"]);
 
   const detector = parseEnum<DetectorMode>(section.detector, CONFIG_DETECTOR_VALUES, sourceLabel, [
     "inspect",
     "detector",
   ]);
+  const contentGateSection = ensureObject(section.contentGate, sourceLabel, [
+    "inspect",
+    "contentGate",
+  ]);
+  if (contentGateSection) {
+    rejectUnknownKeys(contentGateSection, ["mode"], sourceLabel, ["inspect", "contentGate"]);
+  }
+  const mode = parseEnum<DetectorContentGateMode>(
+    contentGateSection?.mode,
+    CONFIG_CONTENT_GATE_MODE_VALUES,
+    sourceLabel,
+    ["inspect", "contentGate", "mode"],
+  );
 
-  return detector === undefined ? undefined : { detector };
+  const normalized: NonNullable<WordCounterConfig["inspect"]> = {};
+  if (detector !== undefined) {
+    normalized.detector = detector;
+  }
+  if (mode !== undefined) {
+    normalized.contentGate = { mode };
+  }
+
+  return Object.keys(normalized).length > 0 ? normalized : undefined;
+}
+
+function normalizeContentGateConfig(
+  value: unknown,
+  sourceLabel: string,
+): WordCounterConfig["contentGate"] {
+  const section = ensureObject(value, sourceLabel, ["contentGate"]);
+  if (!section) {
+    return undefined;
+  }
+
+  rejectUnknownKeys(section, ["mode"], sourceLabel, ["contentGate"]);
+
+  const mode = parseEnum<DetectorContentGateMode>(
+    section.mode,
+    CONFIG_CONTENT_GATE_MODE_VALUES,
+    sourceLabel,
+    ["contentGate", "mode"],
+  );
+
+  return mode === undefined ? undefined : { mode };
 }
 
 function normalizePathConfig(value: unknown, sourceLabel: string): WordCounterConfig["path"] {
@@ -329,7 +372,7 @@ export function normalizeWordCounterConfig(value: unknown, sourceLabel: string):
 
   rejectUnknownKeys(
     root,
-    ["detector", "inspect", "path", "progress", "output", "reporting", "logging"],
+    ["detector", "contentGate", "inspect", "path", "progress", "output", "reporting", "logging"],
     sourceLabel,
     [],
   );
@@ -337,6 +380,7 @@ export function normalizeWordCounterConfig(value: unknown, sourceLabel: string):
   const detector = parseEnum<DetectorMode>(root.detector, CONFIG_DETECTOR_VALUES, sourceLabel, [
     "detector",
   ]);
+  const contentGate = normalizeContentGateConfig(root.contentGate, sourceLabel);
   const inspect = normalizeInspectConfig(root.inspect, sourceLabel);
   const path = normalizePathConfig(root.path, sourceLabel);
   const progress = normalizeProgressConfig(root.progress, sourceLabel);
@@ -347,6 +391,9 @@ export function normalizeWordCounterConfig(value: unknown, sourceLabel: string):
   const normalized: WordCounterConfig = {};
   if (detector !== undefined) {
     normalized.detector = detector;
+  }
+  if (contentGate !== undefined) {
+    normalized.contentGate = contentGate;
   }
   if (inspect !== undefined) {
     normalized.inspect = inspect;

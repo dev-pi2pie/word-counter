@@ -10,6 +10,7 @@ function isCliOptionSource(program: Command, optionName: string): boolean {
 export function deriveCountCliSources(program: Command): CountCliSources {
   return {
     detector: isCliOptionSource(program, "detector"),
+    contentGate: isCliOptionSource(program, "contentGate"),
     pathMode: isCliOptionSource(program, "pathMode"),
     recursive: isCliOptionSource(program, "recursive"),
     includeExt: isCliOptionSource(program, "includeExt"),

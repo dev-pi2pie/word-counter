@@ -92,6 +92,7 @@ export function validateInspectInvocation(argv: string[]): ValidInspectInvocatio
   const textTokens: string[] = [];
   const sources = {
     detector: false,
+    contentGate: false,
     pathMode: false,
     recursive: false,
     includeExt: false,
@@ -150,6 +151,7 @@ export function validateInspectInvocation(argv: string[]): ValidInspectInvocatio
         return "`--content-gate` must be `default`, `strict`, `loose`, or `off`.";
       }
       contentGateMode = parsed;
+      sources.contentGate = true;
       return null;
     }
 

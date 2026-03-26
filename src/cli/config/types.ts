@@ -1,4 +1,4 @@
-import type { DetectorMode } from "../../detector";
+import type { DetectorContentGateMode, DetectorMode } from "../../detector";
 import type { TotalOfPart } from "../total-of";
 import type { PathMode } from "../types";
 
@@ -10,8 +10,14 @@ export type ConfigLogVerbosity = "compact" | "verbose";
 
 export type WordCounterConfig = {
   detector?: DetectorMode;
+  contentGate?: {
+    mode?: DetectorContentGateMode;
+  };
   inspect?: {
     detector?: DetectorMode;
+    contentGate?: {
+      mode?: DetectorContentGateMode;
+    };
   };
   path?: {
     mode?: PathMode;

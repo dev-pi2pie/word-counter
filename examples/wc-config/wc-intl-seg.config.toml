@@ -1,5 +1,8 @@
 detector = "regex"
 
+[contentGate]
+mode = "default"
+
 [inspect]
 detector = "regex"
 

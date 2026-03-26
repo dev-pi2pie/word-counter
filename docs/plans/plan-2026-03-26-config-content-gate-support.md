@@ -1,7 +1,8 @@
 ---
 title: "config content gate support"
 created-date: 2026-03-26
-status: draft
+modified-date: 2026-03-26
+status: completed
 agent: Codex
 ---
 
@@ -49,10 +50,10 @@ Extend the config layer so detector policy mode becomes configurable alongside d
 
 ### Phase 1 - Contract And Plumbing
 
-- [ ] Add `contentGate.mode` and `inspect.contentGate.mode` to the config schema types and normalization layer.
-- [ ] Add `WORD_COUNTER_CONTENT_GATE` to env-backed config resolution.
-- [ ] Update merged config application for counting and inspect so content-gate mode follows the same precedence rules as detector mode.
-- [ ] Keep inspect inheritance explicit: root fallback first, inspect override second, CLI override last.
+- [x] Add `contentGate.mode` and `inspect.contentGate.mode` to the config schema types and normalization layer.
+- [x] Add `WORD_COUNTER_CONTENT_GATE` to env-backed config resolution.
+- [x] Update merged config application for counting and inspect so content-gate mode follows the same precedence rules as detector mode.
+- [x] Keep inspect inheritance explicit: root fallback first, inspect override second, CLI override last.
 
 Validation for this phase:
 
@@ -62,10 +63,10 @@ Validation for this phase:
 
 ### Phase 2 - Runtime Integration And Validation
 
-- [ ] Thread config-derived content-gate mode into counting command execution.
-- [ ] Thread config-derived content-gate mode into inspect command execution.
-- [ ] Preserve current validation behavior for unsupported content-gate values and detector/view combinations.
-- [ ] Ensure omitted config keeps the current effective default of `default`.
+- [x] Thread config-derived content-gate mode into counting command execution.
+- [x] Thread config-derived content-gate mode into inspect command execution.
+- [x] Preserve current validation behavior for unsupported content-gate values and detector/view combinations.
+- [x] Ensure omitted config keeps the current effective default of `default`.
 
 Validation for this phase:
 
@@ -75,10 +76,10 @@ Validation for this phase:
 
 ### Phase 3 - Docs And Examples
 
-- [ ] Update `docs/schemas/default-config.md` for the new config keys and mapping rules.
-- [ ] Update `docs/config-usage-guide.md` for root and inspect content-gate configuration.
-- [ ] Update `README.md` examples and config notes.
-- [ ] Update `examples/wc-config/` so the example files reflect the final documented default contract or explicitly documented content-gate defaults.
+- [x] Update `docs/schemas/default-config.md` for the new config keys and mapping rules.
+- [x] Update `docs/config-usage-guide.md` for root and inspect content-gate configuration.
+- [x] Update `README.md` examples and config notes.
+- [x] Update `examples/wc-config/` so the example files reflect the final documented default contract or explicitly documented content-gate defaults.
 
 Validation for this phase:
 
@@ -87,10 +88,10 @@ Validation for this phase:
 
 ## Compatibility Gates
 
-- [ ] Omitted config still preserves the current effective content-gate default of `default`.
-- [ ] Existing CLI `--content-gate` behavior remains unchanged and keeps highest precedence.
-- [ ] Existing detector-mode precedence remains unchanged while adding content-gate precedence alongside it.
-- [ ] `inspect.contentGate.mode` only affects inspect behavior and does not silently rewrite root counting behavior.
+- [x] Omitted config still preserves the current effective content-gate default of `default`.
+- [x] Existing CLI `--content-gate` behavior remains unchanged and keeps highest precedence.
+- [x] Existing detector-mode precedence remains unchanged while adding content-gate precedence alongside it.
+- [x] `inspect.contentGate.mode` only affects inspect behavior and does not silently rewrite root counting behavior.
 
 ## Related Research
 

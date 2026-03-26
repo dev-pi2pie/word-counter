@@ -7,6 +7,7 @@ import {
   discoverConfigFiles,
   loadConfigFile,
   parseConfigText,
+  resolveEnvConfig,
   resolveUserConfigDirectory,
 } from "../src/cli/config";
 
@@ -15,6 +16,7 @@ describe("cli config parsing and discovery", () => {
     const config = parseConfigText(
       JSON.stringify({
         detector: "regex",
+        contentGate: { mode: "strict" },
         inspect: { detector: "wasm" },
         path: {
           mode: "manual",
@@ -32,6 +34,7 @@ describe("cli config parsing and discovery", () => {
 
     expect(config).toEqual({
       detector: "regex",
+      contentGate: { mode: "strict" },
       inspect: { detector: "wasm" },
       path: {
         mode: "manual",
@@ -51,7 +54,8 @@ describe("cli config parsing and discovery", () => {
         "{",
         "  // detector defaults",
         '  "detector": "regex",',
-        '  "inspect": { /* inspect override */ "detector": "wasm" },',
+        '  "contentGate": { "mode": "loose" },',
+        '  "inspect": { /* inspect override */ "detector": "wasm", "contentGate": { "mode": "off" } },',
         '  "progress": { "mode": "auto" }',
         "}",
       ].join("\n"),
@@ -61,7 +65,8 @@ describe("cli config parsing and discovery", () => {
 
     expect(config).toEqual({
       detector: "regex",
-      inspect: { detector: "wasm" },
+      contentGate: { mode: "loose" },
+      inspect: { detector: "wasm", contentGate: { mode: "off" } },
       progress: { mode: "auto" },
     });
   });
@@ -71,8 +76,14 @@ describe("cli config parsing and discovery", () => {
       [
         'detector = "regex"',
         "",
+        "[contentGate]",
+        'mode = "strict"',
+        "",
         "[inspect]",
         'detector = "wasm"',
+        "",
+        "[inspect.contentGate]",
+        'mode = "off"',
         "",
         "[path]",
         'mode = "manual"',
@@ -92,7 +103,8 @@ describe("cli config parsing and discovery", () => {
 
     expect(config).toEqual({
       detector: "regex",
-      inspect: { detector: "wasm" },
+      contentGate: { mode: "strict" },
+      inspect: { detector: "wasm", contentGate: { mode: "off" } },
       path: {
         mode: "manual",
         recursive: false,
@@ -147,6 +159,80 @@ describe("cli config parsing and discovery", () => {
     ).toThrow('Invalid config in invalid.json at "output.totalOf": expected an array of strings.');
   });
 
+  test("rejects non-object contentGate config", () => {
+    expect(() =>
+      parseConfigText(
+        JSON.stringify({
+          contentGate: "strict",
+        }),
+        "json",
+        "invalid.json",
+      ),
+    ).toThrow('Invalid config in invalid.json at "contentGate": expected an object.');
+  });
+
+  test("rejects invalid nested contentGate mode values", () => {
+    expect(() =>
+      parseConfigText(
+        JSON.stringify({
+          inspect: {
+            contentGate: {
+              mode: "aggressive",
+            },
+          },
+        }),
+        "json",
+        "invalid.json",
+      ),
+    ).toThrow(
+      'Invalid config in invalid.json at "inspect.contentGate.mode": expected one of: "default", "strict", "loose", "off".',
+    );
+  });
+
+  test("rejects malformed inspect.contentGate objects", () => {
+    expect(() =>
+      parseConfigText(
+        JSON.stringify({
+          inspect: {
+            contentGate: "strict",
+          },
+        }),
+        "json",
+        "invalid.json",
+      ),
+    ).toThrow('Invalid config in invalid.json at "inspect.contentGate": expected an object.');
+
+    expect(() =>
+      parseConfigText(
+        JSON.stringify({
+          inspect: {
+            contentGate: {
+              mode: "default",
+              extra: true,
+            },
+          },
+        }),
+        "json",
+        "invalid.json",
+      ),
+    ).toThrow('Invalid config in invalid.json at "inspect.contentGate.extra": unknown key.');
+  });
+
+  test("rejects unknown keys inside contentGate config", () => {
+    expect(() =>
+      parseConfigText(
+        JSON.stringify({
+          contentGate: {
+            mode: "default",
+            extra: true,
+          },
+        }),
+        "json",
+        "invalid.json",
+      ),
+    ).toThrow('Invalid config in invalid.json at "contentGate.extra": unknown key.');
+  });
+
   test("rejects malformed JSON config", () => {
     expect(() => parseConfigText('{"detector": "regex"', "json", "broken.json")).toThrow(
       "Invalid JSON config in broken.json",
@@ -178,13 +264,13 @@ describe("cli config parsing and discovery", () => {
   test("loads config files from disk", async () => {
     const root = await mkdtemp(join(tmpdir(), "wc-config-load-"));
     const filePath = join(root, "wc-intl-seg.config.json");
-    await writeFile(filePath, JSON.stringify({ detector: "regex" }));
+    await writeFile(filePath, JSON.stringify({ detector: "regex", contentGate: { mode: "off" } }));
 
     const loaded = await loadConfigFile(filePath, "json");
 
     expect(loaded.path).toBe(filePath);
     expect(loaded.format).toBe("json");
-    expect(loaded.config).toEqual({ detector: "regex" });
+    expect(loaded.config).toEqual({ detector: "regex", contentGate: { mode: "off" } });
   });
 
   test("reports config read failures with the file path", async () => {
@@ -347,5 +433,32 @@ describe("cli config parsing and discovery", () => {
     expect(discovered?.path).toBe(jsoncPath);
     expect(discovered?.format).toBe("jsonc");
     expect(discovered?.ignoredSiblingPaths).toEqual([]);
+  });
+
+  test("resolves WORD_COUNTER_CONTENT_GATE from environment config", () => {
+    const config = resolveEnvConfig({
+      WORD_COUNTER_CONTENT_GATE: "strict",
+    });
+
+    expect(config).toEqual({
+      contentGate: {
+        mode: "strict",
+      },
+      inspect: {
+        contentGate: {
+          mode: "strict",
+        },
+      },
+    });
+  });
+
+  test("rejects invalid WORD_COUNTER_CONTENT_GATE values", () => {
+    expect(() =>
+      resolveEnvConfig({
+        WORD_COUNTER_CONTENT_GATE: "aggressive",
+      }),
+    ).toThrow(
+      'Invalid config in environment variables at "contentGate.mode": expected one of: "default", "strict", "loose", "off".',
+    );
   });
 });

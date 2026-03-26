@@ -35,6 +35,7 @@ export type ParsedInspectInvocation = {
   textTokens: string[];
   sources: {
     detector: boolean;
+    contentGate: boolean;
     pathMode: boolean;
     recursive: boolean;
     includeExt: boolean;

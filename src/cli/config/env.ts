@@ -42,6 +42,7 @@ export function resolveEnvConfig(env: NodeJS.ProcessEnv = process.env): WordCoun
   const excludeExtensions = parseCommaSeparatedEnv(env.WORD_COUNTER_EXCLUDE_EXT);
   const skippedFiles = parseBooleanEnv("WORD_COUNTER_REPORT_SKIPS", env.WORD_COUNTER_REPORT_SKIPS);
   const totalOfRaw = env.WORD_COUNTER_TOTAL_OF;
+  const contentGateMode = env.WORD_COUNTER_CONTENT_GATE;
   const progressMode = env.WORD_COUNTER_PROGRESS;
   const logLevel = env.WORD_COUNTER_LOG_LEVEL;
   const logVerbosity = env.WORD_COUNTER_LOG_VERBOSITY;
@@ -83,6 +84,20 @@ export function resolveEnvConfig(env: NodeJS.ProcessEnv = process.env): WordCoun
   if (totalOfRaw !== undefined) {
     config.output = {
       totalOf: parseTotalOfOption(totalOfRaw),
+    };
+  }
+
+  if (contentGateMode !== undefined) {
+    config.contentGate = {
+      mode: contentGateMode as NonNullable<WordCounterConfig["contentGate"]>["mode"],
+    };
+    config.inspect = {
+      ...(config.inspect ?? {}),
+      contentGate: {
+        mode: contentGateMode as NonNullable<
+          NonNullable<WordCounterConfig["inspect"]>["contentGate"]
+        >["mode"],
+      },
     };
   }
 

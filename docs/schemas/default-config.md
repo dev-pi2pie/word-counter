@@ -60,6 +60,9 @@ Lower-priority sibling config files at the same scope are ignored.
 ```toml
 detector = "regex"
 
+[contentGate]
+mode = "default"
+
 [inspect]
 detector = "regex"
 
@@ -95,6 +98,13 @@ verbosity = "compact"
 - `inspect.detector`
   - optional inspect-only detector override
   - when omitted, `inspect` inherits the root `detector`
+- `contentGate.mode`
+  - root detector-policy default for normal counting flows
+  - allowed values: `default`, `strict`, `loose`, `off`
+- `inspect.contentGate.mode`
+  - optional inspect-only detector-policy override
+  - when omitted, `inspect` inherits the root `contentGate.mode`
+  - `WORD_COUNTER_CONTENT_GATE` still overrides inspect-only config defaults because env precedence is higher than file-based config
 - `path.mode`
   - `auto`: determine file vs directory from filesystem metadata
   - `manual`: treat `--path` inputs as literal files
@@ -131,6 +141,8 @@ verbosity = "compact"
 
 - `-d, --detector <regex|wasm>` -> `detector`
 - `inspect -d, --detector <regex|wasm>` -> `inspect.detector` for that invocation only
+- `--content-gate <default|strict|loose|off>` -> `contentGate.mode`
+- `inspect --content-gate <default|strict|loose|off>` -> `inspect.contentGate.mode` for that invocation only
 - `--path-mode <auto|manual>` -> `path.mode`
 - `--recursive` / `--no-recursive` -> `path.recursive`
 - `--include-ext <list>` -> `path.includeExtensions`
@@ -143,6 +155,7 @@ verbosity = "compact"
 - `--debug` -> `logging.level = debug`
 - `--verbose` -> `logging.verbosity = verbose`
 
+- `WORD_COUNTER_CONTENT_GATE` -> `contentGate.mode`
 - `WORD_COUNTER_PATH_MODE` -> `path.mode`
 - `WORD_COUNTER_RECURSIVE` -> `path.recursive`
 - `WORD_COUNTER_INCLUDE_EXT` -> `path.includeExtensions`

@@ -33,6 +33,9 @@ describe("example config files", () => {
       const loaded = await loadConfigFile(targetPath, formatFromPath(examplePath));
       expect(loaded.config).toEqual({
         detector: "regex",
+        contentGate: {
+          mode: "default",
+        },
         inspect: {
           detector: "regex",
         },

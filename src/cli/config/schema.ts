@@ -1,4 +1,4 @@
-import type { DetectorMode } from "../../detector";
+import type { DetectorContentGateMode, DetectorMode } from "../../detector";
 import type { TotalOfPart } from "../total-of";
 import type { PathMode } from "../types";
 import type { ConfigFormat, ConfigLogLevel, ConfigLogVerbosity, ConfigProgressMode } from "./types";
@@ -10,6 +10,12 @@ export const CONFIG_FILENAMES = CONFIG_FORMAT_PRIORITY.map(
 );
 
 export const CONFIG_DETECTOR_VALUES: readonly DetectorMode[] = ["regex", "wasm"];
+export const CONFIG_CONTENT_GATE_MODE_VALUES: readonly DetectorContentGateMode[] = [
+  "default",
+  "strict",
+  "loose",
+  "off",
+];
 export const CONFIG_PATH_MODE_VALUES: readonly PathMode[] = ["auto", "manual"];
 export const CONFIG_PROGRESS_MODE_VALUES: readonly ConfigProgressMode[] = ["auto", "on", "off"];
 export const CONFIG_LOG_LEVEL_VALUES: readonly ConfigLogLevel[] = ["info", "debug"];

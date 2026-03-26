@@ -1,6 +1,9 @@
 {
   // Default-reference config example for word-counter.
   "detector": "regex",
+  "contentGate": {
+    "mode": "default"
+  },
   "inspect": {
     "detector": "regex"
   },

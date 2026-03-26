@@ -1,6 +1,7 @@
 ---
 title: "Config Usage Guide"
 created-date: 2026-03-26
+modified-date: 2026-03-26
 status: completed
 agent: Codex
 ---
@@ -90,6 +91,8 @@ Examples:
 | --- | --- |
 | `detector` | Root detector default for normal counting |
 | `inspect.detector` | Optional inspect-only override |
+| `contentGate.mode` | Root detector-policy mode for counting and inspect fallback |
+| `inspect.contentGate.mode` | Optional inspect-only content-gate override |
 | `path.mode` | `auto` or `manual` path interpretation |
 | `path.recursive` | Recursive directory traversal toggle |
 | `path.includeExtensions` | Directory scan allowlist |
@@ -119,10 +122,22 @@ Current CLI defaults:
 - counting defaults to `regex`
 - `inspect` also defaults to `regex`
 
+## Content Gate Defaults
+
+Content-gate resolution follows the same layered model:
+
+- `contentGate.mode` sets the root detector-policy default for counting
+- `inspect.contentGate.mode` is optional
+- if `inspect.contentGate.mode` is absent, `inspect` inherits the root `contentGate.mode`
+- `WORD_COUNTER_CONTENT_GATE` overrides both user-level and project config defaults, including inspect-only file defaults
+- `word-counter inspect --content-gate ...` overrides the effective inspect content-gate mode only for that invocation
+- `--content-gate ...` remains the highest-precedence content-gate override on the counting CLI
+
 ## Environment Variables
 
 The current config-aware environment variables are:
 
+- `WORD_COUNTER_CONTENT_GATE`
 - `WORD_COUNTER_PATH_MODE`
 - `WORD_COUNTER_RECURSIVE`
 - `WORD_COUNTER_INCLUDE_EXT`
@@ -145,7 +160,9 @@ Examples:
 
 ```bash
 word-counter --detector wasm "Hello world"
+word-counter --content-gate strict "Internationalization documentation remains understandable."
 word-counter -d regex --format json "Hello world"
+word-counter inspect --content-gate off "mode: debug\ntee: true\npath: logs\nUse this for testing."
 word-counter inspect --detector wasm --view engine "こんにちは、世界！"
 word-counter inspect -d regex -f json "こんにちは、世界！これはテストです。"
 ```

@@ -4,6 +4,7 @@ import type { WordCounterConfig } from "./types";
 
 export type CountCliSources = {
   detector: boolean;
+  contentGate: boolean;
   pathMode: boolean;
   recursive: boolean;
   includeExt: boolean;
@@ -37,6 +38,10 @@ export function applyConfigToCountOptions(
 
   if (!sources.detector && config.detector !== undefined) {
     next.detector = config.detector;
+  }
+
+  if (!sources.contentGate && config.contentGate?.mode !== undefined) {
+    next.contentGate = config.contentGate.mode;
   }
 
   if (!sources.pathMode && config.path?.mode !== undefined) {
@@ -102,6 +107,11 @@ export function applyConfigToInspectInvocation(
   const detectorFromConfig = config.inspect?.detector ?? config.detector;
   if (!next.sources.detector && detectorFromConfig !== undefined) {
     next.detector = detectorFromConfig;
+  }
+
+  const contentGateFromConfig = config.inspect?.contentGate?.mode ?? config.contentGate?.mode;
+  if (!next.sources.contentGate && contentGateFromConfig !== undefined) {
+    next.contentGateMode = contentGateFromConfig;
   }
 
   if (!next.sources.pathMode && config.path?.mode !== undefined) {

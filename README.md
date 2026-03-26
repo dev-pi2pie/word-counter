@@ -184,13 +184,19 @@ Detector config notes:
 - `inspect` also defaults to `regex`
 - root `detector` controls normal counting
 - optional `inspect.detector` overrides inspect-only behavior
+- root `contentGate.mode` controls detector-policy defaults for counting
+- optional `inspect.contentGate.mode` overrides inspect-only detector-policy behavior
+- `WORD_COUNTER_CONTENT_GATE` overrides config-derived content-gate defaults
+- `--content-gate` stays the highest-precedence detector-policy override
 - `inspect --detector` only affects the current inspect invocation
 
 Examples:
 
 ```bash
 word-counter -d wasm "This sentence should clearly be detected as English for the wasm detector path."
+word-counter --content-gate strict "Internationalization documentation remains understandable."
 word-counter inspect -d regex -f json "こんにちは、世界！これはテストです。"
+word-counter inspect --content-gate off "mode: debug\ntee: true\npath: logs\nUse this for testing."
 word-counter --path ./examples/test-case-multi-files-support --format json
 ```
 
