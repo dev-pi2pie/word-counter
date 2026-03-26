@@ -4,7 +4,7 @@ Locale-aware word counting powered by the Web API [`Intl.Segmenter`](https://dev
 
 ## Quick Start (npx)
 
-Runtime requirement: Node.js `>=20`.
+Runtime requirement: Node.js `>=22.18.0`.
 
 Run without installing:
 
@@ -272,7 +272,7 @@ word-counter doctor --format json --pretty
 
 Doctor scope in v1:
 
-- checks runtime support policy against Node.js `>=20`
+- checks runtime support policy against Node.js `>=22.18.0`
 - verifies `Intl.Segmenter` availability plus word/grapheme constructor health
 - reports batch jobs host limits using the same heuristics as `--print-jobs-limit`
 - reports worker-route preflight signals and the worker-disable env toggle that affects worker availability

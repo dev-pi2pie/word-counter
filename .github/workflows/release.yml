@@ -1,5 +1,8 @@
 name: Release
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 on:
   push:
     tags:
@@ -238,7 +241,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 22.18.0
 
       - name: Setup Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -263,7 +266,7 @@ jobs:
         run: bun run verify:package-contents
 
       - name: Upload release package artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: release-package-${{ needs.notes.outputs.tag }}
           if-no-files-found: error
@@ -283,7 +286,7 @@ jobs:
       contents: read
     steps:
       - name: Download prepared package artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: release-package-${{ needs.notes.outputs.tag }}
           path: release-package
@@ -291,7 +294,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v6
         with:
-          node-version: 22.14.0
+          node-version: 22.18.0
           registry-url: https://registry.npmjs.org
 
       - name: Update npm for trusted publishing
@@ -337,7 +340,7 @@ jobs:
       packages: write
     steps:
       - name: Download prepared package artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: release-package-${{ needs.notes.outputs.tag }}
           path: release-package
@@ -345,7 +348,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 22.18.0
           registry-url: https://npm.pkg.github.com
           scope: "@${{ github.repository_owner }}"
 
