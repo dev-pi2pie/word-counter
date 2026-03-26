@@ -134,8 +134,8 @@ Validation for this phase:
 
 ### Phase 3 - Precedence Merge And Option Wiring
 
-- [ ] Implement recursive merge across built-in defaults, user config, current-working-directory config, environment variables, and CLI flags.
-- [ ] Wire config values into existing runtime options for:
+- [x] Implement recursive merge across built-in defaults, user config, current-working-directory config, environment variables, and CLI flags.
+- [x] Wire config values into existing runtime options for:
   - `path.mode`
   - `path.recursive`
   - `path.includeExtensions`
@@ -150,8 +150,8 @@ Validation for this phase:
   - `logging.verbosity`
   - `detector`
   - `inspect.detector`
-- [ ] Ensure environment variables override config-derived values without changing the existing env contract names.
-- [ ] Ensure CLI flags override both config and env values without changing existing flag semantics.
+- [x] Ensure environment variables override config-derived values without changing the existing env contract names.
+- [x] Ensure CLI flags override both config and env values without changing existing flag semantics.
 
 Validation for this phase:
 
@@ -161,11 +161,11 @@ Validation for this phase:
 
 ### Phase 4 - Detector Default Alignment And Alias Support
 
-- [ ] Reset CLI `inspect` default detector behavior to `regex`.
-- [ ] Add `inspect.detector` support so inspect inherits the root `detector` unless overridden in config.
-- [ ] Add `-d` as a global alias of `--detector` for both counting and `inspect`.
-- [ ] Ensure `inspect --detector` remains invocation-scoped and does not mutate or shadow the root config state outside the current inspect execution.
-- [ ] Recheck CLI help text and validation messages so detector defaults and alias behavior are explicit.
+- [x] Reset CLI `inspect` default detector behavior to `regex`.
+- [x] Add `inspect.detector` support so inspect inherits the root `detector` unless overridden in config.
+- [x] Add `-d` as a global alias of `--detector` for both counting and `inspect`.
+- [x] Ensure `inspect --detector` remains invocation-scoped and does not mutate or shadow the root config state outside the current inspect execution.
+- [x] Recheck CLI help text and validation messages so detector defaults and alias behavior are explicit.
 
 Validation for this phase:
 

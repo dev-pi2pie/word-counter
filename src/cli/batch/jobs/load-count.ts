@@ -30,6 +30,7 @@ export async function countBatchInputsWithJobs(
     const loaded = await readBatchInput(filePaths[index], {
       requestedJobs: options.jobs,
       limits,
+      detectBinary: options.detectBinary ?? true,
     });
     if (loaded.type === "skip") {
       completed += 1;

@@ -10,7 +10,7 @@ import type {
 
 function parseDetector(rawValue: string | undefined): InspectDetectorMode | null {
   if (rawValue === undefined) {
-    return "wasm";
+    return "regex";
   }
   if (rawValue === "wasm" || rawValue === "regex") {
     return rawValue;
@@ -77,7 +77,7 @@ function isInvalidInspectDetectorViewCombination(
 export function validateInspectInvocation(argv: string[]): ValidInspectInvocation {
   const inspectIndex = argv.findIndex((token, index) => index >= 2 && token === "inspect");
   const tokens = inspectIndex >= 0 ? argv.slice(inspectIndex + 1) : [];
-  let detector: InspectDetectorMode = "wasm";
+  let detector: InspectDetectorMode = "regex";
   let contentGateMode: DetectorContentGateMode = "default";
   let view: DetectorInspectView = "pipeline";
   let format: InspectOutputFormat = "standard";
@@ -90,6 +90,13 @@ export function validateInspectInvocation(argv: string[]): ValidInspectInvocatio
   const excludeExt: string[] = [];
   let regex: string | undefined;
   const textTokens: string[] = [];
+  const sources = {
+    detector: false,
+    pathMode: false,
+    recursive: false,
+    includeExt: false,
+    excludeExt: false,
+  };
   let expects:
     | "detector"
     | "view"
@@ -124,6 +131,7 @@ export function validateInspectInvocation(argv: string[]): ValidInspectInvocatio
         return "`--detector` must be `wasm` or `regex`.";
       }
       detector = parsed;
+      sources.detector = true;
       return null;
     }
 
@@ -171,6 +179,7 @@ export function validateInspectInvocation(argv: string[]): ValidInspectInvocatio
         return "`--path-mode` must be `auto` or `manual`.";
       }
       pathMode = parsed;
+      sources.pathMode = true;
       return null;
     }
 
@@ -181,11 +190,13 @@ export function validateInspectInvocation(argv: string[]): ValidInspectInvocatio
 
     if (kind === "includeExt") {
       includeExt.push(value);
+      sources.includeExt = true;
       return null;
     }
 
     if (kind === "excludeExt") {
       excludeExt.push(value);
+      sources.excludeExt = true;
       return null;
     }
 
@@ -222,6 +233,7 @@ export function validateInspectInvocation(argv: string[]): ValidInspectInvocatio
 
     if (token === "--no-recursive") {
       recursive = false;
+      sources.recursive = true;
       continue;
     }
 
@@ -232,6 +244,7 @@ export function validateInspectInvocation(argv: string[]): ValidInspectInvocatio
 
     if (
       token === "--detector" ||
+      token === "-d" ||
       token === "--content-gate" ||
       token === "--view" ||
       token === "--format" ||
@@ -247,23 +260,25 @@ export function validateInspectInvocation(argv: string[]): ValidInspectInvocatio
       expects =
         token === "-p"
           ? "path"
-          : token === "--content-gate"
-            ? "contentGate"
-            : token === "-f"
-              ? "format"
-              : token === "--path-mode"
-                ? "pathMode"
-                : token === "--include-ext"
-                  ? "includeExt"
-                  : token === "--exclude-ext"
-                    ? "excludeExt"
-                    : (token.slice(2) as
-                        | "detector"
-                        | "view"
-                        | "format"
-                        | "section"
-                        | "path"
-                        | "regex");
+          : token === "-d"
+            ? "detector"
+            : token === "--content-gate"
+              ? "contentGate"
+              : token === "-f"
+                ? "format"
+                : token === "--path-mode"
+                  ? "pathMode"
+                  : token === "--include-ext"
+                    ? "includeExt"
+                    : token === "--exclude-ext"
+                      ? "excludeExt"
+                      : (token.slice(2) as
+                          | "detector"
+                          | "view"
+                          | "format"
+                          | "section"
+                          | "path"
+                          | "regex");
       continue;
     }
 
@@ -384,11 +399,13 @@ export function validateInspectInvocation(argv: string[]): ValidInspectInvocatio
     pretty,
     section,
     pathMode,
+    pathDetectBinary: true,
     recursive,
     includeExt,
     excludeExt,
     ...(regex !== undefined ? { regex } : {}),
     paths,
     textTokens,
+    sources,
   };
 }

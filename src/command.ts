@@ -1,4 +1,9 @@
 import { Command } from "commander";
+import {
+  applyConfigToCountOptions,
+  deriveCountCliSources,
+  resolveWordCounterConfig,
+} from "./cli/config";
 import { createDebugChannel } from "./cli/debug/channel";
 import { executeDoctorCommand, isExplicitDoctorInvocation } from "./cli/doctor/run";
 import { executeInspectCommand, isExplicitInspectInvocation } from "./cli/inspect/run";
@@ -20,6 +25,13 @@ import type { WordCounterMode } from "./wc";
 import { normalizeMode } from "./wc/mode";
 import pc from "picocolors";
 
+function emitConfigNotes(notes: string[]): void {
+  for (const note of notes) {
+    const warningLine = note.startsWith("Warning:") ? note : `Warning: ${note}`;
+    console.error(pc.yellow(warningLine));
+  }
+}
+
 export async function runCli(
   argv: string[] = process.argv,
   runtime: RunCliOptions = {},
@@ -33,7 +45,7 @@ export async function runCli(
   }
 
   if (isExplicitInspectInvocation(argv)) {
-    await executeInspectCommand({ argv });
+    await executeInspectCommand({ argv, runtime });
     return;
   }
 
@@ -57,8 +69,8 @@ export async function runCli(
 
   configureProgramOptions(program, parseMode);
 
-  program.action(async (textTokens: string[], options: CliActionOptions) => {
-    if (options.printJobsLimit) {
+  program.action(async (textTokens: string[], rawOptions: CliActionOptions) => {
+    if (rawOptions.printJobsLimit) {
       try {
         validateStandalonePrintJobsLimitUsage(argv);
       } catch (error) {
@@ -68,6 +80,34 @@ export async function runCli(
       }
 
       console.log(JSON.stringify(resolveBatchJobsLimit()));
+      return;
+    }
+
+    let options: CliActionOptions = {
+      ...rawOptions,
+      pathDetectBinary: rawOptions.pathDetectBinary ?? true,
+      progressMode:
+        program.getOptionValueSource("progress") === "cli"
+          ? rawOptions.progress
+            ? "on"
+            : "off"
+          : "auto",
+    };
+
+    try {
+      const resolvedConfig = await resolveWordCounterConfig({
+        env: runtime.env,
+        cwd: runtime.cwd,
+      });
+      options = applyConfigToCountOptions(
+        options,
+        resolvedConfig.config,
+        deriveCountCliSources(program, rawOptions),
+      );
+      emitConfigNotes(resolvedConfig.notes);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      program.error(pc.red(message));
       return;
     }
 

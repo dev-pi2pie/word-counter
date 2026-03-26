@@ -58,7 +58,7 @@ parentPort.on("message", async (message: WorkerRequestMessage) => {
     return;
   }
 
-  if (isProbablyBinary(buffer)) {
+  if (config.detectBinary && isProbablyBinary(buffer)) {
     const response: WorkerResponseMessage = {
       type: "result",
       taskId: message.taskId,

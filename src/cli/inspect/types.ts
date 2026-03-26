@@ -10,6 +10,10 @@ export type InspectSectionMode = Extract<SectionMode, "all" | "frontmatter" | "c
 
 export type ExecuteInspectCommandOptions = {
   argv: string[];
+  runtime?: {
+    env?: NodeJS.ProcessEnv;
+    cwd?: string;
+  };
 };
 
 export type ParsedInspectInvocation = {
@@ -22,12 +26,20 @@ export type ParsedInspectInvocation = {
   pretty: boolean;
   section: InspectSectionMode;
   pathMode: PathMode;
+  pathDetectBinary: boolean;
   recursive: boolean;
   includeExt: string[];
   excludeExt: string[];
   regex?: string;
   paths: string[];
   textTokens: string[];
+  sources: {
+    detector: boolean;
+    pathMode: boolean;
+    recursive: boolean;
+    includeExt: boolean;
+    excludeExt: boolean;
+  };
 };
 
 export type InspectHelpInvocation = {

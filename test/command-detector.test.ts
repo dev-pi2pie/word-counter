@@ -772,6 +772,6 @@ describe("detector mode", () => {
     );
 
     expect(result.status).toBe(1);
-    expect(result.stderr).toContain("option '--detector <mode>' argument 'invalid' is invalid");
+    expect(result.stderr).toContain("option '-d, --detector <mode>' argument 'invalid' is invalid");
   });
 });

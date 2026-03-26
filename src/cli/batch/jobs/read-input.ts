@@ -18,6 +18,7 @@ export type ReadBatchInputResult =
 type ReadBatchInputOptions = {
   requestedJobs: number;
   limits: BatchJobsLimit;
+  detectBinary: boolean;
 };
 
 export async function readBatchInput(
@@ -48,7 +49,7 @@ export async function readBatchInput(
     };
   }
 
-  if (isProbablyBinary(buffer)) {
+  if (options.detectBinary && isProbablyBinary(buffer)) {
     return {
       type: "skip",
       path,

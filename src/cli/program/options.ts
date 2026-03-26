@@ -70,7 +70,7 @@ export function configureProgramOptions(
         .default("all"),
     )
     .addOption(
-      new Option("--detector <mode>", "locale detector mode")
+      new Option("-d, --detector <mode>", "locale detector mode")
         .choices(DETECTOR_CHOICES)
         .default("regex"),
     )

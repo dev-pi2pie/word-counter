@@ -90,6 +90,7 @@ export async function countBatchInputsWithWorkerJobs(
       section: options.section,
       detectorMode: options.detectorMode ?? "regex",
       wcOptions: options.wcOptions,
+      detectBinary: options.detectBinary ?? true,
       preserveCollectorSegments: options.preserveCollectorSegments,
       detectorEvidence: options.detectorEvidence,
       debugVerbosity: options.debugVerbosity,

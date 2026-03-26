@@ -8,6 +8,7 @@ export type WorkerConfig = {
   section: SectionMode;
   detectorMode: DetectorMode;
   wcOptions: WordCounterOptions;
+  detectBinary: boolean;
   preserveCollectorSegments: boolean;
   detectorEvidence?: boolean;
   debugVerbosity?: DetectorDebugVerbosity;

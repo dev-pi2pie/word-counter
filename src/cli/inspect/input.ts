@@ -24,11 +24,12 @@ export async function loadSingleInspectInput(
   path: string | undefined,
   textTokens: string[],
   section: InspectSectionMode,
+  detectBinary = true,
 ): Promise<InspectSingleInput> {
   if (path) {
     try {
       const buffer = await readFile(path);
-      if (isProbablyBinary(buffer)) {
+      if (detectBinary && isProbablyBinary(buffer)) {
         throw new Error("binary file");
       }
       return {
@@ -54,6 +55,7 @@ export async function loadInspectBatchInputs(
   pathInputs: string[],
   options: {
     pathMode: PathMode;
+    pathDetectBinary: boolean;
     recursive: boolean;
     includeExt: string[];
     excludeExt: string[];
@@ -96,7 +98,7 @@ export async function loadInspectBatchInputs(
       continue;
     }
 
-    if (isProbablyBinary(buffer)) {
+    if (options.pathDetectBinary && isProbablyBinary(buffer)) {
       if (entry.source === "direct") {
         failures.push({ path: entry.path, reason: "binary file" });
       } else {
