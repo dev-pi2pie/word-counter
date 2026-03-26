@@ -313,7 +313,7 @@ describe("cli config parsing and discovery", () => {
     expect(resolved).toBeUndefined();
   });
 
-  test("resolves macOS user config directory", () => {
+  test("uses HOME/.config on macOS", () => {
     const resolved = resolveUserConfigDirectory({
       platform: "darwin",
       env: {
@@ -321,7 +321,19 @@ describe("cli config parsing and discovery", () => {
       },
     });
 
-    expect(resolved).toBe("/Users/example/Library/Application Support");
+    expect(resolved).toBe("/Users/example/.config");
+  });
+
+  test("prefers XDG_CONFIG_HOME on macOS when it is set", () => {
+    const resolved = resolveUserConfigDirectory({
+      platform: "darwin",
+      env: {
+        XDG_CONFIG_HOME: "/Users/example/custom-config",
+        HOME: "/Users/example",
+      },
+    });
+
+    expect(resolved).toBe("/Users/example/custom-config");
   });
 
   test("returns undefined on macOS when HOME is unavailable", () => {
@@ -333,7 +345,30 @@ describe("cli config parsing and discovery", () => {
     expect(resolved).toBeUndefined();
   });
 
-  test("resolves Windows user config directory from APPDATA", () => {
+  test("uses USERPROFILE/.config on Windows", () => {
+    const resolved = resolveUserConfigDirectory({
+      platform: "win32",
+      env: {
+        USERPROFILE: "C:\\Users\\Example",
+      },
+    });
+
+    expect(resolved).toBe("C:\\Users\\Example\\.config");
+  });
+
+  test("prefers USERPROFILE/.config on Windows even when APPDATA is available", () => {
+    const resolved = resolveUserConfigDirectory({
+      platform: "win32",
+      env: {
+        APPDATA: "C:\\Users\\Example\\AppData\\Roaming",
+        USERPROFILE: "C:\\Users\\Example",
+      },
+    });
+
+    expect(resolved).toBe("C:\\Users\\Example\\.config");
+  });
+
+  test("falls back to APPDATA on Windows when USERPROFILE is unavailable", () => {
     const resolved = resolveUserConfigDirectory({
       platform: "win32",
       env: {
@@ -344,18 +379,7 @@ describe("cli config parsing and discovery", () => {
     expect(resolved).toBe("C:\\Users\\Example\\AppData\\Roaming");
   });
 
-  test("falls back to USERPROFILE on Windows when APPDATA is unavailable", () => {
-    const resolved = resolveUserConfigDirectory({
-      platform: "win32",
-      env: {
-        USERPROFILE: "C:\\Users\\Example",
-      },
-    });
-
-    expect(resolved).toBe("C:\\Users\\Example\\AppData\\Roaming");
-  });
-
-  test("returns undefined on Windows when APPDATA and USERPROFILE are unavailable", () => {
+  test("returns undefined on Windows when USERPROFILE and APPDATA are unavailable", () => {
     const resolved = resolveUserConfigDirectory({
       platform: "win32",
       env: {},
@@ -419,6 +443,110 @@ describe("cli config parsing and discovery", () => {
     expect(discovered.user?.format).toBe("json");
     expect(discovered.cwd?.path).toBe(cwdConfigPath);
     expect(discovered.cwd?.format).toBe("toml");
+  });
+
+  test("falls back to the legacy macOS user config directory when HOME/.config has no config", async () => {
+    const root = await mkdtemp(join(tmpdir(), "wc-config-macos-legacy-"));
+    const home = join(root, "home");
+    const legacyUserDirectory = join(home, "Library", "Application Support");
+    const cwd = join(root, "project");
+    await mkdir(legacyUserDirectory, { recursive: true });
+    await mkdir(cwd);
+
+    const legacyConfigPath = join(legacyUserDirectory, "wc-intl-seg.config.toml");
+    await writeFile(legacyConfigPath, 'detector = "wasm"\n');
+
+    const discovered = await discoverConfigFiles({
+      cwd,
+      platform: "darwin",
+      env: {
+        HOME: home,
+      },
+    });
+
+    expect(discovered.user?.path).toBe(legacyConfigPath);
+    expect(discovered.user?.notes.some((note) => note.includes("legacy macOS user config location"))).toBeTrue();
+  });
+
+  test("prefers XDG_CONFIG_HOME over HOME/.config on macOS", async () => {
+    const root = await mkdtemp(join(tmpdir(), "wc-config-macos-xdg-"));
+    const home = join(root, "home");
+    const xdgDirectory = join(root, "xdg-config");
+    const primaryUserDirectory = join(home, ".config");
+    const cwd = join(root, "project");
+    await mkdir(xdgDirectory, { recursive: true });
+    await mkdir(primaryUserDirectory, { recursive: true });
+    await mkdir(cwd);
+
+    const xdgConfigPath = join(xdgDirectory, "wc-intl-seg.config.toml");
+    const homeConfigPath = join(primaryUserDirectory, "wc-intl-seg.config.json");
+    await writeFile(xdgConfigPath, 'detector = "regex"\n');
+    await writeFile(homeConfigPath, JSON.stringify({ detector: "wasm" }));
+
+    const discovered = await discoverConfigFiles({
+      cwd,
+      platform: "darwin",
+      env: {
+        HOME: home,
+        XDG_CONFIG_HOME: xdgDirectory,
+      },
+    });
+
+    expect(discovered.user?.path).toBe(xdgConfigPath);
+    expect(discovered.user?.notes.some((note) => note.includes(`"${homeConfigPath}"`))).toBeTrue();
+  });
+
+  test("falls back to APPDATA on Windows when USERPROFILE/.config has no config", async () => {
+    const root = await mkdtemp(join(tmpdir(), "wc-config-win-legacy-"));
+    const appData = join(root, "AppData", "Roaming");
+    const cwd = join(root, "project");
+    await mkdir(appData, { recursive: true });
+    await mkdir(cwd);
+
+    const legacyConfigPath = join(appData, "wc-intl-seg.config.toml");
+    await writeFile(legacyConfigPath, 'detector = "wasm"\n');
+
+    const discovered = await discoverConfigFiles({
+      cwd,
+      platform: "win32",
+      env: {
+        APPDATA: appData,
+      },
+    });
+
+    expect(discovered.user?.path).toBe(legacyConfigPath);
+    expect(
+      discovered.user?.notes.some((note) => note.includes("legacy Windows user config location")),
+    ).toBeTrue();
+  });
+
+  test("prefers HOME/.config over the legacy macOS user config directory", async () => {
+    const root = await mkdtemp(join(tmpdir(), "wc-config-macos-primary-"));
+    const home = join(root, "home");
+    const primaryUserDirectory = join(home, ".config");
+    const legacyUserDirectory = join(home, "Library", "Application Support");
+    const cwd = join(root, "project");
+    await mkdir(primaryUserDirectory, { recursive: true });
+    await mkdir(legacyUserDirectory, { recursive: true });
+    await mkdir(cwd);
+
+    const primaryConfigPath = join(primaryUserDirectory, "wc-intl-seg.config.toml");
+    const legacyConfigPath = join(legacyUserDirectory, "wc-intl-seg.config.json");
+    await writeFile(primaryConfigPath, 'detector = "regex"\n');
+    await writeFile(legacyConfigPath, JSON.stringify({ detector: "wasm" }));
+
+    const discovered = await discoverConfigFiles({
+      cwd,
+      platform: "darwin",
+      env: {
+        HOME: home,
+      },
+    });
+
+    expect(discovered.user?.path).toBe(primaryConfigPath);
+    expect(
+      discovered.user?.notes.some((note) => note.includes(`"${legacyConfigPath}"`)),
+    ).toBeTrue();
   });
 
   test("ignores non-file entries when discovering config files", async () => {

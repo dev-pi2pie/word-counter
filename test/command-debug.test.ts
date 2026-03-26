@@ -141,6 +141,79 @@ describe("CLI debug diagnostics", () => {
     expect(output.stdout).toEqual(["2"]);
   });
 
+  test("keeps config verbosity passive until debug is enabled", async () => {
+    const root = await makeTempFixture("cli-config-verbosity-passive");
+    const configPath = join(root, "wc-intl-seg.config.toml");
+    const explicit = join(root, "keep.log");
+    await writeFile(
+      configPath,
+      ['[logging]', 'verbosity = "verbose"', "", "[path]", 'mode = "auto"'].join("\n"),
+    );
+    await writeFile(join(root, "note.md"), "alpha beta");
+    await writeFile(explicit, "explicit log");
+
+    const withoutDebug = await captureCli(["--format", "raw", "Hello world"], { cwd: root });
+    const withDebug = await captureCli(
+      [
+        "--path",
+        root,
+        "--path",
+        explicit,
+        "--path",
+        explicit,
+        "--include-ext",
+        ".md",
+        "--exclude-ext",
+        ".md",
+        "--format",
+        "raw",
+        "--debug",
+        "--quiet-skips",
+      ],
+      { cwd: root },
+    );
+
+    expect(withoutDebug.exitCode).toBe(0);
+    expect(withoutDebug.stderr.some((line) => line.includes("`--verbose` requires `--debug`."))).toBeFalse();
+    const eventNames = listDebugEventNames(withDebug.stderr);
+    expect(withDebug.exitCode).toBe(0);
+    expect(eventNames.includes("path.resolve.filter.excluded")).toBeTrue();
+    expect(eventNames.includes("path.resolve.dedupe.accept")).toBeTrue();
+  });
+
+  test("keeps config debug report passive until debug is enabled", async () => {
+    const root = await makeTempFixture("cli-config-debug-report-passive");
+    const reportPath = join(root, "reports", "diagnostics.jsonl");
+    await writeFile(
+      join(root, "wc-intl-seg.config.toml"),
+      [
+        "[reporting.debugReport]",
+        `path = "${reportPath}"`,
+        "tee = true",
+      ].join("\n"),
+    );
+    await writeFile(join(root, "a.txt"), "alpha");
+    await writeFile(join(root, "b.txt"), "beta");
+
+    const withoutDebug = await captureCli(["--format", "raw", "Hello world"], { cwd: root });
+
+    expect(withoutDebug.exitCode).toBe(0);
+    expect(
+      withoutDebug.stderr.some((line) => line.includes("`--debug-report` requires `--debug`.")),
+    ).toBeFalse();
+    await expect(readFile(reportPath, "utf8")).rejects.toThrow();
+
+    const withDebug = await captureCli(
+      ["--path", root, "--format", "raw", "--debug", "--quiet-skips"],
+      { cwd: root },
+    );
+
+    expect(withDebug.exitCode).toBe(0);
+    const report = await readFile(reportPath, "utf8");
+    expect(report.includes('"event":"batch.resolve.start"')).toBeTrue();
+    expect(listDebugEventNames(withDebug.stderr).length > 0).toBeTrue();
+  });
+
   test("routes debug output to file when --debug-report is enabled", async () => {
     const root = await makeTempFixture("cli-debug-report-file");
     const reportPath = join(root, "reports", "diagnostics.jsonl");

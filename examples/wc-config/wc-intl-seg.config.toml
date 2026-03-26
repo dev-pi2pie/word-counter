@@ -19,9 +19,6 @@ mode = "auto"
 [output]
 totalOf = []
 
-[reporting]
-skippedFiles = false
-
 [reporting.debugReport]
 tee = false
 

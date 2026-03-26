@@ -129,6 +129,25 @@ describe("CLI config precedence and detector defaults", () => {
     expect(parsed.detector).toBe("wasm");
   });
 
+  test("allows inspect --view engine when root detector = wasm comes from config", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const cwd = await makeTempFixture("inspect-engine-root-detector-config");
+    await writeFile(join(cwd, "wc-intl-seg.config.toml"), 'detector = "wasm"\n');
+
+    const output = await captureCli(
+      ["inspect", "--view", "engine", "--format", "json", "こんにちは、世界！これはテストです。"],
+      { cwd },
+    );
+
+    expect(output.exitCode).toBe(0);
+    const parsed = JSON.parse(output.stdout[0] ?? "{}");
+    expect(parsed.detector).toBe("wasm");
+    expect(parsed.view).toBe("engine");
+  });
+
   test("applies root contentGate.mode from config to counting when the CLI does not override it", async () => {
     if (!hasWasmDetectorRuntime()) {
       return;

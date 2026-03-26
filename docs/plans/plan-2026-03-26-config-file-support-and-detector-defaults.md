@@ -71,8 +71,10 @@ Implement first-version config file support for `word-counter` so user-level def
   - `wc-intl-seg.config.jsonc`
 - The user-level config lookup must respect the host platform:
   - Linux: `$XDG_CONFIG_HOME` when set, otherwise `$HOME/.config`
-  - macOS: `$HOME/Library/Application Support`
-  - Windows: `%AppData%`
+  - macOS: `$XDG_CONFIG_HOME` when set, otherwise `$HOME/.config`
+    - legacy fallback for compatibility: `$HOME/Library/Application Support`
+  - Windows: `%USERPROFILE%\.config`
+    - legacy fallback for compatibility: `%AppData%`
 - The project-level config lookup happens once per invocation from the current working directory.
 - Same-scope config files resolve by fixed priority:
   - `toml`

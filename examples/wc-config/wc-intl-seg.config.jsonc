@@ -21,7 +21,6 @@
     "totalOf": []
   },
   "reporting": {
-    "skippedFiles": false,
     "debugReport": {
       "tee": false
     }

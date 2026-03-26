@@ -70,15 +70,24 @@ export function applyConfigToCountOptions(
     next.debug = config.logging.level === "debug";
   }
 
-  if (!sources.verbose && config.logging?.verbosity !== undefined) {
+  const debugEnabled = next.debug === true;
+
+  if (debugEnabled && !sources.verbose && config.logging?.verbosity !== undefined) {
     next.verbose = config.logging.verbosity === "verbose";
   }
 
-  if (!sources.debugReport && config.reporting?.debugReport?.path !== undefined) {
+  if (debugEnabled && !sources.debugReport && config.reporting?.debugReport?.path !== undefined) {
     next.debugReport = config.reporting.debugReport.path;
   }
 
-  if (!sources.debugReportTee && config.reporting?.debugReport?.tee !== undefined) {
+  const debugReportEnabled = next.debugReport !== undefined && next.debugReport !== false;
+
+  if (
+    debugEnabled &&
+    debugReportEnabled &&
+    !sources.debugReportTee &&
+    config.reporting?.debugReport?.tee !== undefined
+  ) {
     next.debugReportTee = config.reporting.debugReport.tee;
   }
 

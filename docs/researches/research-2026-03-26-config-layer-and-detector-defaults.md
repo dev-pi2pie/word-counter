@@ -76,8 +76,10 @@ built-in defaults
   - The user-level config establishes personal defaults.
   - The user-level config path should respect the current platform:
     - Linux: `$XDG_CONFIG_HOME` when set, otherwise `$HOME/.config`
-    - macOS: `$HOME/Library/Application Support`
-    - Windows: `%AppData%`
+    - macOS: `$XDG_CONFIG_HOME` when set, otherwise `$HOME/.config`
+      - legacy fallback for compatibility: `$HOME/Library/Application Support`
+    - Windows: `%USERPROFILE%\.config`
+      - legacy fallback for compatibility: `%AppData%`
   - The directory config overrides only the keys it defines.
   - The directory-level lookup should happen once per invocation from the process working directory, not separately for each input file or batch path.
   - Missing keys should fall through rather than replacing whole sections.

@@ -32,8 +32,10 @@ This document defines the active draft schema for first-version `word-counter` c
 The user-level config directory should follow the host platform:
 
 - Linux: `$XDG_CONFIG_HOME` when set, otherwise `$HOME/.config`
-- macOS: `$HOME/Library/Application Support`
-- Windows: `%AppData%`
+- macOS: `$XDG_CONFIG_HOME` when set, otherwise `$HOME/.config`
+  Legacy fallback: `$HOME/Library/Application Support`
+- Windows: `%USERPROFILE%\.config`
+  Legacy fallback: `%AppData%`
 
 ## Resolution Order
 
@@ -79,9 +81,6 @@ mode = "auto"
 [output]
 totalOf = []
 
-[reporting]
-skippedFiles = false
-
 [reporting.debugReport]
 tee = false
 
@@ -126,6 +125,7 @@ verbosity = "compact"
 - `reporting.skippedFiles`
   - when true, enable skipped-file reporting
   - current CLI behavior still gates skip diagnostics behind debug-oriented flows
+  - omit this key in default-reference configs to preserve the built-in default behavior
 - `reporting.debugReport.path`
   - optional explicit debug-report file path
 - `reporting.debugReport.tee`

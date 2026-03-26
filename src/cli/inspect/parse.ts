@@ -67,13 +67,6 @@ function isSupportedInspectSectionMode(value: string): value is InspectSectionMo
   return value === "all" || value === "frontmatter" || value === "content";
 }
 
-function isInvalidInspectDetectorViewCombination(
-  detector: InspectDetectorMode,
-  view: DetectorInspectView,
-): boolean {
-  return view === "engine" && detector === "regex";
-}
-
 export function validateInspectInvocation(argv: string[]): ValidInspectInvocation {
   const inspectIndex = argv.findIndex((token, index) => index >= 2 && token === "inspect");
   const tokens = inspectIndex >= 0 ? argv.slice(inspectIndex + 1) : [];
@@ -382,13 +375,6 @@ export function validateInspectInvocation(argv: string[]): ValidInspectInvocatio
     return {
       ok: false,
       message: "No inspect input provided. Pass text or use --path.",
-    };
-  }
-
-  if (isInvalidInspectDetectorViewCombination(detector, view)) {
-    return {
-      ok: false,
-      message: "`--view engine` requires `--detector wasm`.",
     };
   }
 

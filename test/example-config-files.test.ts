@@ -53,7 +53,6 @@ describe("example config files", () => {
           totalOf: [],
         },
         reporting: {
-          skippedFiles: false,
           debugReport: {
             tee: false,
           },

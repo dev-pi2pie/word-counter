@@ -32,8 +32,10 @@ These names are used both for:
 The user-level config directory follows the host platform:
 
 - Linux: `$XDG_CONFIG_HOME` when set, otherwise `$HOME/.config`
-- macOS: `$HOME/Library/Application Support`
-- Windows: `%AppData%`
+- macOS: `$XDG_CONFIG_HOME` when set, otherwise `$HOME/.config`
+  Legacy fallback: `$HOME/Library/Application Support`
+- Windows: `%USERPROFILE%\.config`
+  Legacy fallback: `%AppData%`
 
 The loader looks for `wc-intl-seg.config.toml`, `wc-intl-seg.config.jsonc`, and `wc-intl-seg.config.json` in that directory.
 
