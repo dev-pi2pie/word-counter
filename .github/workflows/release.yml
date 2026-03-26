@@ -294,11 +294,8 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v6
         with:
-          node-version: 22.22.2
+          node-version: 24
           registry-url: https://registry.npmjs.org
-
-      - name: Update npm for trusted publishing
-        run: npm install -g npm@latest
 
       - name: Ensure tag matches package version
         working-directory: release-package
@@ -348,7 +345,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v6
         with:
-          node-version: 22.22.2
+          node-version: 24
           registry-url: https://npm.pkg.github.com
           scope: "@${{ github.repository_owner }}"
 
