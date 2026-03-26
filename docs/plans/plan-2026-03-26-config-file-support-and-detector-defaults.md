@@ -2,7 +2,7 @@
 title: "config file support and detector default alignment"
 created-date: 2026-03-26
 modified-date: 2026-03-26
-status: draft
+status: completed
 agent: Codex
 ---
 
@@ -176,7 +176,7 @@ Validation for this phase:
 
 ### Phase 5 - Docs, Guide, Examples, And Closure
 
-- [ ] Add a config usage guide documenting:
+- [x] Add a config usage guide documenting:
   - canonical filenames
   - platform-native user config locations
   - current-working-directory config lookup
@@ -184,13 +184,13 @@ Validation for this phase:
   - ignored-sibling behavior
   - precedence across config, env, and flags
   - `inspect.detector` inheritance and override rules
-- [ ] Update README sections that describe detector defaults, config-related behavior, and CLI usage examples.
-- [ ] Add config examples with default config values under `examples/wc-config/` in all supported formats:
+- [x] Update README sections that describe detector defaults, config-related behavior, and CLI usage examples.
+- [x] Add config examples with default config values under `examples/wc-config/` in all supported formats:
   - `examples/wc-config/wc-intl-seg.config.toml`
   - `examples/wc-config/wc-intl-seg.config.json`
   - `examples/wc-config/wc-intl-seg.config.jsonc`
-- [ ] Ensure the example files reflect the documented default config contract rather than ad hoc overrides.
-- [ ] Record implementation progress in job records under `docs/plans/jobs/` as phases land.
+- [x] Ensure the example files reflect the documented default config contract rather than ad hoc overrides.
+- [x] Record implementation progress in job records under `docs/plans/jobs/` as phases land.
 
 Validation for this phase:
 
@@ -200,14 +200,14 @@ Validation for this phase:
 
 ## Compatibility Gates
 
-- [ ] Omitted config files preserve current behavior.
-- [ ] Existing environment-variable names remain valid and keep their current precedence over config files.
-- [ ] Existing long-form CLI flags remain valid and keep their current precedence over config and env.
-- [ ] The CLI `inspect` default detector becomes `regex` without changing normal counting defaults.
-- [ ] `inspect.detector` only affects inspect behavior and does not silently rewrite root detector behavior for counting.
-- [ ] Same-scope file resolution is deterministic and documented.
-- [ ] Ignored lower-priority sibling config files are not silently selected.
-- [ ] Changed files remain consistent with the documented config contract and examples.
+- [x] Omitted config files preserve current behavior.
+- [x] Existing environment-variable names remain valid and keep their current precedence over config files.
+- [x] Existing long-form CLI flags remain valid and keep their current precedence over config and env.
+- [x] The CLI `inspect` default detector becomes `regex` without changing normal counting defaults.
+- [x] `inspect.detector` only affects inspect behavior and does not silently rewrite root detector behavior for counting.
+- [x] Same-scope file resolution is deterministic and documented.
+- [x] Ignored lower-priority sibling config files are not silently selected.
+- [x] Changed files remain consistent with the documented config contract and examples.
 
 ## Validation
 

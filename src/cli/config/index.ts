@@ -10,7 +10,7 @@ export { CONFIG_FILE_BASENAME, CONFIG_FILENAMES, CONFIG_FORMAT_PRIORITY } from "
 export { loadConfigFile, parseConfigText } from "./parse";
 export { normalizeWordCounterConfig } from "./normalize";
 export { resolveWordCounterConfig } from "./resolve";
-export { deriveCountCliSources } from "./sources";
+export { deriveCountCliSources, deriveInitialCountProgressMode } from "./sources";
 export type {
   ConfigDiscoveryResult,
   ConfigFormat,

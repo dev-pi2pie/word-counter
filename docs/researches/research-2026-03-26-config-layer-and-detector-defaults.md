@@ -2,7 +2,7 @@
 title: "config layer and detector defaults"
 created-date: 2026-03-26
 modified-date: 2026-03-26
-status: draft
+status: completed
 agent: Codex
 ---
 

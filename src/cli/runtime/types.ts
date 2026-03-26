@@ -38,7 +38,6 @@ export type CliActionOptions = {
   pathMode: PathMode;
   pathDetectBinary: boolean;
   recursive: boolean;
-  progress: boolean;
   progressMode: ConfigProgressMode;
   keepProgress?: boolean;
   quietWarnings?: boolean;

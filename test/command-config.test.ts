@@ -173,12 +173,23 @@ describe("CLI config precedence and detector defaults", () => {
 
   test("surfaces a warning when lower-priority sibling config files are ignored", async () => {
     const cwd = await makeTempFixture("config-sibling-warning");
-    await writeFile(join(cwd, "wc-intl-seg.config.toml"), 'detector = "regex"\n');
-    await writeFile(join(cwd, "wc-intl-seg.config.json"), JSON.stringify({ detector: "wasm" }));
+    await writeFile(
+      join(cwd, "wc-intl-seg.config.toml"),
+      ["[output]", 'totalOf = ["emoji"]'].join("\n"),
+    );
+    await writeFile(
+      join(cwd, "wc-intl-seg.config.json"),
+      JSON.stringify({
+        output: {
+          totalOf: ["words"],
+        },
+      }),
+    );
 
-    const output = await captureCli(["--format", "raw", "Hello world"], { cwd });
+    const output = await captureCli(["--format", "raw", "Hello there 👋!"], { cwd });
 
     expect(output.exitCode).toBe(0);
+    expect(output.stdout).toEqual(["1"]);
     expect(
       output.stderr.some((line) => line.includes("Ignoring lower-priority sibling config files")),
     ).toBeTrue();

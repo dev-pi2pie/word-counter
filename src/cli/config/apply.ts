@@ -81,8 +81,6 @@ export function applyConfigToCountOptions(
     next.progressMode = config.progress.mode;
   }
 
-  next.progress = next.progressMode !== "off";
-
   if (!sources.quietSkips) {
     next.quietSkips = withConfigQuietSkips(next.quietSkips, config.reporting?.skippedFiles);
   }

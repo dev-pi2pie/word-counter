@@ -1,4 +1,5 @@
 import type { Command } from "commander";
+import type { ConfigProgressMode } from "./types";
 import type { CliActionOptions } from "../runtime/types";
 import type { CountCliSources } from "./apply";
 
@@ -6,11 +7,7 @@ function isCliOptionSource(program: Command, optionName: string): boolean {
   return program.getOptionValueSource(optionName) === "cli";
 }
 
-export function deriveCountCliSources(
-  program: Command,
-  rawOptions: CliActionOptions,
-): CountCliSources {
-  void rawOptions;
+export function deriveCountCliSources(program: Command): CountCliSources {
   return {
     detector: isCliOptionSource(program, "detector"),
     pathMode: isCliOptionSource(program, "pathMode"),
@@ -26,4 +23,15 @@ export function deriveCountCliSources(
     progress: isCliOptionSource(program, "progress"),
     quietSkips: isCliOptionSource(program, "quietSkips"),
   };
+}
+
+export function deriveInitialCountProgressMode(
+  program: Command,
+  rawProgressValue: boolean,
+): ConfigProgressMode {
+  if (!isCliOptionSource(program, "progress")) {
+    return "auto";
+  }
+
+  return rawProgressValue ? "on" : "off";
 }

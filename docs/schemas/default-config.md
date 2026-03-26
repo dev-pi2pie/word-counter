@@ -2,7 +2,7 @@
 title: "Default Config Schema"
 created-date: 2026-02-13
 modified-date: 2026-03-26
-status: draft
+status: completed
 agent: Codex
 ---
 
@@ -61,7 +61,7 @@ Lower-priority sibling config files at the same scope are ignored.
 detector = "regex"
 
 [inspect]
-detector = "wasm"
+detector = "regex"
 
 [path]
 mode = "auto"
@@ -129,8 +129,8 @@ verbosity = "compact"
 
 ## CLI And Env Mapping
 
-- `--detector <regex|wasm>` -> `detector`
-- `inspect --detector <regex|wasm>` -> `inspect.detector` for that invocation only
+- `-d, --detector <regex|wasm>` -> `detector`
+- `inspect -d, --detector <regex|wasm>` -> `inspect.detector` for that invocation only
 - `--path-mode <auto|manual>` -> `path.mode`
 - `--recursive` / `--no-recursive` -> `path.recursive`
 - `--include-ext <list>` -> `path.includeExtensions`

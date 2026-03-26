@@ -110,7 +110,7 @@ Inspect detector behavior without count output:
 
 ```bash
 word-counter inspect "こんにちは、世界！これはテストです。"
-word-counter inspect --view engine "This sentence should clearly be detected as English for the wasm detector path."
+word-counter inspect --detector wasm --view engine "This sentence should clearly be detected as English for the wasm detector path."
 word-counter inspect --detector regex -f json "こんにちは、世界！これはテストです。"
 word-counter inspect --detector regex -f json --pretty "こんにちは、世界！これはテストです。"
 word-counter inspect --detector wasm --content-gate off "mode: debug\ntee: true\npath: logs\nUse this for testing."
@@ -156,6 +156,51 @@ Detector mode notes:
   - no inspect `--merged`
   - no inspect `--per-file`
   - no inspect `--jobs`
+
+### Config Files
+
+`word-counter` supports config files in these canonical names:
+
+- `wc-intl-seg.config.toml`
+- `wc-intl-seg.config.json`
+- `wc-intl-seg.config.jsonc`
+
+Config precedence is:
+
+```text
+built-in defaults
+< user config dir / wc-intl-seg.config.{toml|jsonc|json}
+< cwd / wc-intl-seg.config.{toml|jsonc|json}
+< environment variables
+< flag options
+```
+
+Same-scope file priority is `toml > jsonc > json`.
+If lower-priority sibling config files are ignored, the CLI emits a warning.
+
+Detector config notes:
+
+- counting defaults to `regex`
+- `inspect` also defaults to `regex`
+- root `detector` controls normal counting
+- optional `inspect.detector` overrides inspect-only behavior
+- `inspect --detector` only affects the current inspect invocation
+
+Examples:
+
+```bash
+word-counter -d wasm "This sentence should clearly be detected as English for the wasm detector path."
+word-counter inspect -d regex -f json "こんにちは、世界！これはテストです。"
+word-counter --path ./examples/test-case-multi-files-support --format json
+```
+
+Default-reference config examples live under:
+
+- `examples/wc-config/wc-intl-seg.config.toml`
+- `examples/wc-config/wc-intl-seg.config.json`
+- `examples/wc-config/wc-intl-seg.config.jsonc`
+
+For full config behavior, platform-specific user config locations, merge rules, and examples, see [`docs/config-usage-guide.md`](docs/config-usage-guide.md).
 
 ### Detector Subpath (`@dev-pi2pie/word-counter/detector`)
 
