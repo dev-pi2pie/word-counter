@@ -1,6 +1,5 @@
 import type { Command } from "commander";
 import type { ConfigProgressMode } from "./types";
-import type { CliActionOptions } from "../runtime/types";
 import type { CountCliSources } from "./apply";
 
 function isCliOptionSource(program: Command, optionName: string): boolean {

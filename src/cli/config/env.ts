@@ -92,7 +92,7 @@ export function resolveEnvConfig(env: NodeJS.ProcessEnv = process.env): WordCoun
       mode: contentGateMode as NonNullable<WordCounterConfig["contentGate"]>["mode"],
     };
     config.inspect = {
-      ...(config.inspect ?? {}),
+      ...config.inspect,
       contentGate: {
         mode: contentGateMode as NonNullable<
           NonNullable<WordCounterConfig["inspect"]>["contentGate"]
