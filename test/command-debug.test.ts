@@ -147,7 +147,7 @@ describe("CLI debug diagnostics", () => {
     const explicit = join(root, "keep.log");
     await writeFile(
       configPath,
-      ['[logging]', 'verbosity = "verbose"', "", "[path]", 'mode = "auto"'].join("\n"),
+      ["[logging]", 'verbosity = "verbose"', "", "[path]", 'mode = "auto"'].join("\n"),
     );
     await writeFile(join(root, "note.md"), "alpha beta");
     await writeFile(explicit, "explicit log");
@@ -174,7 +174,9 @@ describe("CLI debug diagnostics", () => {
     );
 
     expect(withoutDebug.exitCode).toBe(0);
-    expect(withoutDebug.stderr.some((line) => line.includes("`--verbose` requires `--debug`."))).toBeFalse();
+    expect(
+      withoutDebug.stderr.some((line) => line.includes("`--verbose` requires `--debug`.")),
+    ).toBeFalse();
     const eventNames = listDebugEventNames(withDebug.stderr);
     expect(withDebug.exitCode).toBe(0);
     expect(eventNames.includes("path.resolve.filter.excluded")).toBeTrue();
@@ -186,11 +188,7 @@ describe("CLI debug diagnostics", () => {
     const reportPath = join(root, "reports", "diagnostics.jsonl");
     await writeFile(
       join(root, "wc-intl-seg.config.toml"),
-      [
-        "[reporting.debugReport]",
-        `path = "${reportPath}"`,
-        "tee = true",
-      ].join("\n"),
+      ["[reporting.debugReport]", `path = "${reportPath}"`, "tee = true"].join("\n"),
     );
     await writeFile(join(root, "a.txt"), "alpha");
     await writeFile(join(root, "b.txt"), "beta");

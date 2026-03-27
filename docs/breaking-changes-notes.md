@@ -1,20 +1,20 @@
 ---
 title: "Breaking Changes Notes"
 created-date: 2026-02-15
-modified-date: 2026-02-20
+modified-date: 2026-03-27
 status: active
 agent: Codex
 ---
 
 ## Purpose
 
-Track possible breaking changes and deprecation plans before stable `v0.1.0`.
+Track compatibility-sensitive changes and deprecation plans after stable `v0.1.0`.
 
 ## Planned Deprecations
 
 - `--latin-locale <locale>` is now a legacy alias.
 - Preferred replacements are `--latin-language <tag>` and `--latin-tag <tag>`.
-- Planned action: deprecate `--latin-locale` in a later release after canary feedback.
+- Planned action: deprecate `--latin-locale` in a later release after additional stable-release feedback.
 
 ## CLI Behavior Changes (Batch Diagnostics)
 
@@ -39,6 +39,6 @@ Tracking plan:
 
 ## Compatibility Intent
 
-- Keep existing output field name `locale` during canary releases.
+- Keep existing output field name `locale` in the current stable line unless a deliberate compatibility change is announced.
 - Treat values as BCP 47 locale tags, with defaults favoring language/script-style tags over region-specific variants.
-- Revisit output key naming after canary feedback.
+- Revisit output key naming only if stable-release feedback shows a clear migration benefit.

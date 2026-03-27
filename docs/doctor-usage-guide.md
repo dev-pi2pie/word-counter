@@ -1,7 +1,7 @@
 ---
 title: "Doctor Usage Guide"
 created-date: 2026-03-14
-modified-date: 2026-03-26
+modified-date: 2026-03-27
 status: completed
 agent: Codex
 ---
@@ -38,7 +38,7 @@ Example:
 Doctor: warn
 
 Runtime
-- package: 0.1.5-canary.1 (canary)
+- package: 0.1.5 (stable)
 - node: v22.18.0 (supported: yes; required >=22.18.0)
 - platform: darwin arm64
 
@@ -66,7 +66,7 @@ Worker route
 
 | Text key | Meaning | Typical values |
 | --- | --- | --- |
-| `package` | Embedded package version and derived release channel of the CLI you are actually running. | `0.1.5-canary.1 (canary)`, `0.1.5-rc.1 (rc)`, `0.1.5 (stable)` |
+| `package` | Embedded package version and derived release channel of the CLI you are actually running. | `0.1.5 (stable)`, `0.1.5-rc.1 (rc)`, `0.1.5-canary.1 (canary)` |
 | `node` | Current Node.js runtime version plus whether it is within the supported project policy. | `v22.18.0 (supported: yes; required >=22.18.0)` |
 | `platform` | Host OS platform and CPU architecture. | `darwin arm64`, `linux x64` |
 

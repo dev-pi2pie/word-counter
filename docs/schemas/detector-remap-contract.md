@@ -1,12 +1,12 @@
 ---
-title: "Detector Remap Contract (Draft)"
+title: "Detector Remap Contract"
 created-date: 2026-03-23
-modified-date: 2026-03-25
-status: draft
+modified-date: 2026-03-27
+status: completed
 agent: Codex
 ---
 
-# Detector Remap Contract (Draft)
+# Detector Remap Contract
 
 This document defines how detector-engine output is remapped into the public locale tags exposed by `word-counter`.
 
@@ -23,7 +23,7 @@ This document defines how detector-engine output is remapped into the public loc
   - uses current Unicode script and hint logic only
 - `wasm`
   - optional detector-assisted mode
-  - currently planned around `whatlang`
+  - currently uses `whatlang`
 
 ## Route Gating
 
@@ -49,7 +49,7 @@ If a chunk is below the threshold, it stays on the original `und-*` route.
 - The detector result must satisfy both:
   - confidence threshold for the route
   - reliability requirement for the route
-- Current draft thresholds:
+- Current thresholds:
   - `und-Latn`: confidence `>= 0.75` and `reliable = true`
   - `und-Hani`: confidence `>= 0.90` and `reliable = true`
 - Current Latin corroboration rule:
@@ -125,21 +125,21 @@ Return to the original ambiguous `und-*` tag when any of the following is true:
 
 ## Provenance Metadata
 
-Detector-assisted output should reserve room for provenance metadata in JSON output.
+Detector-assisted output reserves room for provenance metadata in future additive JSON contract work.
 
-Draft source values:
+Reserved source values:
 
 - `script`
 - `hint`
 - `wasm`
 
-Defined draft placement:
+Reserved placement:
 
 - top-level `meta.detector.mode`
 - top-level `meta.detector.provenance = "per-item"`
 - chunk-style detector-assisted items may include `source`
 
-This document defines the allowed provenance values and remap behavior.
+This document defines the current remap behavior and the reserved provenance values.
 The broader JSON contract is documented in `docs/schemas/json-output-contract.md`.
 
 ## Related Docs

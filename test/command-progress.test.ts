@@ -40,7 +40,10 @@ describe("CLI progress output", () => {
 
   test("lets --progress override config-driven progress.mode = off", async () => {
     const root = await makeTempFixture("cli-progress-config-override");
-    await writeFile(join(root, "wc-intl-seg.config.toml"), ['[progress]', 'mode = "off"'].join("\n"));
+    await writeFile(
+      join(root, "wc-intl-seg.config.toml"),
+      ["[progress]", 'mode = "off"'].join("\n"),
+    );
     await writeFile(join(root, "a.txt"), "alpha beta");
     await writeFile(join(root, "b.txt"), "gamma delta");
     const progress = createCapturedStream(true);

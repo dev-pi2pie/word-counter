@@ -162,9 +162,7 @@ describe("CLI doctor diagnostics", () => {
 
     expect(output.exitCode).toBe(0);
     expect(parsed.runtime.meetsProjectRequirement).toBeTrue();
-    expect(
-      parsed.warnings.some((line: string) => line.includes("supported range")),
-    ).toBeFalse();
+    expect(parsed.warnings.some((line: string) => line.includes("supported range"))).toBeFalse();
   });
 
   test("reports rc builds as rc instead of stable", async () => {

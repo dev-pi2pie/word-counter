@@ -58,11 +58,13 @@ function parseNodeVersion(version: string): {
   return { major, minor, patch };
 }
 
-function meetsRequiredNodeVersion(version: {
-  major: number;
-  minor: number;
-  patch: number;
-} | null): boolean {
+function meetsRequiredNodeVersion(
+  version: {
+    major: number;
+    minor: number;
+    patch: number;
+  } | null,
+): boolean {
   if (!version) {
     return false;
   }
