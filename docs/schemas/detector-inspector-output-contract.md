@@ -1,13 +1,14 @@
 ---
 title: "Detector Inspector Output Contract"
 created-date: 2026-03-25
-status: draft
+modified-date: 2026-03-27
+status: completed
 agent: Codex
 ---
 
 # Detector Inspector Output Contract
 
-This document defines the planned first-version request/response contract for `word-counter inspect` and the matching detector-subpath inspector API.
+This document defines the current first-version request/response contract for `word-counter inspect` and the matching detector-subpath inspector API.
 
 ## Scope
 
@@ -398,7 +399,7 @@ Formatting rules:
 
 ## Version History
 
-- Draft for `v0.1.5-canary.4` follow-up planning:
+- Implemented in the current `0.1.5` line:
   - establishes the first dedicated inspector schema track
   - separates inspector evolution from the counting debug-event stream
 
