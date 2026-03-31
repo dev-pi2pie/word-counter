@@ -111,6 +111,7 @@ Inspect detector behavior without count output:
 ```bash
 word-counter inspect "こんにちは、世界！これはテストです。"
 word-counter inspect --detector wasm --view engine "This sentence should clearly be detected as English for the wasm detector path."
+word-counter inspect --detector wasm --view engine --content-gate strict "Readers understand this behavior."
 word-counter inspect --detector regex -f json "こんにちは、世界！これはテストです。"
 word-counter inspect --detector regex -f json --pretty "こんにちは、世界！これはテストです。"
 word-counter inspect --detector wasm --content-gate off "mode: debug\ntee: true\npath: logs\nUse this for testing."
@@ -144,6 +145,11 @@ Detector mode notes:
 - Technical-noise-heavy Latin windows stay conservative and may remain `und-Latn` even when the detector produces a wrong-but-confident language guess.
 - inspect/debug disclosure uses `contentGate` as the canonical gate field.
 - legacy debug/evidence payloads still emit `qualityGate` as a compatibility alias derived from `contentGate.passed`.
+- `inspect --view engine` stays raw:
+  - it shows the detector sample plus raw/normalized/remapped Whatlang output
+  - it does not apply `eligibility` or `contentGate` policy decisions
+  - if engine view uses an explicit or effective non-default content-gate mode, the CLI emits a cyan info note and points to `--view pipeline`
+- `inspect --view pipeline` is the inspect surface for `eligibility`, `contentGate`, acceptance, and fallback reasoning.
 - for practical verification, use `inspect` to compare direct mode outcomes across `default`, `strict`, `loose`, and `off`; use `--debug --detector-evidence` when you specifically need counting-flow event details or legacy `qualityGate` compatibility
 - `word-counter inspect` supports:
   - positional text input

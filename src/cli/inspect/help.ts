@@ -5,7 +5,7 @@ const INSPECT_HELP_LINES = [
   "",
   "Options:",
   "  -d, --detector <mode>  inspect detector mode (wasm, regex) (default: regex)",
-  "  --content-gate <mode>  content gate mode (default, strict, loose, off) (default: default)",
+  "  --content-gate <mode>  content gate mode for pipeline policy inspection (default, strict, loose, off) (default: default)",
   "  --view <view>      inspect view (pipeline, engine) (default: pipeline)",
   "  -f, --format <format>  inspect output format (standard, json) (default: standard)",
   "  --pretty          pretty print inspect JSON output",

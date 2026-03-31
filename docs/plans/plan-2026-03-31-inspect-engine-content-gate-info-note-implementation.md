@@ -1,7 +1,8 @@
 ---
 title: "inspect engine content gate info note implementation"
 created-date: 2026-03-31
-status: draft
+modified-date: 2026-03-31
+status: completed
 agent: Codex
 ---
 
@@ -49,14 +50,14 @@ Implement the settled `inspect --view engine` UX refinement so `--content-gate .
 
 ### Phase 1 - Effective-Mode Note Emission
 
-- [ ] Identify the inspect command point where config/env application has already resolved the effective detector and content-gate values.
-- [ ] Add inspect-local logic that emits the cyan info note before execution when:
+- [x] Identify the inspect command point where config/env application has already resolved the effective detector and content-gate values.
+- [x] Add inspect-local logic that emits the cyan info note before execution when:
   - `view === "engine"`
   - `detector === "wasm"`
   - the note trigger rules are satisfied
-- [ ] Keep the note out of the main inspect result body so standard and JSON result payloads remain unchanged.
-- [ ] Ensure the note is emitted to stderr rather than being mixed into stdout result output.
-- [ ] Ensure the note is emitted once per inspect invocation, including batch runs, rather than once per inspected file.
+- [x] Keep the note out of the main inspect result body so standard and JSON result payloads remain unchanged.
+- [x] Ensure the note is emitted to stderr rather than being mixed into stdout result output.
+- [x] Ensure the note is emitted once per inspect invocation, including batch runs, rather than once per inspected file.
 
 Validation for this phase:
 
@@ -68,10 +69,10 @@ Validation for this phase:
 
 ### Phase 2 - Docs And Help Alignment
 
-- [ ] Update inspect help text to clarify that `--content-gate` affects pipeline policy inspection, not raw engine view.
-- [ ] Update `README.md` inspect guidance so engine vs pipeline responsibilities are explicit at the user-facing command level.
-- [ ] Update `docs/schemas/detector-inspector-output-contract.md` to note that engine view ignores content-gate policy and that the CLI may emit an informational note for that combination.
-- [ ] Keep the wording aligned with the settled research message and cyan/info intent.
+- [x] Update inspect help text to clarify that `--content-gate` affects pipeline policy inspection, not raw engine view.
+- [x] Update `README.md` inspect guidance so engine vs pipeline responsibilities are explicit at the user-facing command level.
+- [x] Update `docs/schemas/detector-inspector-output-contract.md` to note that engine view ignores content-gate policy and that the CLI may emit an informational note for that combination.
+- [x] Keep the wording aligned with the settled research message and cyan/info intent.
 
 Validation for this phase:
 
@@ -80,9 +81,9 @@ Validation for this phase:
 
 ### Phase 3 - Regression And Contract Audit
 
-- [ ] Confirm that engine-view stdout output remains unchanged for the same input before and after the note feature.
-- [ ] Confirm that inspect JSON output remains schema-identical and free of note text.
-- [ ] Confirm that pipeline-view behavior, counting behavior, and detector-subpath inspect library results remain unchanged.
+- [x] Confirm that engine-view stdout output remains unchanged for the same input before and after the note feature.
+- [x] Confirm that inspect JSON output remains schema-identical and free of note text.
+- [x] Confirm that pipeline-view behavior, counting behavior, and detector-subpath inspect library results remain unchanged.
 
 Validation for this phase:
 
@@ -92,10 +93,10 @@ Validation for this phase:
 
 ## Compatibility Gates
 
-- [ ] `inspect --view engine` continues to return the same detector result data for the same text.
-- [ ] The new informational note does not alter stdout payloads for either `standard` or `json` output.
-- [ ] `inspect --view pipeline` remains the only inspect view that exposes `eligibility`, `contentGate`, and fallback reasoning.
-- [ ] Existing config/env/CLI precedence for effective content-gate mode remains unchanged.
+- [x] `inspect --view engine` continues to return the same detector result data for the same text.
+- [x] The new informational note does not alter stdout payloads for either `standard` or `json` output.
+- [x] `inspect --view pipeline` remains the only inspect view that exposes `eligibility`, `contentGate`, and fallback reasoning.
+- [x] Existing config/env/CLI precedence for effective content-gate mode remains unchanged.
 
 ## Related Research
 
