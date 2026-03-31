@@ -5,6 +5,10 @@ env:
 
 on:
   pull_request:
+    paths:
+      - "src/**"
+      - "crates/**"
+      - "test/**"
 
 jobs:
   validate:

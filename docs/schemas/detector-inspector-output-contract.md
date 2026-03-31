@@ -81,6 +81,8 @@ Shared validation rules:
   - `off`
 - `--format raw` is invalid for `inspect`
 - `--pretty` changes JSON indentation only
+- `--content-gate ...` remains accepted with `--view engine`, but engine view does not apply content-gate policy
+  - the CLI may emit an informational stderr note when engine view uses an explicit or effective non-default content-gate mode
 - positional inspect input is always treated as text, never auto-resolved as a path
 - supported inspect section modes are:
   - `all`
@@ -136,6 +138,12 @@ Batch exit rules:
 ## Engine View
 
 `engine` view is WASM-only and reports engine-centered detector output without package-level projection.
+
+Interpretation notes:
+
+- engine view reports the diagnostic sample plus raw/normalized/remapped Whatlang output only
+- engine view does not apply `eligibility`, `contentGate`, acceptance, or fallback policy decisions
+- when engine view uses an explicit or effective non-default content-gate mode, the CLI may emit an informational stderr note that points users to `--view pipeline`
 
 Required fields:
 

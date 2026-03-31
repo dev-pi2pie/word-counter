@@ -18,6 +18,29 @@ function emitConfigNotes(notes: string[]): void {
   }
 }
 
+function shouldEmitEngineContentGateInfo(validated: {
+  view: "engine" | "pipeline";
+  detector: "wasm" | "regex";
+  contentGateMode: "default" | "strict" | "loose" | "off";
+  sources: {
+    contentGate: boolean;
+  };
+}): boolean {
+  if (validated.view !== "engine" || validated.detector !== "wasm") {
+    return false;
+  }
+
+  return validated.sources.contentGate || validated.contentGateMode !== "default";
+}
+
+function emitEngineContentGateInfo(): void {
+  console.error(
+    pc.cyan(
+      "Info: `--content-gate` does not affect `inspect --view engine`; engine view shows raw detector output. Use `--view pipeline` to inspect eligibility and content-gate restrictions.",
+    ),
+  );
+}
+
 export async function executeInspectCommand({
   argv,
   runtime,
@@ -55,6 +78,10 @@ export async function executeInspectCommand({
     console.error(pc.red("error: `--view engine` requires `--detector wasm`."));
     process.exitCode = 1;
     return;
+  }
+
+  if (shouldEmitEngineContentGateInfo(validated)) {
+    emitEngineContentGateInfo();
   }
 
   try {

@@ -66,6 +66,61 @@ describe("CLI inspect config overrides and defaults", () => {
     expect(parsed.view).toBe("engine");
   });
 
+  test("emits the engine-view info note for config-derived non-default content-gate mode", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const cwd = await makeTempFixture("inspect-engine-content-gate-config-note");
+    await writeTomlConfig(cwd, ['detector = "wasm"', "", "[contentGate]", 'mode = "strict"']);
+
+    const output = await captureCli(
+      ["inspect", "--view", "engine", "--format", "json", inspectContentGateText],
+      { cwd },
+    );
+
+    expect(output.exitCode).toBe(0);
+    expect(
+      output.stderr.filter(
+        (line) =>
+          line.includes("Info:") && line.includes("does not affect `inspect --view engine`"),
+      ),
+    ).toHaveLength(1);
+    const parsed = JSON.parse(output.stdout[0] ?? "{}");
+    expect(parsed.view).toBe("engine");
+    expect(parsed.detector).toBe("wasm");
+  });
+
+  test("emits the engine-view info note for inspect.contentGate.mode derived from config", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const cwd = await makeTempFixture("inspect-engine-content-gate-inspect-config-note");
+    await writeTomlConfig(cwd, [
+      'detector = "wasm"',
+      "",
+      "[inspect.contentGate]",
+      'mode = "strict"',
+    ]);
+
+    const output = await captureCli(
+      ["inspect", "--view", "engine", "--format", "json", inspectContentGateText],
+      { cwd },
+    );
+
+    expect(output.exitCode).toBe(0);
+    expect(
+      output.stderr.filter(
+        (line) =>
+          line.includes("Info:") && line.includes("does not affect `inspect --view engine`"),
+      ),
+    ).toHaveLength(1);
+    const parsed = JSON.parse(output.stdout[0] ?? "{}");
+    expect(parsed.view).toBe("engine");
+    expect(parsed.detector).toBe("wasm");
+  });
+
   test("lets inspect inherit root contentGate.mode when inspect.contentGate.mode is absent", async () => {
     if (!hasWasmDetectorRuntime()) {
       return;
@@ -120,6 +175,36 @@ describe("CLI inspect config overrides and defaults", () => {
       policy: "latinProse",
       mode: "loose",
     });
+  });
+
+  test("emits the engine-view info note for env-derived non-default content-gate mode", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const cwd = await makeTempFixture("inspect-engine-content-gate-env-note");
+    await writeTomlConfig(cwd, ['detector = "wasm"']);
+
+    const output = await captureCli(
+      ["inspect", "--view", "engine", "--format", "json", inspectContentGateText],
+      {
+        cwd,
+        env: {
+          WORD_COUNTER_CONTENT_GATE: "loose",
+        },
+      },
+    );
+
+    expect(output.exitCode).toBe(0);
+    expect(
+      output.stderr.filter(
+        (line) =>
+          line.includes("Info:") && line.includes("does not affect `inspect --view engine`"),
+      ),
+    ).toHaveLength(1);
+    const parsed = JSON.parse(output.stdout[0] ?? "{}");
+    expect(parsed.view).toBe("engine");
+    expect(parsed.detector).toBe("wasm");
   });
 
   test("lets inspect.contentGate.mode override the root content gate without changing counting defaults", async () => {

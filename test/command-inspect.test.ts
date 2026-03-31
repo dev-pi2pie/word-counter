@@ -42,6 +42,92 @@ describe("inspect command", () => {
     expect(output.stdout.some((line) => line.includes("Route tag: und-Hani"))).toBeTrue();
   });
 
+  test("does not emit an engine-view info note for inherited default content-gate mode", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const output = await captureCli([
+      "inspect",
+      "--detector",
+      "wasm",
+      "--view",
+      "engine",
+      "This sentence should clearly be detected as English for the wasm detector path.",
+    ]);
+
+    expect(output.exitCode).toBe(0);
+    expect(
+      output.stderr.some(
+        (line) =>
+          line.includes("Info:") && line.includes("does not affect `inspect --view engine`"),
+      ),
+    ).toBeFalse();
+  });
+
+  test("emits an engine-view info note for explicit --content-gate default", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const output = await captureCli([
+      "inspect",
+      "--detector",
+      "wasm",
+      "--view",
+      "engine",
+      "--content-gate",
+      "default",
+      "This sentence should clearly be detected as English for the wasm detector path.",
+    ]);
+
+    expect(output.exitCode).toBe(0);
+    expect(
+      output.stderr.filter(
+        (line) =>
+          line.includes("Info:") && line.includes("does not affect `inspect --view engine`"),
+      ),
+    ).toHaveLength(1);
+    expect(
+      output.stderr.some(
+        (line) =>
+          line.includes("Info:") && line.includes("Use `--view pipeline` to inspect eligibility"),
+      ),
+    ).toBeTrue();
+  });
+
+  test("keeps engine-view JSON output on stdout while emitting the info note on stderr", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const output = await captureCli([
+      "inspect",
+      "--detector",
+      "wasm",
+      "--view",
+      "engine",
+      "--content-gate",
+      "strict",
+      "--format",
+      "json",
+      "Readers understand this behavior.",
+    ]);
+
+    expect(output.exitCode).toBe(0);
+    expect(output.stdout.length).toBe(1);
+    expect(output.stdout[0]?.includes("does not affect `inspect --view engine`")).toBeFalse();
+    expect(
+      output.stderr.filter(
+        (line) =>
+          line.includes("Info:") && line.includes("does not affect `inspect --view engine`"),
+      ),
+    ).toHaveLength(1);
+    const parsed = JSON.parse(output.stdout[0] ?? "{}");
+    expect(parsed.view).toBe("engine");
+    expect(parsed.detector).toBe("wasm");
+  });
+
   test("bounds standard engine inspection output to previews", async () => {
     if (!hasWasmDetectorRuntime()) {
       return;
@@ -230,6 +316,46 @@ describe("inspect command", () => {
         line.includes("Content gate: mode=off policy=none applied=false passed=true"),
       ),
     ).toBeTrue();
+  });
+
+  test("emits the engine-view info note once per batch inspect invocation", async () => {
+    if (!hasWasmDetectorRuntime()) {
+      return;
+    }
+
+    const root = await makeTempFixture("inspect-engine-content-gate-batch-note");
+    const firstPath = join(root, "a.txt");
+    const secondPath = join(root, "b.txt");
+    const text = "This sentence should clearly be detected as English for the wasm detector path.";
+    await writeFile(firstPath, text);
+    await writeFile(secondPath, text);
+
+    const output = await captureCli([
+      "inspect",
+      "--detector",
+      "wasm",
+      "--view",
+      "engine",
+      "--content-gate",
+      "off",
+      "--format",
+      "json",
+      "--path",
+      firstPath,
+      "--path",
+      secondPath,
+    ]);
+
+    expect(output.exitCode).toBe(0);
+    expect(
+      output.stderr.filter(
+        (line) =>
+          line.includes("Info:") && line.includes("does not affect `inspect --view engine`"),
+      ),
+    ).toHaveLength(1);
+    const parsed = JSON.parse(output.stdout[0] ?? "{}");
+    expect(parsed.kind).toBe("detector-inspect-batch");
+    expect(parsed.files).toHaveLength(2);
   });
 
   test("shows strict inspect eligibility and content gate details in standard output", async () => {
