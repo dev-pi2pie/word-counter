@@ -82,7 +82,8 @@ describe("CLI inspect config overrides and defaults", () => {
     expect(output.exitCode).toBe(0);
     expect(
       output.stderr.filter(
-        (line) => line.includes("Info:") && line.includes("does not affect `inspect --view engine`"),
+        (line) =>
+          line.includes("Info:") && line.includes("does not affect `inspect --view engine`"),
       ),
     ).toHaveLength(1);
     const parsed = JSON.parse(output.stdout[0] ?? "{}");
@@ -111,7 +112,8 @@ describe("CLI inspect config overrides and defaults", () => {
     expect(output.exitCode).toBe(0);
     expect(
       output.stderr.filter(
-        (line) => line.includes("Info:") && line.includes("does not affect `inspect --view engine`"),
+        (line) =>
+          line.includes("Info:") && line.includes("does not affect `inspect --view engine`"),
       ),
     ).toHaveLength(1);
     const parsed = JSON.parse(output.stdout[0] ?? "{}");
@@ -196,7 +198,8 @@ describe("CLI inspect config overrides and defaults", () => {
     expect(output.exitCode).toBe(0);
     expect(
       output.stderr.filter(
-        (line) => line.includes("Info:") && line.includes("does not affect `inspect --view engine`"),
+        (line) =>
+          line.includes("Info:") && line.includes("does not affect `inspect --view engine`"),
       ),
     ).toHaveLength(1);
     const parsed = JSON.parse(output.stdout[0] ?? "{}");

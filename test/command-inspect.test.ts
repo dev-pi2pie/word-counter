@@ -59,7 +59,8 @@ describe("inspect command", () => {
     expect(output.exitCode).toBe(0);
     expect(
       output.stderr.some(
-        (line) => line.includes("Info:") && line.includes("does not affect `inspect --view engine`"),
+        (line) =>
+          line.includes("Info:") && line.includes("does not affect `inspect --view engine`"),
       ),
     ).toBeFalse();
   });
@@ -83,12 +84,14 @@ describe("inspect command", () => {
     expect(output.exitCode).toBe(0);
     expect(
       output.stderr.filter(
-        (line) => line.includes("Info:") && line.includes("does not affect `inspect --view engine`"),
+        (line) =>
+          line.includes("Info:") && line.includes("does not affect `inspect --view engine`"),
       ),
     ).toHaveLength(1);
     expect(
       output.stderr.some(
-        (line) => line.includes("Info:") && line.includes("Use `--view pipeline` to inspect eligibility"),
+        (line) =>
+          line.includes("Info:") && line.includes("Use `--view pipeline` to inspect eligibility"),
       ),
     ).toBeTrue();
   });
@@ -116,7 +119,8 @@ describe("inspect command", () => {
     expect(output.stdout[0]?.includes("does not affect `inspect --view engine`")).toBeFalse();
     expect(
       output.stderr.filter(
-        (line) => line.includes("Info:") && line.includes("does not affect `inspect --view engine`"),
+        (line) =>
+          line.includes("Info:") && line.includes("does not affect `inspect --view engine`"),
       ),
     ).toHaveLength(1);
     const parsed = JSON.parse(output.stdout[0] ?? "{}");
@@ -322,8 +326,7 @@ describe("inspect command", () => {
     const root = await makeTempFixture("inspect-engine-content-gate-batch-note");
     const firstPath = join(root, "a.txt");
     const secondPath = join(root, "b.txt");
-    const text =
-      "This sentence should clearly be detected as English for the wasm detector path.";
+    const text = "This sentence should clearly be detected as English for the wasm detector path.";
     await writeFile(firstPath, text);
     await writeFile(secondPath, text);
 
@@ -346,7 +349,8 @@ describe("inspect command", () => {
     expect(output.exitCode).toBe(0);
     expect(
       output.stderr.filter(
-        (line) => line.includes("Info:") && line.includes("does not affect `inspect --view engine`"),
+        (line) =>
+          line.includes("Info:") && line.includes("does not affect `inspect --view engine`"),
       ),
     ).toHaveLength(1);
     const parsed = JSON.parse(output.stdout[0] ?? "{}");
