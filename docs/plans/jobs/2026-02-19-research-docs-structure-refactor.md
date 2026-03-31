@@ -18,7 +18,7 @@ Move all `research*` documents into `docs/researches/` and update repository ref
   - `docs/research-...` to `docs/researches/research-...`
   - `../research-...` to `../researches/research-...`
 - Updated remaining plain-text reference `docs/research` to `docs/researches` in:
-  - `docs/plans/plan-2026-01-14-latin-ambiguous-locale.md`
+  - `docs/plans/archive/plan-2026-01-14-latin-ambiguous-locale.md`
 
 ## Verification
 
@@ -26,5 +26,5 @@ Move all `research*` documents into `docs/researches/` and update repository ref
 - Confirmed `docs/researches/` contains all migrated research files.
 - Confirmed `README.md` has no research-path references requiring updates.
 - Final pass: normalized `## Related Research` link style to backticked repo-root paths in:
-  - `docs/plans/plan-2026-01-15-custom-yaml-frontmatter.md`
-  - `docs/plans/plan-2026-01-15-simple-toml-parser.md`
+  - `docs/plans/archive/plan-2026-01-15-custom-yaml-frontmatter.md`
+  - `docs/plans/archive/plan-2026-01-15-simple-toml-parser.md`

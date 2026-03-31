@@ -49,4 +49,4 @@ Implement Phase 5 Layer 1 UX/performance improvements before `--total-of` work:
 
 ## Related Plans
 
-- `docs/plans/plan-2026-02-15-v0-1-0-canary-phased-delivery.md`
+- `docs/plans/archive/plan-2026-02-15-v0-1-0-canary-phased-delivery.md`

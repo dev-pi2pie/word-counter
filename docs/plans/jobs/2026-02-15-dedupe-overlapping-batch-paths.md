@@ -24,4 +24,4 @@ Address duplicate counting when users pass overlapping `--path` inputs (for exam
 
 ## Related Plans
 
-- `docs/plans/plan-2026-02-15-command-modularization-and-extension-filters.md`
+- `docs/plans/archive/plan-2026-02-15-command-modularization-and-extension-filters.md`

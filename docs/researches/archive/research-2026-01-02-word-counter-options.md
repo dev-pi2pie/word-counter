@@ -85,7 +85,7 @@ A small adapter can compile `pattern` strings into `RegExp` at runtime.
 This doc uses footnote-style references (e.g., `[^1]`) with the URLs listed at the end of the file.
 
 ## Related Plans
-- `docs/plans/plan-2026-01-02-wc-refactor-locale-research.md`
+- `docs/plans/archive/plan-2026-01-02-wc-refactor-locale-research.md`
 
 ## References
 [^1]: https://developer.mozilla.org/en-US/docs/Glossary/BCP_47_language_tag

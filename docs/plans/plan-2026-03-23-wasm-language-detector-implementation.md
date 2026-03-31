@@ -165,10 +165,10 @@ Implement an optional WASM-backed language detector for ambiguous script routes 
 
 ## Related Plans
 
-- `docs/plans/plan-2026-01-02-wc-refactor-locale-research.md`
+- `docs/plans/archive/plan-2026-01-02-wc-refactor-locale-research.md`
 
 ## Related Research
 
 - `docs/researches/research-2026-02-18-wasm-language-detector-spike.md`
 - `docs/researches/research-2026-03-23-wasm-packaging-repo-structure.md`
-- `docs/researches/research-2026-01-02-language-detection.md`
+- `docs/researches/archive/research-2026-01-02-language-detection.md`

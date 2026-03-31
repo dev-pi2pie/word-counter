@@ -287,8 +287,8 @@ Refactor `src/detector/wasm.ts` in a compatibility-first pass by extracting only
 
 ## Related Plans
 
-- `docs/plans/plan-2026-01-02-wc-refactor-locale-research.md`
-- `docs/plans/plan-2026-02-16-command-ts-separation-pass-2.md`
+- `docs/plans/archive/plan-2026-01-02-wc-refactor-locale-research.md`
+- `docs/plans/archive/plan-2026-02-16-command-ts-separation-pass-2.md`
 - `docs/plans/plan-2026-02-19-batch-jobs-concurrency.md`
 - `docs/plans/plan-2026-03-25-detector-policy-and-inspect-command.md`
 - `docs/plans/plan-2026-03-25-inspect-batch-command.md`

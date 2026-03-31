@@ -25,4 +25,4 @@ Document and lock in the intended CLI behavior that readable `--path` files with
 
 ## Related Plans
 
-- `docs/plans/plan-2026-02-15-v0-1-0-canary-phased-delivery.md`
+- `docs/plans/archive/plan-2026-02-15-v0-1-0-canary-phased-delivery.md`

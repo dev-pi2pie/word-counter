@@ -231,4 +231,4 @@ without changing command semantics.
 [^1]: `docs/schemas/default-config.md`
 [^2]: `docs/researches/research-2026-03-25-detector-policy-and-inspector-surface.md`
 [^3]: `docs/plans/jobs/2026-03-26-inspect-default-detector-followup.md`
-[^4]: `docs/researches/research-2026-01-02-word-counter-options.md`
+[^4]: `docs/researches/archive/research-2026-01-02-word-counter-options.md`

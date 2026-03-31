@@ -17,11 +17,11 @@ agent: Codex
 
 ## Output
 
-- Created: `docs/plans/plan-2026-02-16-command-ts-separation-pass-2.md`
+- Created: `docs/plans/archive/plan-2026-02-16-command-ts-separation-pass-2.md`
 - Updated Phase 7 tracking in:
-  - `docs/plans/plan-2026-02-15-v0-1-0-canary-phased-delivery.md`
+  - `docs/plans/archive/plan-2026-02-15-v0-1-0-canary-phased-delivery.md`
 
 ## Related Plans
 
-- `docs/plans/plan-2026-02-16-command-ts-separation-pass-2.md`
-- `docs/plans/plan-2026-02-15-v0-1-0-canary-phased-delivery.md`
+- `docs/plans/archive/plan-2026-02-16-command-ts-separation-pass-2.md`
+- `docs/plans/archive/plan-2026-02-15-v0-1-0-canary-phased-delivery.md`

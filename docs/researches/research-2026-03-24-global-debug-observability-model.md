@@ -23,8 +23,8 @@ Define a repository-wide observability model for `word-counter` so debug and dia
 - Current JSON result payloads are mostly result-oriented, but there is already one mixed behavior:
   - per-file JSON can include `skipped` when debug skip diagnostics are enabled
 - Existing docs already cover adjacent but narrower concerns:
-  - `docs/researches/research-2026-02-13-cli-progress-indicator.md` defines progress/debug separation for batch UX
-  - `docs/plans/plan-2026-02-16-debug-verbosity-and-report-file.md` defines compact/verbose debug routing and report-file behavior
+  - `docs/researches/archive/research-2026-02-13-cli-progress-indicator.md` defines progress/debug separation for batch UX
+  - `docs/plans/archive/plan-2026-02-16-debug-verbosity-and-report-file.md` defines compact/verbose debug routing and report-file behavior
   - `docs/researches/research-2026-02-17-json-output-schema-contract.md` defines additive JSON contract thinking for result payloads
   - `docs/researches/research-2026-03-13-doctor-command.md` defines a standalone diagnostics command
   - `docs/researches/research-2026-03-24-wasm-latin-detector-quality-false-positives.md` identifies detector-specific observability needs
@@ -367,7 +367,7 @@ This model should not replace or duplicate the following:
 
 ## Related Research
 
-- `docs/researches/research-2026-02-13-cli-progress-indicator.md`
+- `docs/researches/archive/research-2026-02-13-cli-progress-indicator.md`
 - `docs/researches/research-2026-02-17-json-output-schema-contract.md`
 - `docs/researches/research-2026-03-13-doctor-command.md`
 - `docs/researches/research-2026-03-24-wasm-latin-detector-quality-false-positives.md`

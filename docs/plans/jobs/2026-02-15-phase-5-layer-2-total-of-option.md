@@ -44,4 +44,4 @@ Implement Phase 5 Layer 2 selective total composition via `--total-of` while pre
 
 ## Related Plans
 
-- `docs/plans/plan-2026-02-15-v0-1-0-canary-phased-delivery.md`
+- `docs/plans/archive/plan-2026-02-15-v0-1-0-canary-phased-delivery.md`

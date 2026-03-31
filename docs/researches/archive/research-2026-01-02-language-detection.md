@@ -52,7 +52,7 @@ This doc uses footnote-style references (e.g., `[^1]`) with the URLs listed at t
 This research is marked `completed` for the `v0.1.0` scope. Future heuristic refinements can be tracked in follow-up research if needed.
 
 ## Related Plans
-- `docs/plans/plan-2026-01-02-wc-refactor-locale-research.md`
+- `docs/plans/archive/plan-2026-01-02-wc-refactor-locale-research.md`
 
 ## References
 [^1]: https://www.unicode.org/reports/tr24/

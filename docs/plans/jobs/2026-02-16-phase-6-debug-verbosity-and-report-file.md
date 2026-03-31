@@ -49,5 +49,5 @@ Implement the Phase 6 follow-up work for debug diagnostics usability:
 
 ## Related Plans
 
-- `docs/plans/plan-2026-02-15-v0-1-0-canary-phased-delivery.md`
-- `docs/plans/plan-2026-02-16-debug-verbosity-and-report-file.md`
+- `docs/plans/archive/plan-2026-02-15-v0-1-0-canary-phased-delivery.md`
+- `docs/plans/archive/plan-2026-02-16-debug-verbosity-and-report-file.md`

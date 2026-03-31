@@ -7,7 +7,7 @@ agent: Codex
 
 ## Scope
 
-Execute `docs/plans/plan-2026-02-15-command-modularization-and-extension-filters.md`.
+Execute `docs/plans/archive/plan-2026-02-15-command-modularization-and-extension-filters.md`.
 
 ## What Changed
 
@@ -52,5 +52,5 @@ Execute `docs/plans/plan-2026-02-15-command-modularization-and-extension-filters
 
 ## Related Plans
 
-- `docs/plans/plan-2026-02-15-command-modularization-and-extension-filters.md`
-- `docs/plans/plan-2026-02-15-v0-1-0-canary-phased-delivery.md`
+- `docs/plans/archive/plan-2026-02-15-command-modularization-and-extension-filters.md`
+- `docs/plans/archive/plan-2026-02-15-v0-1-0-canary-phased-delivery.md`

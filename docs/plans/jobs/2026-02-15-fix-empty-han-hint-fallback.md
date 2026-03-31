@@ -23,4 +23,4 @@ Fix the Han hint resolution path so empty hint values do not crash segmentation 
 
 ## Related Plans
 
-- `docs/plans/plan-2026-02-15-v0-1-0-canary-phased-delivery.md`
+- `docs/plans/archive/plan-2026-02-15-v0-1-0-canary-phased-delivery.md`

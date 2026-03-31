@@ -7,7 +7,7 @@ agent: Codex
 
 ## Scope
 
-Complete the remaining Phase 1 task in `docs/plans/plan-2026-02-15-v0-1-0-canary-phased-delivery.md` by gating skipped-file diagnostics behind `--debug`, then sync usage and schema docs.
+Complete the remaining Phase 1 task in `docs/plans/archive/plan-2026-02-15-v0-1-0-canary-phased-delivery.md` by gating skipped-file diagnostics behind `--debug`, then sync usage and schema docs.
 
 ## What Changed
 
@@ -31,5 +31,5 @@ Complete the remaining Phase 1 task in `docs/plans/plan-2026-02-15-v0-1-0-canary
 
 ## Related Plans
 
-- `docs/plans/plan-2026-02-15-v0-1-0-canary-phased-delivery.md`
-- `docs/plans/plan-2026-02-15-command-modularization-and-extension-filters.md`
+- `docs/plans/archive/plan-2026-02-15-v0-1-0-canary-phased-delivery.md`
+- `docs/plans/archive/plan-2026-02-15-command-modularization-and-extension-filters.md`

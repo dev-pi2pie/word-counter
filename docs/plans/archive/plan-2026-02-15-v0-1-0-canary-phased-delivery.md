@@ -128,8 +128,8 @@ Deliver `v0.1.0` through phased canary releases with clear priority ordering, ex
 ### Phase 7 - Stable Release Readiness (`v0.1.0`)
 
 - [x] Implement `char-collector` mode with deterministic composed alias normalization matrix and compatibility coverage (`#33`, parent `#21`).
-- [x] Re-check `src/command.ts` separation boundaries and issue a dedicated sub-plan for an additional compatibility-safe refactor pass (see `docs/plans/plan-2026-02-16-command-ts-separation-pass-2.md`).
-- [x] Execute `docs/plans/plan-2026-02-16-command-ts-separation-pass-2.md` (implement command modularization pass 2 while preserving CLI/export compatibility contracts).
+- [x] Re-check `src/command.ts` separation boundaries and issue a dedicated sub-plan for an additional compatibility-safe refactor pass (see `docs/plans/archive/plan-2026-02-16-command-ts-separation-pass-2.md`).
+- [x] Execute `docs/plans/archive/plan-2026-02-16-command-ts-separation-pass-2.md` (implement command modularization pass 2 while preserving CLI/export compatibility contracts).
 - [x] Run final regression pass across feature and legacy paths (`#21`) using `bun run test:ci` plus CLI smoke checks on 2026-02-16 UTC.
 - [x] Re-check issue closure and acceptance criteria for `#17`, `#18`, `#19`, `#20`, `#24`, `#26`, and `#33` (see `docs/plans/jobs/2026-02-16-phase-7-regression-and-issue-closure-audit.md`).
 - [x] Validate release notes and canary-to-stable changelog clarity (release-owner task completed).
@@ -142,15 +142,15 @@ Deliver `v0.1.0` through phased canary releases with clear priority ordering, ex
 
 ## Related Research
 
-- `docs/researches/research-2026-02-13-batch-file-counting.md`
-- `docs/researches/research-2026-02-13-cli-progress-indicator.md`
-- `docs/researches/research-2026-02-13-total-combination-mode.md`
-- `docs/researches/research-2026-01-02-language-detection.md`
+- `docs/researches/archive/research-2026-02-13-batch-file-counting.md`
+- `docs/researches/archive/research-2026-02-13-cli-progress-indicator.md`
+- `docs/researches/archive/research-2026-02-13-total-combination-mode.md`
+- `docs/researches/archive/research-2026-01-02-language-detection.md`
 - `docs/schemas/default-config.md`
 
 ## Related Plans
 
-- `docs/plans/plan-2026-02-15-command-modularization-and-extension-filters.md`
-- `docs/plans/plan-2026-02-16-debug-verbosity-and-report-file.md`
-- `docs/plans/plan-2026-02-16-char-collector-mode.md`
-- `docs/plans/plan-2026-02-16-command-ts-separation-pass-2.md`
+- `docs/plans/archive/plan-2026-02-15-command-modularization-and-extension-filters.md`
+- `docs/plans/archive/plan-2026-02-16-debug-verbosity-and-report-file.md`
+- `docs/plans/archive/plan-2026-02-16-char-collector-mode.md`
+- `docs/plans/archive/plan-2026-02-16-command-ts-separation-pass-2.md`

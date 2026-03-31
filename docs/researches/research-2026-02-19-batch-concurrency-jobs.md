@@ -216,8 +216,8 @@ CLI help text:
 
 ## Related Research
 
-- `docs/researches/research-2026-02-13-batch-file-counting.md`
-- `docs/researches/research-2026-02-13-cli-progress-indicator.md`
+- `docs/researches/archive/research-2026-02-13-batch-file-counting.md`
+- `docs/researches/archive/research-2026-02-13-cli-progress-indicator.md`
 - `docs/researches/research-2026-02-17-filename-regex-matching.md`
 
 ## References

@@ -37,4 +37,4 @@ Fix `Maximum call stack size exceeded` during CLI batch counting with large `col
 
 ## Related Plans
 
-- `docs/plans/plan-2026-02-15-v0-1-0-canary-phased-delivery.md`
+- `docs/plans/archive/plan-2026-02-15-v0-1-0-canary-phased-delivery.md`

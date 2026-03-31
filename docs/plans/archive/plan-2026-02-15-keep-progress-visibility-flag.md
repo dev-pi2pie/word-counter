@@ -26,8 +26,8 @@ Add an explicit opt-in flag to keep the final progress line visible after batch 
 
 ## Related Research
 
-- `docs/researches/research-2026-02-13-cli-progress-indicator.md`
+- `docs/researches/archive/research-2026-02-13-cli-progress-indicator.md`
 
 ## Related Plans
 
-- `docs/plans/plan-2026-02-15-v0-1-0-canary-phased-delivery.md`
+- `docs/plans/archive/plan-2026-02-15-v0-1-0-canary-phased-delivery.md`

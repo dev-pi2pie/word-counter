@@ -56,6 +56,6 @@ This concentration increases maintenance risk and slows targeted changes.
 
 ## Related Plans
 
-- `docs/plans/plan-2026-02-15-v0-1-0-canary-phased-delivery.md`
-- `docs/plans/plan-2026-02-15-command-modularization-and-extension-filters.md`
-- `docs/plans/plan-2026-02-16-char-collector-mode.md`
+- `docs/plans/archive/plan-2026-02-15-v0-1-0-canary-phased-delivery.md`
+- `docs/plans/archive/plan-2026-02-15-command-modularization-and-extension-filters.md`
+- `docs/plans/archive/plan-2026-02-16-char-collector-mode.md`
