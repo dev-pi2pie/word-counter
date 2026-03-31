@@ -43,4 +43,4 @@ Suggested file layout under `src/markdown/toml/`:
 - `toml-simple.ts` becomes a thin entry module or is replaced by the new module tree.
 
 ## Related Plans
-- `docs/plans/plan-2026-01-15-simple-toml-parser.md`
+- `docs/plans/archive/plan-2026-01-15-simple-toml-parser.md`

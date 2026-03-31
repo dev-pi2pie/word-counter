@@ -43,4 +43,4 @@ Complete the final Phase 7 validation by running a full regression pass and re-c
 Phase 7 final regression and issue acceptance re-check completed. No blocking regressions were found.
 
 ## Related Plans
-- `docs/plans/plan-2026-02-15-v0-1-0-canary-phased-delivery.md`
+- `docs/plans/archive/plan-2026-02-15-v0-1-0-canary-phased-delivery.md`

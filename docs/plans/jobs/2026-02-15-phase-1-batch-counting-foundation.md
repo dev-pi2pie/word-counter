@@ -7,7 +7,7 @@ agent: Codex
 
 ## Scope
 
-Implement Phase 1 (`v0.1.0-canary.0`) from `docs/plans/plan-2026-02-15-v0-1-0-canary-phased-delivery.md`.
+Implement Phase 1 (`v0.1.0-canary.0`) from `docs/plans/archive/plan-2026-02-15-v0-1-0-canary-phased-delivery.md`.
 
 ## What Changed
 
@@ -55,4 +55,4 @@ with markdown/text files, nested directories, excluded extensions, and a binary 
 
 ## Related Plans
 
-- `docs/plans/plan-2026-02-15-v0-1-0-canary-phased-delivery.md`
+- `docs/plans/archive/plan-2026-02-15-v0-1-0-canary-phased-delivery.md`

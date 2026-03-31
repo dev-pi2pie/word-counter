@@ -59,9 +59,9 @@ Issue linkage:
 
 ## Related Plans
 
-- `docs/plans/plan-2026-02-15-v0-1-0-canary-phased-delivery.md`
-- `docs/plans/plan-2026-01-21-character-count-mode.md`
+- `docs/plans/archive/plan-2026-02-15-v0-1-0-canary-phased-delivery.md`
+- `docs/plans/archive/plan-2026-01-21-character-count-mode.md`
 
 ## Related Research
 
-- `docs/researches/research-2026-02-13-batch-file-counting.md`
+- `docs/researches/archive/research-2026-02-13-batch-file-counting.md`

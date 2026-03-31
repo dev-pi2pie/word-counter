@@ -40,4 +40,4 @@ Execute Phase 6 dependency upgrades in staged order using Bun and align runtime 
 
 ## Related Plans
 
-- `docs/plans/plan-2026-02-15-v0-1-0-canary-phased-delivery.md`
+- `docs/plans/archive/plan-2026-02-15-v0-1-0-canary-phased-delivery.md`

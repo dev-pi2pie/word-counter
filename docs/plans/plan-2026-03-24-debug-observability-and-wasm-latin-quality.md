@@ -134,5 +134,5 @@ Implement the cross-cutting debug observability contract and the WASM Latin fals
 
 ## Related Plans
 
-- `docs/plans/plan-2026-02-16-debug-verbosity-and-report-file.md`
+- `docs/plans/archive/plan-2026-02-16-debug-verbosity-and-report-file.md`
 - `docs/plans/plan-2026-03-24-wasm-mode-latin-hint-ordering.md`

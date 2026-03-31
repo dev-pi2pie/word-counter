@@ -315,7 +315,7 @@ Behavior contract:
 ## Related Research
 
 - `docs/researches/research-2026-02-19-batch-concurrency-jobs.md`
-- `docs/researches/research-2026-01-02-word-counter-options.md`
+- `docs/researches/archive/research-2026-01-02-word-counter-options.md`
 - `docs/researches/research-2026-02-18-wasm-language-detector-spike.md`
 
 ## Related Plans

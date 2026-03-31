@@ -138,12 +138,12 @@ Rationale:
 - Should we support explicit regex flags in CLI patterns (for example `/.../iu`) or keep `u`-only for predictability?
 
 ## Related Plans
-- `docs/plans/plan-2026-01-14-latin-ambiguous-locale.md`
-- `docs/plans/plan-2026-01-02-wc-refactor-locale-research.md`
+- `docs/plans/archive/plan-2026-01-14-latin-ambiguous-locale.md`
+- `docs/plans/archive/plan-2026-01-02-wc-refactor-locale-research.md`
 
 ## Related Research
-- `docs/researches/research-2026-01-02-language-detection.md`
-- `docs/researches/research-2026-01-02-word-counter-options.md`
+- `docs/researches/archive/research-2026-01-02-language-detection.md`
+- `docs/researches/archive/research-2026-01-02-word-counter-options.md`
 
 ## References
 [^1]: https://www.rfc-editor.org/rfc/rfc5646

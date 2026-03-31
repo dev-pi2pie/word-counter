@@ -240,7 +240,7 @@ Validation for this phase:
 
 - `docs/researches/research-2026-03-25-inspect-batch-mode.md`
 - `docs/researches/research-2026-03-25-detector-policy-and-inspector-surface.md`
-- `docs/researches/research-2026-02-13-batch-file-counting.md`
+- `docs/researches/archive/research-2026-02-13-batch-file-counting.md`
 - `docs/researches/research-2026-02-19-batch-concurrency-jobs.md`
 
 ## Related Plans

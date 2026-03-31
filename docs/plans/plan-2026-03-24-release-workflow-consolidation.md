@@ -166,7 +166,7 @@ Reduce duplicated Rust/WASM build work across release and publish automation by 
 
 ## Related Plans
 
-- `docs/plans/plan-2026-01-21-publish-flow-checkout.md`
+- `docs/plans/archive/plan-2026-01-21-publish-flow-checkout.md`
 - `docs/plans/plan-2026-03-23-wasm-language-detector-implementation.md`
 
 ## Related Research

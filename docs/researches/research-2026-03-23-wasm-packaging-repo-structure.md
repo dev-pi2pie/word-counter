@@ -129,10 +129,10 @@ Choose a packaging direction for the WASM spike that preserves the current Node.
 
 ## Related Plans
 
-- `docs/plans/plan-2026-01-02-wc-refactor-locale-research.md`
-- `docs/plans/plan-2026-01-01-node-runtime-refactor.md`
+- `docs/plans/archive/plan-2026-01-02-wc-refactor-locale-research.md`
+- `docs/plans/archive/plan-2026-01-01-node-runtime-refactor.md`
 
 ## Related Research
 
 - `docs/researches/research-2026-02-18-wasm-language-detector-spike.md`
-- `docs/researches/research-2026-01-02-language-detection.md`
+- `docs/researches/archive/research-2026-01-02-language-detection.md`
