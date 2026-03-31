@@ -1,7 +1,8 @@
 ---
 title: "inspect engine content gate info note"
 created-date: 2026-03-31
-status: draft
+modified-date: 2026-03-31
+status: completed
 agent: codex
 ---
 
@@ -49,6 +50,7 @@ Decide how `word-counter inspect --detector wasm --view engine` should behave wh
 ## Related Plans
 
 - [docs/plans/plan-2026-03-25-detector-policy-and-inspect-command.md](docs/plans/plan-2026-03-25-detector-policy-and-inspect-command.md)
+- [docs/plans/plan-2026-03-31-inspect-engine-content-gate-info-note-implementation.md](docs/plans/plan-2026-03-31-inspect-engine-content-gate-info-note-implementation.md)
 
 ## Related Research
 
