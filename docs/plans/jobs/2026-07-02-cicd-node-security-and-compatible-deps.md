@@ -1,6 +1,7 @@
 ---
 title: "CI/CD Node security and compatible dependency refresh"
 created-date: 2026-07-02
+modified-date: 2026-07-02
 status: completed
 agent: Codex
 ---
@@ -46,10 +47,10 @@ Execute Phase 1 of the CI/CD and dependency refresh plan by patching repository 
 
 ## Phase 2 Notes
 
-- Remaining JavaScript dependency-line validation lanes:
-  - `commander@15`
-  - `@types/node@26`
-  - `oxfmt@0.57`
-  - `tsdown@0.22`
-- Remaining Rust/WASM dependency-line validation lane:
-  - `whatlang@0.18`
+- Accepted `tsdown@0.22.3` after type-check, build, and package-content verification.
+- Accepted `commander@15.0.0` after focused CLI parsing, help, error, config, detector, inspect, and total-of compatibility tests.
+- Accepted `@types/node@26.1.0` after type-checking without changing the published Node.js runtime policy.
+- Accepted `oxfmt@0.57.0` after `format:check` passed without formatting churn.
+- Accepted `whatlang@0.18.0` after adding the new `Lang::Cym` to `cym` detector remap and rerunning WASM detector regressions.
+- `bun outdated` reported no remaining outdated packages after the Phase 2 lanes.
+- `cargo update --dry-run --verbose` reported no remaining compatible Rust updates after the Phase 2 lanes.
