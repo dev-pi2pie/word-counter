@@ -63,7 +63,7 @@ Refresh the repository automation and dependency baselines after the June 2026 N
 - [ ] Refresh compatible Rust/WASM lockfile updates for `crates/language-detector`.
 - [ ] Confirm no duplicate Rust dependency versions are introduced.
 - [ ] Run the focused validation suite for CI, package contents, and detector behavior.
-- [ ] Create or update a job record for the Phase 1 implementation and verification results.
+- [ ] Create one job record for the dependency refresh implementation and Phase 1 verification results.
 
 ### Phase 2 - Dependency-Line Upgrade Validation
 
@@ -73,7 +73,7 @@ Refresh the repository automation and dependency baselines after the June 2026 N
 - [ ] Validate `tsdown@0.22` as the first Phase 2 lane if Phase 1 compatible updates do not clear the audit finding; otherwise evaluate it only if the newer line is separately justified.
 - [ ] Validate `whatlang@0.18` against detector regression coverage before accepting any language-detection behavior change.
 - [ ] Adopt, leave pinned, or split follow-up work for each Phase 2 lane based on validation evidence.
-- [ ] Create or update a job record for Phase 2 results and any accepted dependency-line changes.
+- [ ] If Phase 2 continues from the same refresh effort, append Phase 2 results to the Phase 1 job record instead of creating a second job record.
 
 ## Validation Plan
 
