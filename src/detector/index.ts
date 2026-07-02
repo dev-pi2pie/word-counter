@@ -16,8 +16,6 @@ import {
 import { inspectTextWithDetector } from "./inspect";
 import { createDetectorDebugSummary, mergeDetectorDebugSummaries } from "./debug";
 import type {
-  DetectorContentGateMode,
-  DetectorContentGateOptions,
   DetectorCountSectionsOptions,
   DetectorLocaleOptions,
   DetectorMode,

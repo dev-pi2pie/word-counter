@@ -46,10 +46,10 @@ Refresh the repository automation and dependency baselines after the June 2026 N
 
 ### Phase 1 - Security Patch and Compatible Refresh
 
-- [ ] Update `.github/workflows/ci.yml` from Node.js `22.22.2` to Node.js `22.23.0`.
-- [ ] Update the release workflow `prepare` job from Node.js `22.22.2` to Node.js `22.23.0`.
-- [ ] Leave release publish jobs on Node.js `24` and verify the existing npm trusted-publishing rationale still applies.
-- [ ] Broaden CI pull request path filters so validation runs for:
+- [x] Update `.github/workflows/ci.yml` from Node.js `22.22.2` to Node.js `22.23.0`.
+- [x] Update the release workflow `prepare` job from Node.js `22.22.2` to Node.js `22.23.0`.
+- [x] Leave release publish jobs on Node.js `24` and verify the existing npm trusted-publishing rationale still applies.
+- [x] Broaden CI pull request path filters so validation runs for:
   - `.github/workflows/**`
   - `package.json`
   - `bun.lock`
@@ -57,13 +57,13 @@ Refresh the repository automation and dependency baselines after the June 2026 N
   - `tsconfig*.json`
   - `crates/**`
   - Rust lockfile and crate metadata changes
-- [ ] Update semver-compatible JavaScript dependencies.
-- [ ] Rerun `bun audit` and confirm whether the `tsdown` transitive `defu` advisory is cleared.
-- [ ] If `bun audit` still reports the `tsdown` transitive advisory after compatible updates, record the residual risk and move the fix attempt to Phase 2 rather than expanding Phase 1 scope.
-- [ ] Refresh compatible Rust/WASM lockfile updates for `crates/language-detector`.
-- [ ] Confirm no duplicate Rust dependency versions are introduced.
-- [ ] Run the focused validation suite for CI, package contents, and detector behavior.
-- [ ] Create one job record for the dependency refresh implementation and Phase 1 verification results.
+- [x] Update semver-compatible JavaScript dependencies.
+- [x] Rerun `bun audit` and confirm whether the `tsdown` transitive `defu` advisory is cleared.
+- [x] If `bun audit` still reports the `tsdown` transitive advisory after compatible updates, record the residual risk and move the fix attempt to Phase 2 rather than expanding Phase 1 scope.
+- [x] Refresh compatible Rust/WASM lockfile updates for `crates/language-detector`.
+- [x] Confirm no duplicate Rust dependency versions are introduced.
+- [x] Run the focused validation suite for CI, package contents, and detector behavior.
+- [x] Create one job record for the dependency refresh implementation and Phase 1 verification results.
 
 ### Phase 2 - Dependency-Line Upgrade Validation
 
