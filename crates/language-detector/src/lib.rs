@@ -82,6 +82,7 @@ fn lang_to_iso_639_3(lang: Lang) -> &'static str {
         Lang::Cat => "cat",
         Lang::Tgl => "tgl",
         Lang::Hye => "hye",
+        Lang::Cym => "cym",
     }
 }
 
