@@ -27,15 +27,18 @@ export function analyzeChunk(
   const segments: string[] = [];
   const nonWords: NonWordCollection | null = collectNonWords ? createNonWordCollection() : null;
   for (const part of segmenter.segment(chunk.text)) {
+    const category = classifyNonWordSegment(part.segment);
+    if (category) {
+      if (collectNonWords && nonWords) {
+        addNonWord(nonWords, category, part.segment);
+      }
+      continue;
+    }
     if (part.isWordLike) {
       segments.push(part.segment);
     } else if (collectNonWords && nonWords) {
       if (includeWhitespace) {
         addWhitespace(nonWords, part.segment);
-      }
-      const category = classifyNonWordSegment(part.segment);
-      if (category) {
-        addNonWord(nonWords, category, part.segment);
       }
     }
   }
@@ -60,6 +63,17 @@ export function analyzeCharChunk(
   let nonWordChars = 0;
 
   for (const part of segmenter.segment(chunk.text)) {
+    const category = classifyNonWordSegment(part.segment);
+    if (category) {
+      if (collectNonWords && nonWords) {
+        addNonWord(nonWords, category, part.segment);
+        const count = countCharsForLocale(part.segment, chunk.locale);
+        chars += count;
+        nonWordChars += count;
+      }
+      continue;
+    }
+
     if (part.isWordLike) {
       const count = countCharsForLocale(part.segment, chunk.locale);
       chars += count;
@@ -72,11 +86,7 @@ export function analyzeCharChunk(
       if (includeWhitespace) {
         whitespaceCount = addWhitespace(nonWords, part.segment);
       }
-      const category = classifyNonWordSegment(part.segment);
-      if (category) {
-        addNonWord(nonWords, category, part.segment);
-      }
-      if (category || whitespaceCount > 0) {
+      if (whitespaceCount > 0) {
         const count = countCharsForLocale(part.segment, chunk.locale);
         chars += count;
         nonWordChars += count;

@@ -34,7 +34,7 @@ Make stable release-note generation locally reproducible before CI by extracting
   - Added `GH_TOKEN` env so GitHub login resolution works in CI for contributor attribution.
   - Set stable release default mode to `hybrid` for balanced grouped context + contributor-attributed changelog lines.
   - Adjusted `workflow_dispatch` checkout ref to use the selected branch (`github.ref`) so current scripts are available even when generating notes for an older tag via `inputs.tag`.
-- Added `docs/release-notes-local-verification.md` with local verification commands.
+- Added `docs/notes/release-notes-local-verification.md` with local verification commands.
 - Added a local mode-diff workflow in docs to compare commit vs PR render outputs.
 - Added a forced fallback login option for local preview when API login resolution is unavailable.
 - Updated changelog format:

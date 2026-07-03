@@ -11,7 +11,7 @@ Add a dedicated guide that explains each `doctor` key and value in both text and
 
 ## What Changed
 
-- Added `docs/doctor-usage-guide.md`.
+- Added `docs/guides/doctor-usage-guide.md`.
 - Documented:
   - top-level doctor statuses and exit codes
   - each text-mode section and key in table form

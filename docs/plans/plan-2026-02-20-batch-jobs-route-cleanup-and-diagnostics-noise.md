@@ -20,7 +20,7 @@ Finalize batch jobs routing by removing the legacy `load-only` execution route, 
   - Rename internal `experimental` route files to stable names aligned with current policy.
   - Define and implement unified diagnostics noise policy for warnings/debug/verbose behavior.
   - Update tests and docs for route and diagnostics behavior.
-  - Record user-visible diagnostics behavior changes in `docs/breaking-changes-notes.md`.
+  - Record user-visible diagnostics behavior changes in `docs/notes/breaking-changes-notes.md`.
 - Out of scope:
   - Counting algorithm or total semantics changes.
   - New doctor-style diagnostics command.

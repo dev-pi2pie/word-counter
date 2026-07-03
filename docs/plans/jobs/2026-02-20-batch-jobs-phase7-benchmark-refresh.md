@@ -67,7 +67,7 @@ Observed:
 
 ## Docs Updated
 
-- `docs/batch-jobs-usage-guide.md`
+- `docs/guides/batch-jobs-usage-guide.md`
 - `docs/plans/plan-2026-02-19-batch-jobs-concurrency.md`
 
 ## Related Plans

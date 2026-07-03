@@ -11,7 +11,7 @@ Complete Phase 5 of `docs/plans/plan-2026-03-26-config-file-support-and-detector
 
 ## What Changed
 
-- Added `docs/config-usage-guide.md` covering:
+- Added `docs/guides/config-usage-guide.md` covering:
   - canonical filenames
   - platform-native user config locations
   - current-working-directory lookup

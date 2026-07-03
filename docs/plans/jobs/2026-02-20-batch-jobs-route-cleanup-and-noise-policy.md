@@ -52,8 +52,8 @@ Implemented Phase 7 route and diagnostics cleanup work:
 ## Docs Updated
 
 - `README.md`
-- `docs/batch-jobs-usage-guide.md`
-- `docs/breaking-changes-notes.md`
+- `docs/guides/batch-jobs-usage-guide.md`
+- `docs/notes/breaking-changes-notes.md`
 - `docs/plans/plan-2026-02-19-batch-jobs-concurrency.md`
 - `docs/plans/plan-2026-02-20-batch-jobs-route-cleanup-and-diagnostics-noise.md`
 

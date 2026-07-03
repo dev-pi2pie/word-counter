@@ -21,7 +21,7 @@ Align Phase 6 status in the concurrency plan with implemented behavior, and clos
   - `docs/plans/jobs/2026-02-19-jobs-limit-guardrail.md`
 - Added explicit README usage example for diagnostics:
   - `word-counter --print-jobs-limit`
-- Updated `docs/batch-jobs-usage-guide.md` to reflect:
+- Updated `docs/guides/batch-jobs-usage-guide.md` to reflect:
   - safety-cap behavior for over-limit jobs
   - diagnostics command usage
 

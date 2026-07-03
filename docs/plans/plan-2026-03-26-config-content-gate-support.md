@@ -77,7 +77,7 @@ Validation for this phase:
 ### Phase 3 - Docs And Examples
 
 - [x] Update `docs/schemas/default-config.md` for the new config keys and mapping rules.
-- [x] Update `docs/config-usage-guide.md` for root and inspect content-gate configuration.
+- [x] Update `docs/guides/config-usage-guide.md` for root and inspect content-gate configuration.
 - [x] Update `README.md` examples and config notes.
 - [x] Update `examples/wc-config/` so the example files reflect the final documented default contract or explicitly documented content-gate defaults.
 

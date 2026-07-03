@@ -24,7 +24,7 @@ Improve detector-mode behavior for ambiguous Latin text by refining how WASM sco
   - short low-confidence English-like fallback
 - Updated detector docs:
   - `docs/schemas/detector-remap-contract.md`
-  - `docs/locale-tag-detection-notes.md`
+  - `docs/notes/locale-tag-detection-notes.md`
 - Marked Phase 6 complete in `docs/plans/plan-2026-03-23-wasm-language-detector-implementation.md`.
 
 ## Smoke Test Results

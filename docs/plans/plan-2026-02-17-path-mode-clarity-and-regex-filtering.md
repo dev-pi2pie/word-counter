@@ -34,7 +34,7 @@ Resolve the existing docs clarity issue for `--path-mode manual` and the regex-b
 - [x] Resolve Issue #35 by updating CLI help and README wording/examples.
 - [x] Resolve Issue #36 by implementing regex filtering semantics and tests.
 - [x] Enforce one `--regex` value and return a clear error when repeated.
-- [x] Add `docs/regex-usage-guide.md` and update README for regex only after feature behavior is implemented and stabilized.
+- [x] Add `docs/guides/regex-usage-guide.md` and update README for regex only after feature behavior is implemented and stabilized.
 - [x] Verify docs, behavior, and tests are aligned before closing both issues.
 
 ## Acceptance Criteria

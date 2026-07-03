@@ -10,7 +10,7 @@ agent: Codex
 
 Document current locale-tag detection behavior, known limits, and override flags.
 
-For the current supported-route and remap overview, see `docs/language-detection-support-guide.md`.
+For the current supported-route and remap overview, see `docs/guides/language-detection-support-guide.md`.
 
 ## Detection Model
 

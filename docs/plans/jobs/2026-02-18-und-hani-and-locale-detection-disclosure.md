@@ -32,7 +32,7 @@ agent: Codex
 - `docs/researches/archive/research-2026-01-02-language-detection.md`
   - Updated implementation notes to `und-Hani`.
   - Clarified `und-*` script tagging rationale.
-- `docs/breaking-changes-notes.md`
+- `docs/notes/breaking-changes-notes.md`
   - Updated language-tag note to `und-Hani`.
 
 ## Verification

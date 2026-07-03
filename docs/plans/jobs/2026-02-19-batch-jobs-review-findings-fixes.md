@@ -11,7 +11,7 @@ agent: Codex
 Addressed two review findings for the batch jobs route:
 - Ensure worker-pool initialization failures always tear down already-started workers.
 - Restore early collector-segment compaction so large batch runs do not retain full per-file segment arrays until finalization.
-Also ran a benchmark-style smoke test following `docs/batch-jobs-usage-guide.md` to confirm raw total parity, JSON determinism, and expected speedup across `--jobs` values.
+Also ran a benchmark-style smoke test following `docs/guides/batch-jobs-usage-guide.md` to confirm raw total parity, JSON determinism, and expected speedup across `--jobs` values.
 
 ## What Changed
 

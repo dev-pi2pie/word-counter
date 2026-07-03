@@ -11,7 +11,7 @@ Update the detector-facing docs so `contentGate` verification guidance matches t
 
 ## What Changed
 
-- Added a practical verification section to `docs/language-detection-support-guide.md`.
+- Added a practical verification section to `docs/guides/language-detection-support-guide.md`.
 - Documented that:
   - `off` is easy to confirm on large technical files
   - `default`, `strict`, and `loose` often look identical on strongly technical or strongly prose-heavy files

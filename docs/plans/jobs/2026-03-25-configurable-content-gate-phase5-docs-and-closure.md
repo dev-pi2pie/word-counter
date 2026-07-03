@@ -23,14 +23,14 @@ Complete Phase 5 of the configurable content gate plan:
     - canonical `contentGate`
     - legacy `qualityGate`
     - Latin and Hani mode semantics
-- Updated `docs/language-detection-support-guide.md` with the current public content gate surface, route behavior, and practical verification guidance for both Latin and Hani routes.
+- Updated `docs/guides/language-detection-support-guide.md` with the current public content gate surface, route behavior, and practical verification guidance for both Latin and Hani routes.
 - Updated `docs/schemas/detector-inspector-output-contract.md` to document:
   - `--content-gate` in inspect CLI shape
   - `contentGate.mode` in inspect payloads
   - Hani eligibility-only mode behavior in inspect payloads
   - standard-output disclosure expectations
 - Updated `docs/schemas/debug-event-stream-contract.md` to document `contentGate.mode` and Hani eligibility-only mode behavior in legacy debug/evidence payloads.
-- Updated `docs/schemas/detector-remap-contract.md` and `docs/locale-tag-detection-notes.md` so the documented route thresholds match the shipped Latin and Hani mode-aware eligibility rules.
+- Updated `docs/schemas/detector-remap-contract.md` and `docs/notes/locale-tag-detection-notes.md` so the documented route thresholds match the shipped Latin and Hani mode-aware eligibility rules.
 
 ## Release Notes Draft
 

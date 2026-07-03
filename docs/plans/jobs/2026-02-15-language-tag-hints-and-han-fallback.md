@@ -42,5 +42,5 @@ agent: Codex
 ## Docs
 
 - Updated README wording/examples for language-tag hints and Han fallback behavior.
-- Added `docs/breaking-changes-notes.md` to track planned deprecations and migration notes.
+- Added `docs/notes/breaking-changes-notes.md` to track planned deprecations and migration notes.
 - Updated canary phased plan to place this scope in `v0.1.0-canary.1` and shift later canaries by `+1`.
