@@ -336,6 +336,6 @@ This is expected current behavior, not a runtime failure.
 
 ## Related Docs
 
-- `docs/locale-tag-detection-notes.md`
+- `docs/notes/locale-tag-detection-notes.md`
 - `docs/schemas/detector-remap-contract.md`
 - `docs/schemas/detector-inspector-output-contract.md`

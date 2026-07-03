@@ -120,11 +120,11 @@ Phase 6 related job records:
 - [x] Internal naming cleanup: remove `experimental` wording from active route module filenames/imports.
 - [x] Diagnostics sub-plan execution: implement unified noise policy (error/warning/debug tiers), warning suppression option, and `--quiet-skips` contract alignment.
 - [x] Update breaking-change tracking for diagnostics contract updates:
-  - `docs/breaking-changes-notes.md`
+  - `docs/notes/breaking-changes-notes.md`
 - [x] Track and execute sub-plan:
   - `docs/plans/plan-2026-02-20-batch-jobs-route-cleanup-and-diagnostics-noise.md`
 - [x] Benchmark protocol is documented in:
-  - `docs/batch-jobs-usage-guide.md`
+  - `docs/guides/batch-jobs-usage-guide.md`
   - includes fixture workflow (`examples/manage-huge-logs.mjs`), benchmark matrix (`--jobs 1,2,4,8`), and acceptance criteria (median/p95 + parity).
 - [x] Add benchmark script (for local verification), proposed:
   - `scripts/benchmark-batch-jobs.mjs`

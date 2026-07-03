@@ -212,7 +212,7 @@ Default-reference config examples live under:
 - `examples/wc-config/wc-intl-seg.config.json`
 - `examples/wc-config/wc-intl-seg.config.jsonc`
 
-For full config behavior, platform-specific user config locations, merge rules, and examples, see [`docs/config-usage-guide.md`](docs/config-usage-guide.md).
+For full config behavior, platform-specific user config locations, merge rules, and examples, see [`docs/guides/config-usage-guide.md`](docs/guides/config-usage-guide.md).
 
 ### Detector Subpath (`@dev-pi2pie/word-counter/detector`)
 
@@ -344,9 +344,9 @@ Doctor output contract:
 - doctor exits with code `0` for `ok` / `warn`, `1` for invalid doctor usage, and `2` for runtime `fail`
 - doctor does not accept counting inputs, `--path`, `--jobs`, or other counting/debug flags
 
-For a field-by-field explanation of doctor text and JSON output, see [`docs/doctor-usage-guide.md`](docs/doctor-usage-guide.md).
+For a field-by-field explanation of doctor text and JSON output, see [`docs/guides/doctor-usage-guide.md`](docs/guides/doctor-usage-guide.md).
 
-For full policy details, JSON parity expectations (`--misc`, `--total-of whitespace,words`), and benchmark standards, see [`docs/batch-jobs-usage-guide.md`](docs/batch-jobs-usage-guide.md).
+For full policy details, JSON parity expectations (`--misc`, `--total-of whitespace,words`), and benchmark standards, see [`docs/guides/batch-jobs-usage-guide.md`](docs/guides/batch-jobs-usage-guide.md).
 
 ### Stable Path Resolution Contract
 
@@ -404,7 +404,7 @@ Regex behavior contract:
 - `--regex` is single-use; repeated `--regex` flags fail fast with a misuse error.
 - Empty regex values are treated as no regex restriction.
 
-For additional usage details and troubleshooting, see [`docs/regex-usage-guide.md`](docs/regex-usage-guide.md).
+For additional usage details and troubleshooting, see [`docs/guides/regex-usage-guide.md`](docs/guides/regex-usage-guide.md).
 
 ### Debugging Diagnostics (`--debug`)
 
@@ -859,11 +859,11 @@ Example JSON (trimmed):
 - The current first WASM engine is `whatlang`, remapped into this package's public tags.
 - The npm package ships one portable WASM artifact; users do not install per-OS detector packages.
 - Use explicit tag and hint flags when you need deterministic tagging.
-- Full notes (built-in heuristics, limitations, and override guidance) are tracked in `docs/locale-tag-detection-notes.md`.
+- Full notes (built-in heuristics, limitations, and override guidance) are tracked in `docs/notes/locale-tag-detection-notes.md`.
 
 ## Breaking Changes Notes
 
-- Planned deprecations and migration notes are tracked in `docs/breaking-changes-notes.md`.
+- Planned deprecations and migration notes are tracked in `docs/notes/breaking-changes-notes.md`.
 
 ## Testing
 

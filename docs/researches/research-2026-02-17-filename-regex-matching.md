@@ -37,7 +37,7 @@ Prepare a low-risk implementation direction that can be scheduled with the curre
 - If `--regex` is omitted or provided with an empty effective value, treat it as no restriction.
 - Do not add separate include/exclude regex flags in this iteration.
 - Emit debug diagnostics for regex exclusion similar to extension exclusion so filtering decisions remain observable.
-- Add `docs/regex-usage-guide.md` as a follow-up docs task after feature implementation, then sync README with the finalized behavior.
+- Add `docs/guides/regex-usage-guide.md` as a follow-up docs task after feature implementation, then sync README with the finalized behavior.
 - Add tests for:
   - regex with directory roots only
   - one regex across multiple directory roots with merged+deduped results

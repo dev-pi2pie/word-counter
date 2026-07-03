@@ -17,7 +17,7 @@ Patch the remaining precedence regressions where config or env defaults could no
 - Preserved explicit CLI precedence so `--recursive` can override `path.recursive = false` for both counting and `inspect`.
 - Made config discovery notes respect `--quiet-warnings`.
 - Updated help text, README, and the inspect output contract docs to reflect the positive flag forms.
-- Updated README and `docs/batch-jobs-usage-guide.md` to document the broader `--quiet-warnings` suppression scope for non-fatal config notes and batch-route warnings.
+- Updated README and `docs/guides/batch-jobs-usage-guide.md` to document the broader `--quiet-warnings` suppression scope for non-fatal config notes and batch-route warnings.
 
 ## Verification
 
