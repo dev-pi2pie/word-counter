@@ -1,7 +1,8 @@
 ---
 title: "CI and dependency security refresh"
 created-date: 2026-10-22
-status: draft
+modified-date: 2026-10-22
+status: active
 agent: Codex
 ---
 
@@ -9,7 +10,7 @@ agent: Codex
 
 Patch automation's Node.js versions and refresh npm and Cargo dependencies through three verified phases.
 
-## Current Evidence
+## Baseline Evidence
 
 - CI and release preparation use Node.js `22.23.0`. The October security release patched 22.x in `22.23.4` and 24.x in `24.22.1`. Publish jobs request a floating `24`.
 - `bun audit` reports two critical advisories for `tinypool@2.1.0` through development dependency `oxfmt@0.57.0`. `bun audit --prod` is clean.
@@ -28,11 +29,11 @@ Recheck advisories and versions when each phase starts.
 
 ## Phase 1 — CI and Release Flow
 
-- [ ] Move CI and release jobs to patched Node.js 22 and 24 releases. Use `22.23.4` and `24.22.1` or newer patches in those lines.
-- [ ] Review Bun, Rust, `wasm-pack`, and Actions version drift. Choose reproducible references where useful, and check the WASM build before changing dependencies.
-- [ ] Make pull-request CI cover build-affecting files and useful validation, including lint. Decide how required checks behave when a workflow is skipped.
-- [ ] Ensure the exact tagged commit has passed type checks, build, package verification, and tests before artifact upload. Use direct checks or verified CI results.
-- [ ] Preserve existing publish behavior and review job permissions. Record what needs a live workflow run to verify.
+- [x] Move CI and release jobs to patched Node.js 22 and 24 releases. Use `22.23.4` and `24.22.1` or newer patches in those lines.
+- [x] Review Bun, Rust, `wasm-pack`, and Actions version drift. Choose reproducible references where useful, and check the WASM build before changing dependencies.
+- [x] Make pull-request CI cover build-affecting files and useful validation, including lint. Decide how required checks behave when a workflow is skipped.
+- [x] Configure release preparation to validate the tagged commit with type checks, build, package verification, and tests before artifact upload.
+- [x] Preserve existing publish behavior and review job permissions. Record what needs a live workflow run to verify.
 
 Phase 1 can finish with the current npm finding open. Resolve it in Phase 2 before publishing.
 
