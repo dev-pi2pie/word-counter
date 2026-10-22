@@ -66,10 +66,10 @@
     "oxlint": "^1.89.0",
     "picocolors": "^1.1.1",
     "tsdown": "^0.23.1",
-    "typescript": "^6.0.3"
+    "typescript": "^7.0.2"
   },
   "peerDependencies": {
-    "typescript": "^5 || ^6"
+    "typescript": "^5 || ^6 || ^7"
   },
   "engines": {
     "node": ">=22.18.0"
