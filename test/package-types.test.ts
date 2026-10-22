@@ -1,12 +1,12 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { spawnSync } from "node:child_process";
 
 const tempRoots: string[] = [];
 const require = createRequire(import.meta.url);
-const tscEntrypoint = require.resolve("typescript/bin/tsc");
+const tscEntrypoint = join(dirname(require.resolve("typescript/package.json")), "bin", "tsc");
 
 afterEach(async () => {
   await Promise.all(tempRoots.splice(0).map((path) => rm(path, { recursive: true, force: true })));
