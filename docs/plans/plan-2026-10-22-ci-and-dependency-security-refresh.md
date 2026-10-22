@@ -2,7 +2,7 @@
 title: "CI and dependency security refresh"
 created-date: 2026-10-22
 modified-date: 2026-10-22
-status: active
+status: completed
 agent: Codex
 ---
 
@@ -49,17 +49,16 @@ Phase 2 ends when the resolved graph is clean and the accepted updates pass vali
 
 ## Phase 3 — Cargo Dependencies
 
-- [ ] Refresh `crates/language-detector/Cargo.lock` within declared ranges. Review `wasm-bindgen`, `js-sys`, and `syn` changes without expanding detector scope by default.
-- [ ] Check lockfile stability and duplicate crates. Rebuild WASM and run detector, package, and native crate checks where useful.
-- [ ] Audit the refreshed lockfile against current RustSec data and check for yanked crates. Decide how to repeat this check in automation, pinning audit tooling if added.
+- [x] Refresh `crates/language-detector/Cargo.lock` within declared ranges. Review `wasm-bindgen`, `js-sys`, and `syn` changes without expanding detector scope by default.
+- [x] Check lockfile stability and duplicate crates. Rebuild WASM and run detector, package, and native crate checks where useful.
+- [x] Audit the refreshed lockfile against current RustSec data and check for yanked crates. Decide how to repeat this check in automation, pinning audit tooling if added.
 
 Phase 3 ends when the Rust audit and detector/package checks pass.
 
 ## Closeout and Records
 
-- Keep this plan `draft` until work starts, `active` through all three phases, and `completed` after integrated verification.
-- Create one concise job record when Phase 1 starts. Record each phase's changes, verification, deferrals, and outstanding live checks without repeating the plan.
-- Finish with the updated CI flow, both audits, and the relevant Node.js and WASM regression checks.
+- All three phases passed local integrated verification. The unified job record holds the evidence and remaining live checks.
+- Live pull-request CI and tag-release preparation remain unrun. Verify them on the next normal workflow runs.
 
 ## Related Plans
 

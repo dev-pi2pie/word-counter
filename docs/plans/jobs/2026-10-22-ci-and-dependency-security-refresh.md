@@ -1,7 +1,7 @@
 ---
 title: "CI and dependency security refresh"
 created-date: 2026-10-22
-status: in-progress
+status: completed
 agent: Codex
 ---
 
@@ -49,6 +49,18 @@ agent: Codex
 - `actionlint` passed. `tsdown` warns that its TypeScript 7 API integration is experimental, although the build and consumer checks passed.
 - The new CI gates and release preparation still need live workflow runs. The local WASM build needed normal cache access after the sandbox denied a cache write.
 
-## Next Phases
+## Phase 3 — Cargo Dependencies
 
-- Phase 3: refresh and audit the Cargo lockfile, then validate the rebuilt WASM detector.
+- Refreshed 18 locked crates within the existing manifest ranges, including `wasm-bindgen@0.2.129`, `js-sys@0.3.106`, and `syn@3.0.9`. The detector source and direct dependency ranges did not change.
+- Moved npm checks ahead of Rust setup. CI and release preparation now install `cargo-audit@0.22.2` with `--locked`, then audit the crate lockfile and deny yanked crates before building.
+
+### Verification
+
+- A fresh RustSec audit found no advisories or yanked crates among 28 locked dependencies. A second `cargo update --dry-run` found no further updates, and the full target graph had no duplicate crates.
+- Native Cargo tests and the WASM target check passed. The crate has no Rust unit tests, so the rebuilt detector was checked through the package tests and Node.js smoke runs.
+- Build, package-content verification, all 385 Bun tests, type check, lint, format check, and full and production npm audits passed. The detector identified English through the WASM path on Node.js `22.23.4` and `24.22.1`.
+- The pinned `cargo-audit` installation and command passed locally. `actionlint` passed for both workflows.
+
+## Closeout
+
+- Implementation and local integrated verification are complete. Live pull-request CI and tag-release preparation have not run for these commits and remain follow-up checks on the next normal workflow runs.
