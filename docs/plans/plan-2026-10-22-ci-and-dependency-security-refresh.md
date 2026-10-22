@@ -39,11 +39,11 @@ Phase 1 can finish with the current npm finding open. Resolve it in Phase 2 befo
 
 ## Phase 2 — npm Dependencies
 
-- [ ] Clear both `tinypool` advisories with a compatible `oxfmt` update or a narrow patched resolution. Review any formatter changes.
-- [ ] Review compatible updates to `yaml`, Bun and Node types, `oxlint`, and `tsdown`. Inspect the resulting lockfile and package metadata.
-- [ ] Evaluate newer `oxfmt`, `tsdown`, and TypeScript lines separately. Adopt or defer each based on formatting, build, declaration, consumer, and runtime results. Update the TypeScript peer range only if a new line is accepted.
-- [ ] Validate frozen installation, type checks, lint, formatting, build, package contents, tests, and Node.js 22/24 behavior.
-- [ ] Confirm clean full and production `bun audit` results. Add repeatable audit and format checks to automation where they provide a useful gate.
+- [x] Clear both `tinypool` advisories with a compatible `oxfmt` update or a narrow patched resolution. Review any formatter changes.
+- [x] Review compatible updates to `yaml`, Bun and Node types, `oxlint`, and `tsdown`. Inspect the resulting lockfile and package metadata.
+- [x] Evaluate newer `oxfmt`, `tsdown`, and TypeScript lines separately. Adopt or defer each based on formatting, build, declaration, consumer, and runtime results. Update the TypeScript peer range only if a new line is accepted.
+- [x] Validate frozen installation, type checks, lint, formatting, build, package contents, tests, and Node.js 22/24 behavior.
+- [x] Confirm clean full and production `bun audit` results. Add repeatable audit and format checks to automation where they provide a useful gate.
 
 Phase 2 ends when the resolved graph is clean and the accepted updates pass validation. Record any deferral.
 

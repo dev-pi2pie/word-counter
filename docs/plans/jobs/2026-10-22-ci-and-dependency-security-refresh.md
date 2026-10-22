@@ -35,7 +35,20 @@ agent: Codex
 - The first sandboxed WASM build could not write its `wasm-bindgen` cache. The unchanged build passed with normal cache access.
 - Live pull-request CI and tag-release preparation have not run for this commit. Their results remain open evidence for later verification.
 
+## Phase 2 — npm Dependencies
+
+- Upgraded `oxfmt` to `0.74.0`, resolving `tinypool` from `2.1.0` to `2.2.0` and clearing both critical advisories. The formatter check found no file changes.
+- Refreshed `yaml`, Bun and Node types, `oxlint`, and `tsdown`. Accepted `tsdown@0.23.1` after its JavaScript bundles matched the previous build and its detector declaration kept the same 48 exports.
+- Adopted TypeScript `7.0.2` and widened the peer range to include 7. Updated the package-type test to locate the compiler through its exported package metadata.
+- Added full `bun audit` and format checks to pull-request CI and release preparation.
+
+### Verification
+
+- Frozen install, full and production audits, type check, lint, format check, build, package-content check, and all 385 tests passed. `bun outdated` reports no pending packages.
+- The packed package's public imports and detector types compiled with TypeScript 5.9.3, 6.0.3, and 7.0.2. CLI and WASM detector smoke checks passed on Node.js `22.23.4` and `24.22.1`.
+- `actionlint` passed. `tsdown` warns that its TypeScript 7 API integration is experimental, although the build and consumer checks passed.
+- The new CI gates and release preparation still need live workflow runs. The local WASM build needed normal cache access after the sandbox denied a cache write.
+
 ## Next Phases
 
-- Phase 2: refresh npm dependencies and clear the two `tinypool` advisories before publishing.
 - Phase 3: refresh and audit the Cargo lockfile, then validate the rebuilt WASM detector.
