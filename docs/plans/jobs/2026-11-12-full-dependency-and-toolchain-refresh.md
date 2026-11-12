@@ -8,12 +8,12 @@ agent: Codex
 
 ## Plan
 
-[Full dependency and toolchain refresh](../plan-2026-11-12-full-dependency-and-toolchain-refresh.md). One record covers all six phases. Phases 1–3 are complete; Phases 4–6 are pending.
+[Full dependency and toolchain refresh](../plan-2026-11-12-full-dependency-and-toolchain-refresh.md). One record covers all six phases. Phases 1–3 are complete; Phase 4 is in progress.
 
 ## Execution Contract
 
 - Record changes, validation, exact commit ranges, findings, and deferrals under each phase. Keep machine details and raw reports out of this record.
-- During Phases 1–3, use `auto_commit_notification` for checkpoint advice and auto-commit validated progress with Conventional Commit messages. Review each complete phase base..tip range after committing; fix, revalidate, and re-review any widened range before closure.
+- During Phases 1–5, use `auto_commit_notification` for checkpoint advice and auto-commit validated progress with Conventional Commit messages. Review each complete phase base..tip range after committing; fix, revalidate, and re-review any widened range before closure.
 - Review evidence and checklist updates together. Future phases and unrun live workflows remain pending. Pushes are outside the current authorization.
 
 ## Phase 1 — Node.js and JavaScript Dependencies
@@ -98,7 +98,20 @@ Status: completed. Starting revision: `b695286`. Local validation and independen
 
 ## Phase 4 — tsdown and Declarations
 
-Status: pending.
+Status: in-progress. Starting revision: `1971008`. Local validation passed; post-commit review is pending.
+
+### Changes and Validation
+
+- Updated tsdown to `0.23.7` and its lockfile subtree, including Rolldown `1.3.2` and rolldown-plugin-dts `0.30.1`. Other direct resolutions, Cargo lockfile, workflows, build configuration, and package exports are unchanged.
+- Frozen install, type/lint/format checks, build, package verification, all 385 Bun tests (1,272 assertions), npm audits (121/23 packages), workflow lint, and diff checks passed.
+- External packed-package consumers compiled with TypeScript `5.9.3`, `6.0.3`, and retained `7.0.2`, covering default/named root imports and detector APIs/types with strict checking and declaration checking enabled.
+- Packed CLI/config, ESM/CJS, and actual WASM checks passed on Node `22.18.0`, `22.23.5`, and `24.22.3`. Batch counts also used the emitted worker pool on all three runtimes, with no fallback.
+
+### Artifact Comparison and Review
+
+- All export/type paths remain valid, including `dist/esm/index2.d.mts`. Declarations differ only by removed region comments: root 4,477 → 3,940 bytes, detector 8,727 → 8,287 bytes, shared declaration unchanged at 897 bytes. Type signatures and exported names are identical.
+- WASM bytes/hash/exports, the 10 root/16 detector runtime exports, and sample payload/tag/count match Phase 3. The expected TypeScript 7.0 generator deprecation warning remains; no compiler requirement was widened.
+- Implementation commit and independent committed-range review: pending. Live workflow checks remain pending.
 
 ## Phase 5 — oxfmt
 

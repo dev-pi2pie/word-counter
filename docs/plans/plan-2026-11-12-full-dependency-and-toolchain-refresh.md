@@ -8,7 +8,7 @@ agent: Codex
 
 ## Goal
 
-Refresh Node.js security pins, JavaScript dependencies, and the Rust/WASM toolchain in six validated checkpoints. Phases 1–3 are complete; Phases 4–6 are pending.
+Refresh Node.js security pins, JavaScript dependencies, and the Rust/WASM toolchain in six validated checkpoints. Phases 1–3 are complete; Phase 4 is in progress.
 
 ## Baseline
 
@@ -31,7 +31,7 @@ Reviewed November 12 against `84fb17e8b4425e651e3f6745846cbcec30820291` (`0.1.9-
 
 - Each phase is one checkpoint. Proceed after validation and exact-range review; fix findings, rerun affected checks, and re-review widened ranges.
 - Use the [unified job record](jobs/2026-11-12-full-dependency-and-toolchain-refresh.md) for phase changes, tool versions, validation, review findings, and deferrals.
-- Record base/tip commit IDs or immutable patch snapshots. Preserve unrelated work and use the preceding accepted checkpoint as the rollback boundary. Phases 1–3 may auto-commit validated progress with `auto_commit_notification` advice; pushes and later-phase commits require separate authorization.
+- Record base/tip commit IDs or immutable patch snapshots. Preserve unrelated work and use the preceding accepted checkpoint as the rollback boundary. Phases 1–5 may auto-commit validated progress with `auto_commit_notification` advice; pushes and later-phase commits require separate authorization.
 - Keep detailed evidence in the unified record and status/checklists here. Set this plan to `active` when execution starts. Separate environment failures, local results, and live workflow results; use public-safe, repository-relative references.
 
 ## Validation Gates
@@ -90,9 +90,10 @@ Reviewed November 12 against `84fb17e8b4425e651e3f6745846cbcec30820291` (`0.1.9-
 
 ## Phase 4 — tsdown and Declarations
 
-- [ ] Update `tsdown` `0.23.1` to `0.23.7`; distinguish the expected TypeScript 7.0 warning from failures.
-- [ ] Compare root/detector declarations and verify package export/type paths, especially `dist/esm/index2.d.mts`. Adjust configuration/references only for confirmed output changes.
-- [ ] Compile external packed-package fixtures with stable TypeScript 5, 6, and retained `7.0.2`, covering default/named root imports and detector APIs.
+- [x] Update `tsdown` `0.23.1` to `0.23.7`; distinguish the expected TypeScript 7.0 warning from failures.
+- [x] Compare root/detector declarations and verify package export/type paths, especially `dist/esm/index2.d.mts`. Adjust configuration/references only for confirmed output changes.
+- [x] Compile external packed-package fixtures with stable TypeScript 5, 6, and retained `7.0.2`, covering default/named root imports and detector APIs.
+- [ ] Review the committed Phase 4 range and resolve findings before closure.
 
 **Validate:** Package and Node gates plus consumer/declaration checks. Defer an incompatible upgrade instead of widening compiler requirements.
 

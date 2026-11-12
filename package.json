@@ -65,7 +65,7 @@
     "oxfmt": "^0.74.0",
     "oxlint": "^1.93.0",
     "picocolors": "^1.1.1",
-    "tsdown": "^0.23.1",
+    "tsdown": "^0.23.7",
     "typescript": "^7.0.2"
   },
   "peerDependencies": {
