@@ -1,13 +1,14 @@
 ---
 title: "Full dependency and toolchain refresh"
 created-date: 2026-11-12
+modified-date: 2026-11-12
 status: active
 agent: Codex
 ---
 
 ## Goal
 
-Refresh Node.js security pins, JavaScript dependencies, and the Rust/WASM toolchain in six validated checkpoints. Phase 1 is in progress.
+Refresh Node.js security pins, JavaScript dependencies, and the Rust/WASM toolchain in six validated checkpoints. Phase 1 is complete; Phases 2–6 are pending.
 
 ## Baseline
 
@@ -57,7 +58,7 @@ Reviewed November 12 against `84fb17e8b4425e651e3f6745846cbcec30820291` (`0.1.9-
 
 - [x] Update workflow pins, declared dependency bounds, and `bun.lock`; inspect incidental lockfile drift and lint diagnostics. Keep tsdown, oxfmt, TypeScript, and Rust resolutions unchanged.
 - [x] Preserve npm `id-token: write`/empty `NODE_AUTH_TOKEN` and GitHub Packages token/registry configuration.
-- [ ] Review the committed Phase 1 range, fix findings, revalidate, and re-review before closing the phase.
+- [x] Review the committed Phase 1 range, fix findings, revalidate, and re-review before closing the phase.
 
 **Validate:** Package, Node, and Workflow gates. Check all four Node pins and Commander option/help/config behavior; reject APIs unavailable on Node 22 despite Node 26 types. Capture this phase's fresh Rust `1.98.1` exports, payloads, warnings, and WASM size in the unified record before Phase 2.
 

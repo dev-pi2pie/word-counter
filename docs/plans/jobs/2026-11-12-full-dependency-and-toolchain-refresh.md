@@ -7,7 +7,7 @@ agent: Codex
 
 ## Plan
 
-[Full dependency and toolchain refresh](../plan-2026-11-12-full-dependency-and-toolchain-refresh.md). One record covers all six phases. Phase 1 is in progress.
+[Full dependency and toolchain refresh](../plan-2026-11-12-full-dependency-and-toolchain-refresh.md). One record covers all six phases. Phase 1 is complete; Phases 2–6 are pending.
 
 ## Execution Contract
 
@@ -17,7 +17,7 @@ agent: Codex
 
 ## Phase 1 — Node.js and JavaScript Dependencies
 
-Status: in-progress. Starting revision: `de146cd42abf5cb393e11c687fceb65230df78bf`. Local validation passed; committed-range review is pending.
+Status: completed. Starting revision: `de146cd42abf5cb393e11c687fceb65230df78bf`. Local validation and independent committed-range review passed.
 
 ### Changes
 
@@ -51,7 +51,8 @@ Fresh release build: Rust/Cargo `1.98.1`, target `wasm32-unknown-unknown`, wasm-
 
 ### Review and Live Evidence
 
-- Implementation commit and independent post-commit review: pending.
+- Implementation commit: `ef6f985`. Independent code review of `de146cd42abf5cb393e11c687fceb65230df78bf..ef6f985` found no actionable issues in version pins, lockfile consistency, publishing configuration, or phase isolation. The reviewer inspected the committed range without rerunning validation.
+- `docs_reviewer` closeout review found no material gaps; phase status, checklist, reviewed range, evidence, and pending live checks agree.
 - Live PR CI and release preparation: pending; no publishing workflow was dispatched.
 
 ## Phase 2 — Rust Compiler
