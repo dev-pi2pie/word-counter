@@ -8,7 +8,7 @@ agent: Codex
 
 ## Plan
 
-[Full dependency and toolchain refresh](../plan-2026-11-12-full-dependency-and-toolchain-refresh.md). One record covers all six phases. Phases 1–3 are complete; Phase 4 is in progress.
+[Full dependency and toolchain refresh](../plan-2026-11-12-full-dependency-and-toolchain-refresh.md). One record covers all six phases. Phases 1–4 are complete; Phases 5–6 are pending.
 
 ## Execution Contract
 
@@ -98,7 +98,7 @@ Status: completed. Starting revision: `b695286`. Local validation and independen
 
 ## Phase 4 — tsdown and Declarations
 
-Status: in-progress. Starting revision: `1971008`. Local validation passed; post-commit review is pending.
+Status: completed. Starting revision: `1971008`. Local validation and independent post-commit review passed.
 
 ### Changes and Validation
 
@@ -111,7 +111,8 @@ Status: in-progress. Starting revision: `1971008`. Local validation passed; post
 
 - All export/type paths remain valid, including `dist/esm/index2.d.mts`. Declarations differ only by removed region comments: root 4,477 → 3,940 bytes, detector 8,727 → 8,287 bytes, shared declaration unchanged at 897 bytes. Type signatures and exported names are identical.
 - WASM bytes/hash/exports, the 10 root/16 detector runtime exports, and sample payload/tag/count match Phase 3. The expected TypeScript 7.0 generator deprecation warning remains; no compiler requirement was widened.
-- Implementation commit and independent committed-range review: pending. Live workflow checks remain pending.
+- Independent code review of `1971008..311df0c` found no actionable issues in the dependency graph, phase isolation, declarations, or package configuration. The reviewer independently compared the declarations and inspected consumer/runtime evidence; validation was not rerun. Live workflow checks remain pending.
+- `docs_reviewer` closeout review found no material gaps in Phase 4 status, checklist, reviewed range, validation, or declaration comparison.
 
 ## Phase 5 — oxfmt
 

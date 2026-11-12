@@ -8,7 +8,7 @@ agent: Codex
 
 ## Goal
 
-Refresh Node.js security pins, JavaScript dependencies, and the Rust/WASM toolchain in six validated checkpoints. Phases 1–3 are complete; Phase 4 is in progress.
+Refresh Node.js security pins, JavaScript dependencies, and the Rust/WASM toolchain in six validated checkpoints. Phases 1–4 are complete; Phases 5–6 are pending.
 
 ## Baseline
 
@@ -93,7 +93,7 @@ Reviewed November 12 against `84fb17e8b4425e651e3f6745846cbcec30820291` (`0.1.9-
 - [x] Update `tsdown` `0.23.1` to `0.23.7`; distinguish the expected TypeScript 7.0 warning from failures.
 - [x] Compare root/detector declarations and verify package export/type paths, especially `dist/esm/index2.d.mts`. Adjust configuration/references only for confirmed output changes.
 - [x] Compile external packed-package fixtures with stable TypeScript 5, 6, and retained `7.0.2`, covering default/named root imports and detector APIs.
-- [ ] Review the committed Phase 4 range and resolve findings before closure.
+- [x] Review the committed Phase 4 range and resolve findings before closure.
 
 **Validate:** Package and Node gates plus consumer/declaration checks. Defer an incompatible upgrade instead of widening compiler requirements.
 
