@@ -8,7 +8,7 @@ agent: Codex
 
 ## Goal
 
-Refresh Node.js security pins, JavaScript dependencies, and the Rust/WASM toolchain in six validated checkpoints. Phases 1–2 are complete; Phase 3 is in progress.
+Refresh Node.js security pins, JavaScript dependencies, and the Rust/WASM toolchain in six validated checkpoints. Phases 1–3 are complete; Phases 4–6 are pending.
 
 ## Baseline
 
@@ -84,7 +84,7 @@ Reviewed November 12 against `84fb17e8b4425e651e3f6745846cbcec30820291` (`0.1.9-
 - [x] Update both workflow tool pins; install exact versions with `--locked`. Refresh the crate lockfile within existing manifest ranges.
 - [x] Run `cargo tree --locked --target all -d` from the crate, repeat the update dry run, and verify the wasm-bindgen CLI matches the resolved crate.
 - [x] Inspect regenerated JS glue, package contents, exports, and WASM sizes, including Binaryen changes.
-- [ ] Review the committed Phase 3 range and resolve findings before closure.
+- [x] Review the committed Phase 3 range and resolve findings before closure.
 
 **Validate:** all gates, installed tool versions, audit exit/output compatibility, and detector language/script/confidence/reliability contracts. Isolate tool/crate changes if a combined gate fails.
 

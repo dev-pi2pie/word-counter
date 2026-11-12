@@ -8,7 +8,7 @@ agent: Codex
 
 ## Plan
 
-[Full dependency and toolchain refresh](../plan-2026-11-12-full-dependency-and-toolchain-refresh.md). One record covers all six phases. Phases 1–2 are complete; Phase 3 is in progress.
+[Full dependency and toolchain refresh](../plan-2026-11-12-full-dependency-and-toolchain-refresh.md). One record covers all six phases. Phases 1–3 are complete; Phases 4–6 are pending.
 
 ## Execution Contract
 
@@ -76,7 +76,7 @@ Status: completed. Starting revision: `dad48bf`. Local validation and independen
 
 ## Phase 3 — Cargo Dependencies and Rust/WASM Tools
 
-Status: in-progress. Starting revision: `b695286`. Local validation passed; post-commit review is pending.
+Status: completed. Starting revision: `b695286`. Local validation and independent post-commit review passed.
 
 ### Changes and Validation
 
@@ -93,7 +93,8 @@ Status: in-progress. Starting revision: `b695286`. Local validation passed; post
 - WASM: 287,373 bytes, down 1,566 bytes (0.54%) from Phase 2. SHA-256: `efb33a3d4acd66d4a1b5652c59f651c9c1dbc8f511a489cb9fe2b034a526d629`.
 - All prior WASM exports remain, with `__wbindgen_free` added for generated argument-conversion cleanup. The generated glue also changes externref initialization and UTF-8 decoding; its raw WASM declaration adds the matching free signature. The internal WASM export count is now nine.
 - The 10 root/16 detector runtime exports, all three public declaration fingerprints, and the Phase 1 sample payload/tag/count match Phase 2. The existing TypeScript API warning remains.
-- Implementation commit and independent review will be recorded after commit creation. Live workflow checks remain pending.
+- Independent code review of `b695286..7e38472` found no actionable issues in tool pins, the lockfile refresh, phase isolation, publishing configuration, or generated cleanup export. Validation was not rerun by the reviewer. Live workflow checks remain pending.
+- `docs_reviewer` closeout review found no material gaps in Phase 3 status, checklist, reviewed range, validation, or artifact comparison.
 
 ## Phase 4 — tsdown and Declarations
 
