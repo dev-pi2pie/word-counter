@@ -1,6 +1,6 @@
 {
   "name": "@dev-pi2pie/word-counter",
-  "version": "0.1.8-canary.1",
+  "version": "0.1.9-canary.1",
   "keywords": [
     "cli",
     "intl-segmenter",
@@ -56,16 +56,16 @@
     "format:check": "oxfmt --check src test scripts package.json tsconfig.json tsconfig.test.json .oxlintrc.json .oxfmtrc.json"
   },
   "dependencies": {
-    "commander": "^15.0.0",
+    "commander": "^15.1.0",
     "yaml": "^2.9.1"
   },
   "devDependencies": {
-    "@types/bun": "^1.4.3",
-    "@types/node": "^26.6.5",
-    "oxfmt": "^0.74.0",
-    "oxlint": "^1.89.0",
+    "@types/bun": "^1.4.4",
+    "@types/node": "^26.6.6",
+    "oxfmt": "^0.78.0",
+    "oxlint": "^1.93.0",
     "picocolors": "^1.1.1",
-    "tsdown": "^0.23.1",
+    "tsdown": "^0.23.7",
     "typescript": "^7.0.2"
   },
   "peerDependencies": {
