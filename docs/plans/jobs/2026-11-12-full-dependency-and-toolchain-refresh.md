@@ -7,12 +7,12 @@ agent: Codex
 
 ## Plan
 
-[Full dependency and toolchain refresh](../plan-2026-11-12-full-dependency-and-toolchain-refresh.md). One record covers all six phases. Phase 1 is complete; Phases 2–6 are pending.
+[Full dependency and toolchain refresh](../plan-2026-11-12-full-dependency-and-toolchain-refresh.md). One record covers all six phases. Phase 1 is complete; Phase 2 is in progress.
 
 ## Execution Contract
 
 - Record changes, validation, exact commit ranges, findings, and deferrals under each phase. Keep machine details and raw reports out of this record.
-- During Phase 1, use `auto_commit_notification` for checkpoint advice and auto-commit validated progress with Conventional Commit messages. Review the complete phase base..tip range after committing; fix, revalidate, and re-review any widened range before closure.
+- During Phases 1–3, use `auto_commit_notification` for checkpoint advice and auto-commit validated progress with Conventional Commit messages. Review each complete phase base..tip range after committing; fix, revalidate, and re-review any widened range before closure.
 - Review evidence and checklist updates together. Future phases and unrun live workflows remain pending. Pushes are outside the current authorization.
 
 ## Phase 1 — Node.js and JavaScript Dependencies
@@ -57,7 +57,20 @@ Fresh release build: Rust/Cargo `1.98.1`, target `wasm32-unknown-unknown`, wasm-
 
 ## Phase 2 — Rust Compiler
 
-Status: pending.
+Status: in-progress. Starting revision: `dad48bf`. Local validation passed; post-commit review is pending.
+
+### Changes and Validation
+
+- Updated both workflow compiler pins to Rust `1.99.1`. Cargo lockfile, crate source/ranges, wasm-pack `0.15.0`, cargo-audit `0.22.2`, wasm-bindgen `0.2.129`, Binaryen `117`, and JavaScript resolutions are unchanged.
+- With Rust/Cargo `1.99.1`, the WASM target check and native Cargo tests passed (0 Rust unit/doc tests). Fresh RustSec audit passed for 28 dependencies, with no advisories or yanked crates.
+- Frozen install, type/lint/format checks, build, package verification, all 385 Bun tests (1,272 assertions), npm audits (124/23 packages), workflow lint, and diff checks passed.
+- External packed-package CLI/config, ESM/CJS, and actual WASM checks passed on Node `22.18.0`, `22.23.5`, and `24.22.3`, using the same assertions as Phase 1.
+
+### Compiler Comparison and Review
+
+- WASM: 288,939 bytes, up 64 bytes (0.02%). Code grew 420 bytes and data shrank 356 bytes; the net change is small and behavior gates passed. SHA-256: `cc31f456c11697c3d61d0775fe86f8d3cdd16746178821aac867f47949294fc2`.
+- The eight WASM exports, 10 root/16 detector runtime exports, sample payload/count, and all three declaration fingerprints match Phase 1. The existing TypeScript API warning and wasm-pack update notice remain; no new compiler warnings appeared in the package build.
+- This fresh build is the comparison baseline for Phase 3. Implementation commit and independent review will be recorded after commit creation; live workflow checks remain pending.
 
 ## Phase 3 — Cargo Dependencies and Rust/WASM Tools
 

@@ -8,7 +8,7 @@ agent: Codex
 
 ## Goal
 
-Refresh Node.js security pins, JavaScript dependencies, and the Rust/WASM toolchain in six validated checkpoints. Phase 1 is complete; Phases 2–6 are pending.
+Refresh Node.js security pins, JavaScript dependencies, and the Rust/WASM toolchain in six validated checkpoints. Phase 1 is complete; Phase 2 is in progress.
 
 ## Baseline
 
@@ -31,7 +31,7 @@ Reviewed November 12 against `84fb17e8b4425e651e3f6745846cbcec30820291` (`0.1.9-
 
 - Each phase is one checkpoint. Proceed after validation and exact-range review; fix findings, rerun affected checks, and re-review widened ranges.
 - Use the [unified job record](jobs/2026-11-12-full-dependency-and-toolchain-refresh.md) for phase changes, tool versions, validation, review findings, and deferrals.
-- Record base/tip commit IDs or immutable patch snapshots. Preserve unrelated work and use the preceding accepted checkpoint as the rollback boundary. Phase 1 may auto-commit validated progress with `auto_commit_notification` advice; pushes and later-phase commits require separate authorization.
+- Record base/tip commit IDs or immutable patch snapshots. Preserve unrelated work and use the preceding accepted checkpoint as the rollback boundary. Phases 1–3 may auto-commit validated progress with `auto_commit_notification` advice; pushes and later-phase commits require separate authorization.
 - Keep detailed evidence in the unified record and status/checklists here. Set this plan to `active` when execution starts. Separate environment failures, local results, and live workflow results; use public-safe, repository-relative references.
 
 ## Validation Gates
@@ -64,8 +64,9 @@ Reviewed November 12 against `84fb17e8b4425e651e3f6745846cbcec30820291` (`0.1.9-
 
 ## Phase 2 — Rust Compiler
 
-- [ ] Change Rust `1.98.1` to `1.99.1` in both workflows; retain `wasm-pack` `0.15.0`, `cargo-audit` `0.22.2`, and the crate lockfile.
-- [ ] Compare rebuilt exports, payloads, warnings, and WASM size with Phase 1's captured output. Rust 1.99 uses LLVM 23; investigate unexplained material changes rather than require byte equality.
+- [x] Change Rust `1.98.1` to `1.99.1` in both workflows; retain `wasm-pack` `0.15.0`, `cargo-audit` `0.22.2`, and the crate lockfile.
+- [x] Compare rebuilt exports, payloads, warnings, and WASM size with Phase 1's captured output. Rust 1.99 uses LLVM 23; investigate unexplained material changes rather than require byte equality.
+- [ ] Review the committed Phase 2 range and resolve findings before closure.
 
 **Validate:** Rust, Package, Node, and Workflow gates.
 
