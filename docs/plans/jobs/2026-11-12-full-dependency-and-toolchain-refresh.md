@@ -8,12 +8,12 @@ agent: Codex
 
 ## Plan
 
-[Full dependency and toolchain refresh](../plan-2026-11-12-full-dependency-and-toolchain-refresh.md). One record covers all six phases. Phases 1–5 are complete; Phase 6 is pending.
+[Full dependency and toolchain refresh](../plan-2026-11-12-full-dependency-and-toolchain-refresh.md). One record covers all six phases. Phases 1–5 are complete; Phase 6 is in progress.
 
 ## Execution Contract
 
 - Record changes, validation, exact commit ranges, findings, and deferrals under each phase. Keep machine details and raw reports out of this record.
-- During Phases 1–5, use `auto_commit_notification` for checkpoint advice and auto-commit validated progress with Conventional Commit messages. Review each complete phase base..tip range after committing; fix, revalidate, and re-review any widened range before closure.
+- During all six phases, use `auto_commit_notification` for checkpoint advice and auto-commit validated progress with Conventional Commit messages. Review each complete phase base..tip range after committing; fix, revalidate, and re-review any widened range before closure.
 - Review evidence and checklist updates together. Future phases and unrun live workflows remain pending. Pushes are outside the current authorization.
 
 ## Phase 1 — Node.js and JavaScript Dependencies
@@ -129,4 +129,19 @@ Status: completed. Starting revision: `a269bae`. Local validation and independen
 
 ## Phase 6 — Integrated Validation and Closeout
 
-Status: pending. Live PR CI and release preparation have not run for this refresh.
+Status: in-progress. Starting revision: `5066898`. Integrated local validation passed; post-commit review and documentation closeout are pending.
+
+### Final Graph and Validation
+
+- Verified Node build pin `22.23.5`, both publishing pins `24.22.3`, Bun `1.4.4`, Rust/Cargo `1.99.1`, wasm-pack `0.15.1`, cargo-audit `0.23.0`, wasm-bindgen CLI/crate `0.2.130`, and Binaryen `130`. Publishing Node bundles npm `11.19.1`; workflows differ from `de146cd` only by the agreed version substitutions.
+- Confirmed all planned JavaScript/Cargo resolutions. `bun outdated` lists no packages; the Cargo update dry run locks zero packages and the full-target graph has no duplicate versions. No planned update was deferred. TypeScript `7.0.2` and existing crate constraints remain as agreed.
+- Frozen install, type/lint/format checks, fresh optimized build, package verification, all 385 Bun tests (1,272 assertions; no skips), npm audits (121/23 packages), workflow lint, and diff checks passed. Both lockfiles stayed unchanged.
+- WASM target check and native Cargo tests passed (0 Rust unit/doc tests). Fresh RustSec audit passed for 27 dependencies, with no advisories or yanked crates. The build used a fresh Cargo target directory and the previously verified tool caches; the expected TypeScript 7.0 generator warning remains.
+- A freshly packed external installation passed CLI/config, root/detector ESM/CJS, actual WASM, and worker-pool checks on Node `22.18.0`, `22.23.5`, and `24.22.3`, with no fallback. Strict consumers with declaration checking enabled passed on TypeScript `5.9.3`, `6.0.3`, and `7.0.2`; all export/type and CLI paths resolve.
+- All 21 build-file hashes match Phase 5, excluding filesystem metadata. WASM remains 287,373 bytes with nine exports; the 10 root/16 detector runtime exports and sample payload/tag/count are unchanged. No additional code or dependency changes were needed.
+
+### Review and Follow-ups
+
+- Phase 6 implementation commit and independent committed-range review: pending. The accumulated refresh will also be reviewed against `de146cd`.
+- Live PR CI: pending. The PR-triggered workflow lookup for `5066898` returned no runs. Record a normal PR CI result against its exact revision when available.
+- Release preparation: pending; record a separately authorized run against its tag/revision. No tag was created or publishing workflow dispatched; no package was published.
