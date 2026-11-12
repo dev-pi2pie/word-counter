@@ -8,7 +8,7 @@ agent: Codex
 
 ## Goal
 
-Refresh Node.js security pins, JavaScript dependencies, and the Rust/WASM toolchain in six validated checkpoints. Phases 1–4 are complete; Phases 5–6 are pending.
+Refresh Node.js security pins, JavaScript dependencies, and the Rust/WASM toolchain in six validated checkpoints. Phases 1–4 are complete; Phase 5 is in progress.
 
 ## Baseline
 
@@ -99,8 +99,9 @@ Reviewed November 12 against `84fb17e8b4425e651e3f6745846cbcec30820291` (`0.1.9-
 
 ## Phase 5 — oxfmt
 
-- [ ] Update `oxfmt` `0.74.0` to `0.78.0`, explicitly replacing the `^0.74.0` range.
-- [ ] Check formatting before applying changes; inspect embedded HTML/Vue effects and preserve the configured scope unless migration is required.
+- [x] Update `oxfmt` `0.74.0` to `0.78.0`, explicitly replacing the `^0.74.0` range.
+- [x] Check formatting before applying changes; inspect embedded HTML/Vue effects and preserve the configured scope unless migration is required.
+- [ ] Review the committed Phase 5 range and resolve findings before closure.
 
 **Validate:** apply reviewed formatting if needed, then run the Package gate. Run Node checks if source changed; confirm repeatable formatting and no semantic changes.
 
