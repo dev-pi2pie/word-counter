@@ -17,7 +17,7 @@ agent: Codex
 
 ## Phase 1 — Node.js and JavaScript Dependencies
 
-Status: completed. Starting revision: `de146cd42abf5cb393e11c687fceb65230df78bf`. Local validation and independent committed-range review passed.
+Status: completed. Starting revision: `de146cd`. Local validation and independent committed-range review passed.
 
 ### Changes
 
@@ -51,7 +51,7 @@ Fresh release build: Rust/Cargo `1.98.1`, target `wasm32-unknown-unknown`, wasm-
 
 ### Review and Live Evidence
 
-- Implementation commit: `ef6f985`. Independent code review of `de146cd42abf5cb393e11c687fceb65230df78bf..ef6f985` found no actionable issues in version pins, lockfile consistency, publishing configuration, or phase isolation. The reviewer inspected the committed range without rerunning validation.
+- Implementation commit: `ef6f985`. Independent code review of `de146cd..ef6f985` found no actionable issues in version pins, lockfile consistency, publishing configuration, or phase isolation. The reviewer inspected the committed range without rerunning validation.
 - `docs_reviewer` closeout review found no material gaps; phase status, checklist, reviewed range, evidence, and pending live checks agree.
 - Live PR CI and release preparation: pending; no publishing workflow was dispatched.
 
