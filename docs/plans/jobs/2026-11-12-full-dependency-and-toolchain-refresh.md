@@ -1,13 +1,14 @@
 ---
 title: "Full dependency and toolchain refresh"
 created-date: 2026-11-12
+modified-date: 2026-11-12
 status: in-progress
 agent: Codex
 ---
 
 ## Plan
 
-[Full dependency and toolchain refresh](../plan-2026-11-12-full-dependency-and-toolchain-refresh.md). One record covers all six phases. Phases 1–2 are complete; Phases 3–6 are pending.
+[Full dependency and toolchain refresh](../plan-2026-11-12-full-dependency-and-toolchain-refresh.md). One record covers all six phases. Phases 1–2 are complete; Phase 3 is in progress.
 
 ## Execution Contract
 
@@ -75,7 +76,24 @@ Status: completed. Starting revision: `dad48bf`. Local validation and independen
 
 ## Phase 3 — Cargo Dependencies and Rust/WASM Tools
 
-Status: pending.
+Status: in-progress. Starting revision: `b695286`. Local validation passed; post-commit review is pending.
+
+### Changes and Validation
+
+- Updated both workflow pins to cargo-audit `0.23.0` and wasm-pack `0.15.1`; exact-version `cargo install --locked` commands passed. Rust remains `1.99.1`.
+- Cargo lockfile changes match the six planned updates: wasm-bindgen and its three companion crates `0.2.130`, js-sys `0.3.107`, and syn `3.0.10`; once_cell was removed. Manifest ranges, detector source, and JavaScript resolutions are unchanged.
+- The full target graph has no duplicate crate versions; a second update dry run found no remaining compatible updates. Build/check commands left the refreshed lockfile unchanged.
+- WASM target check and native Cargo tests passed (0 Rust unit/doc tests). The new audit command passed against fresh RustSec data: 27 dependencies, no advisories or yanked crates.
+- Frozen install, type/lint/format checks, build, package verification, all 385 Bun tests (1,272 assertions), npm audits (124/23 packages), workflow lint, and diff checks passed.
+- External packed-package CLI/config, ESM/CJS, and actual WASM checks passed on Node `22.18.0`, `22.23.5`, and `24.22.3`, with no engine fallback.
+
+### Artifact Comparison and Review
+
+- Verified wasm-bindgen CLI `0.2.130` matches the crate, with Binaryen `130`. The optimizer download initially failed; caching that exact upstream release allowed the unchanged optimized build to pass.
+- WASM: 287,373 bytes, down 1,566 bytes (0.54%) from Phase 2. SHA-256: `efb33a3d4acd66d4a1b5652c59f651c9c1dbc8f511a489cb9fe2b034a526d629`.
+- All prior WASM exports remain, with `__wbindgen_free` added for generated argument-conversion cleanup. The generated glue also changes externref initialization and UTF-8 decoding; its raw WASM declaration adds the matching free signature. The internal WASM export count is now nine.
+- The 10 root/16 detector runtime exports, all three public declaration fingerprints, and the Phase 1 sample payload/tag/count match Phase 2. The existing TypeScript API warning remains.
+- Implementation commit and independent review will be recorded after commit creation. Live workflow checks remain pending.
 
 ## Phase 4 — tsdown and Declarations
 

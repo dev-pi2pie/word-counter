@@ -270,13 +270,13 @@ jobs:
           workspaces: crates/language-detector
 
       - name: Install cargo-audit
-        run: cargo install cargo-audit --version 0.22.2 --locked
+        run: cargo install cargo-audit --version 0.23.0 --locked
 
       - name: Audit Rust dependencies
         run: cargo audit --file crates/language-detector/Cargo.lock --deny yanked
 
       - name: Install wasm-pack
-        run: cargo install wasm-pack --version 0.15.0 --locked
+        run: cargo install wasm-pack --version 0.15.1 --locked
 
       - name: Build
         run: bun run build
