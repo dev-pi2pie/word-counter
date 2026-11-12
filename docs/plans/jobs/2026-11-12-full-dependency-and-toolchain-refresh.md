@@ -8,7 +8,7 @@ agent: Codex
 
 ## Plan
 
-[Full dependency and toolchain refresh](../plan-2026-11-12-full-dependency-and-toolchain-refresh.md). One record covers all six phases. Phases 1–4 are complete; Phase 5 is in progress.
+[Full dependency and toolchain refresh](../plan-2026-11-12-full-dependency-and-toolchain-refresh.md). One record covers all six phases. Phases 1–5 are complete; Phase 6 is pending.
 
 ## Execution Contract
 
@@ -116,15 +116,16 @@ Status: completed. Starting revision: `1971008`. Local validation and independen
 
 ## Phase 5 — oxfmt
 
-Status: in-progress. Starting revision: `a269bae`. Local validation passed; post-commit review is pending.
+Status: completed. Starting revision: `a269bae`. Local validation and independent post-commit review passed.
 
 ### Changes and Validation
 
 - Replaced `^0.74.0` with `^0.78.0`. Lockfile changes are limited to oxfmt and its 19 native bindings, including upstream metadata. Other resolutions, source, formatter configuration/scope, Cargo, and workflows are unchanged.
 - The initial check and repeated Package gate check passed for all 157 matched files. No formatting edits were needed; no HTML/Vue files are in the configured scope, and no embedded-content formatting changes appeared.
 - Frozen install, type/lint/format checks, build, package verification, all 385 Bun tests (1,272 assertions), npm audits (121/23 packages), workflow lint, and diff checks passed.
-- All 22 rebuilt artifact hashes match Phase 4, including declarations, CLI/worker bundles, and WASM. Source is unchanged, so the conditional Node rerun was not needed; Phase 4's packed-runtime evidence remains the baseline.
-- Implementation commit and independent committed-range review: pending. Live workflow checks remain pending.
+- All 21 build-file hashes match Phase 4, including declarations, CLI/worker bundles, and WASM. Source is unchanged, so the conditional Node rerun was not needed; Phase 4's packed-runtime evidence remains the baseline.
+- Independent code review of `a269bae..270c233` found no actionable code issues in the lockfile, upstream metadata, or phase isolation. The reviewer verified the artifact fingerprints; the Package gate was not rerun during review. A wording note corrected the artifact count to exclude metadata; the filtered comparison passed. Live workflow checks remain pending.
+- `docs_reviewer` closeout review found no material gaps after clarifying fingerprint verification versus the Package gate rerun; phase status, checklist, reviewed range, and evidence agree.
 
 ## Phase 6 — Integrated Validation and Closeout
 
