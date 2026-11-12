@@ -1,13 +1,13 @@
 ---
 title: "Full dependency and toolchain refresh"
 created-date: 2026-11-12
-status: draft
+status: active
 agent: Codex
 ---
 
 ## Goal
 
-Refresh Node.js security pins, JavaScript dependencies, and the Rust/WASM toolchain in six validated checkpoints. Implementation has not started.
+Refresh Node.js security pins, JavaScript dependencies, and the Rust/WASM toolchain in six validated checkpoints. Phase 1 is in progress.
 
 ## Baseline
 
@@ -29,8 +29,8 @@ Reviewed November 12 against `84fb17e8b4425e651e3f6745846cbcec30820291` (`0.1.9-
 ## Checkpoints and Record
 
 - Each phase is one checkpoint. Proceed after validation and exact-range review; fix findings, rerun affected checks, and re-review widened ranges.
-- At implementation start, create one unified job record in `docs/plans/jobs/`, linked both ways with this plan. Store phase changes, tool versions, validation, review findings, and deferrals.
-- Record base/tip commit IDs or immutable patch snapshots. Use the preceding accepted checkpoint as the rollback boundary; preserve unrelated work. Commits and pushes require separate authorization.
+- Use the [unified job record](jobs/2026-11-12-full-dependency-and-toolchain-refresh.md) for phase changes, tool versions, validation, review findings, and deferrals.
+- Record base/tip commit IDs or immutable patch snapshots. Preserve unrelated work and use the preceding accepted checkpoint as the rollback boundary. Phase 1 may auto-commit validated progress with `auto_commit_notification` advice; pushes and later-phase commits require separate authorization.
 - Keep detailed evidence in the unified record and status/checklists here. Set this plan to `active` when execution starts. Separate environment failures, local results, and live workflow results; use public-safe, repository-relative references.
 
 ## Validation Gates
@@ -55,8 +55,9 @@ Reviewed November 12 against `84fb17e8b4425e651e3f6745846cbcec30820291` (`0.1.9-
 | `@types/node` | `26.6.5` | `26.6.6` |
 | `oxlint` | `1.89.0` | `1.93.0` |
 
-- [ ] Update workflow pins, declared dependency bounds, and `bun.lock`; inspect incidental lockfile drift and lint diagnostics. Keep tsdown, oxfmt, TypeScript, and Rust resolutions unchanged.
-- [ ] Preserve npm `id-token: write`/empty `NODE_AUTH_TOKEN` and GitHub Packages token/registry configuration.
+- [x] Update workflow pins, declared dependency bounds, and `bun.lock`; inspect incidental lockfile drift and lint diagnostics. Keep tsdown, oxfmt, TypeScript, and Rust resolutions unchanged.
+- [x] Preserve npm `id-token: write`/empty `NODE_AUTH_TOKEN` and GitHub Packages token/registry configuration.
+- [ ] Review the committed Phase 1 range, fix findings, revalidate, and re-review before closing the phase.
 
 **Validate:** Package, Node, and Workflow gates. Check all four Node pins and Commander option/help/config behavior; reject APIs unavailable on Node 22 despite Node 26 types. Capture this phase's fresh Rust `1.98.1` exports, payloads, warnings, and WASM size in the unified record before Phase 2.
 
