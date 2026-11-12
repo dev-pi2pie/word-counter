@@ -8,7 +8,7 @@ agent: Codex
 
 ## Goal
 
-Refresh Node.js security pins, JavaScript dependencies, and the Rust/WASM toolchain in six validated checkpoints. Phase 1 is complete; Phase 2 is in progress.
+Refresh Node.js security pins, JavaScript dependencies, and the Rust/WASM toolchain in six validated checkpoints. Phases 1–2 are complete; Phases 3–6 are pending.
 
 ## Baseline
 
@@ -66,7 +66,7 @@ Reviewed November 12 against `84fb17e8b4425e651e3f6745846cbcec30820291` (`0.1.9-
 
 - [x] Change Rust `1.98.1` to `1.99.1` in both workflows; retain `wasm-pack` `0.15.0`, `cargo-audit` `0.22.2`, and the crate lockfile.
 - [x] Compare rebuilt exports, payloads, warnings, and WASM size with Phase 1's captured output. Rust 1.99 uses LLVM 23; investigate unexplained material changes rather than require byte equality.
-- [ ] Review the committed Phase 2 range and resolve findings before closure.
+- [x] Review the committed Phase 2 range and resolve findings before closure.
 
 **Validate:** Rust, Package, Node, and Workflow gates.
 

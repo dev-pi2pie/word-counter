@@ -7,7 +7,7 @@ agent: Codex
 
 ## Plan
 
-[Full dependency and toolchain refresh](../plan-2026-11-12-full-dependency-and-toolchain-refresh.md). One record covers all six phases. Phase 1 is complete; Phase 2 is in progress.
+[Full dependency and toolchain refresh](../plan-2026-11-12-full-dependency-and-toolchain-refresh.md). One record covers all six phases. Phases 1–2 are complete; Phases 3–6 are pending.
 
 ## Execution Contract
 
@@ -57,7 +57,7 @@ Fresh release build: Rust/Cargo `1.98.1`, target `wasm32-unknown-unknown`, wasm-
 
 ## Phase 2 — Rust Compiler
 
-Status: in-progress. Starting revision: `dad48bf`. Local validation passed; post-commit review is pending.
+Status: completed. Starting revision: `dad48bf`. Local validation and independent post-commit review passed.
 
 ### Changes and Validation
 
@@ -70,7 +70,8 @@ Status: in-progress. Starting revision: `dad48bf`. Local validation passed; post
 
 - WASM: 288,939 bytes, up 64 bytes (0.02%). Code grew 420 bytes and data shrank 356 bytes; the net change is small and behavior gates passed. SHA-256: `cc31f456c11697c3d61d0775fe86f8d3cdd16746178821aac867f47949294fc2`.
 - The eight WASM exports, 10 root/16 detector runtime exports, sample payload/count, and all three declaration fingerprints match Phase 1. The existing TypeScript API warning and wasm-pack update notice remain; no new compiler warnings appeared in the package build.
-- This fresh build is the comparison baseline for Phase 3. Implementation commit and independent review will be recorded after commit creation; live workflow checks remain pending.
+- This fresh build is the comparison baseline for Phase 3. Independent code review of `dad48bf..de1c37e` found no actionable issues and confirmed compiler-only scope; validation was not rerun by the reviewer. Live workflow checks remain pending.
+- `docs_reviewer` closeout review found no material gaps in Phase 2 status, checklist, reviewed range, validation, or compiler comparison.
 
 ## Phase 3 — Cargo Dependencies and Rust/WASM Tools
 
