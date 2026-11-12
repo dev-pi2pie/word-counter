@@ -2,13 +2,13 @@
 title: "Full dependency and toolchain refresh"
 created-date: 2026-11-12
 modified-date: 2026-11-12
-status: active
+status: completed
 agent: Codex
 ---
 
 ## Goal
 
-Refresh Node.js security pins, JavaScript dependencies, and the Rust/WASM toolchain in six validated checkpoints. Phases 1–5 are complete; Phase 6 is in progress.
+Refresh Node.js security pins, JavaScript dependencies, and the Rust/WASM toolchain in six validated checkpoints. All six phases are complete for implementation and local validation; live workflow follow-ups remain in the unified record.
 
 ## Baseline
 
@@ -108,8 +108,8 @@ Reviewed November 12 against `84fb17e8b4425e651e3f6745846cbcec30820291` (`0.1.9-
 ## Phase 6 — Integrated Validation and Closeout
 
 - [x] Run all gates on the final graph and exact tool pins; account for remaining outdated packages, Cargo candidates, and deferrals.
-- [ ] Review the committed Phase 6 range and accumulated refresh; resolve findings before closure.
-- [ ] Reconcile this checklist with the unified record and obtain final documentation review.
+- [x] Review the committed Phase 6 range and accumulated refresh; resolve findings before closure.
+- [x] Reconcile this checklist with the unified record and obtain final documentation review.
 
 **Complete:** close implementation/local validation after review. Track normal PR CI by revision and separately authorized release preparation by tag/revision; unrun live checks remain pending. Do not create tags, dispatch publishing workflows, or publish packages for closeout.
 

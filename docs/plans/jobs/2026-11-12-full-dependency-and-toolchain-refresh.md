@@ -2,13 +2,13 @@
 title: "Full dependency and toolchain refresh"
 created-date: 2026-11-12
 modified-date: 2026-11-12
-status: in-progress
+status: completed
 agent: Codex
 ---
 
 ## Plan
 
-[Full dependency and toolchain refresh](../plan-2026-11-12-full-dependency-and-toolchain-refresh.md). One record covers all six phases. Phases 1–5 are complete; Phase 6 is in progress.
+[Full dependency and toolchain refresh](../plan-2026-11-12-full-dependency-and-toolchain-refresh.md). All six phases are complete for implementation and local validation. Live workflow follow-ups remain below.
 
 ## Execution Contract
 
@@ -129,7 +129,7 @@ Status: completed. Starting revision: `a269bae`. Local validation and independen
 
 ## Phase 6 — Integrated Validation and Closeout
 
-Status: in-progress. Starting revision: `5066898`. Integrated local validation passed; post-commit review and documentation closeout are pending.
+Status: completed. Starting revision: `5066898`. Integrated local validation, independent post-commit review, and documentation closeout passed.
 
 ### Final Graph and Validation
 
@@ -142,6 +142,7 @@ Status: in-progress. Starting revision: `5066898`. Integrated local validation p
 
 ### Review and Follow-ups
 
-- Phase 6 implementation commit and independent committed-range review: pending. The accumulated refresh will also be reviewed against `de146cd`.
-- Live PR CI: pending. The PR-triggered workflow lookup for `5066898` returned no runs. Record a normal PR CI result against its exact revision when available.
+- Independent code review of Phase 6 `5066898..2325b5a` and the accumulated refresh `de146cd..2325b5a` found no actionable issues. The reviewer rechecked all 21 artifact fingerprints and dependency versions against committed locks and inspected validation logs; the Package gate was not rerun during review.
+- `docs_reviewer` found no material gaps in the final evidence, checklist, review ranges, or completion scope. The plan and this record are completed for implementation and local validation and remain in their current locations.
+- Live PR CI: pending. The PR-triggered workflow lookup for `2325b5a` returned no runs. Record a normal PR CI result against its exact revision when available.
 - Release preparation: pending; record a separately authorized run against its tag/revision. No tag was created or publishing workflow dispatched; no package was published.
