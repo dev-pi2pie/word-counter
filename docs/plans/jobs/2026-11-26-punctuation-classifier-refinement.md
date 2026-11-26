@@ -51,3 +51,4 @@ Test review of `3a29bb7..56193bb` reproduced both failures, verified all three c
 | Classifier at `086f6ab` | Same suites after refining the punctuation check | 24 passed. `___` yields one punctuation entry, zero words, and zero word-only graphemes. |
 | Public API regressions | Same suites with 15 added cases | 39 passed. The mixed example yields 3 words and 5 non-words. Exact entries passed for emoji, symbols, standalone and embedded punctuation, and the Han chunk. |
 | Static checks | `bun run type-check`, `bun run lint`, `bun run format:check` | All passed |
+| Review of `75d6140..7e9e9e6` | Classifier, public API tests, and all five checklist items | 39 focused tests passed on rerun. No material coverage gaps found. |
