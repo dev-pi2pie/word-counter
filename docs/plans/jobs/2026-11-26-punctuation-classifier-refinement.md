@@ -78,3 +78,14 @@ Review of `4ba27fc..316bfce` reproduced both results and found the coverage gap 
 - **Package checks.** `bun run type-check`, `bun run lint`, `bun run format:check`, and `bun run verify:package-contents` passed.
 
 Review of `f504924..23fb441` reproduced the API, CLI, section, and punctuation sweep results on both builds. No material coverage gaps were found.
+
+## Phase 4 — Documentation validation and closeout
+
+`bun run test:ci` built `931c676` and passed all 408 tests. On each Node build, all five commands in the README’s Non-Word Collection section ran against the built CLI. The whitespace commands reproduced the displayed JSON, including one space, one tab, and one newline.
+
+| Node | Segment example | `___` in character mode | Per-locale helpers for `___` in `en` |
+| --- | --- | --- | --- |
+| 22.23.5 | Words `["foo_bar", "١٫٢"]`, punctuation `["___", "٫"]`, total 4 | 0 word graphemes, 3 non-word graphemes, 1 punctuation entry | 1 word-like segment, 3 graphemes |
+| 24.22.3 | Words `["foo_bar", "١٫٢"]`, punctuation `["___", "٫"]`, total 4 | 0 word graphemes, 3 non-word graphemes, 1 punctuation entry | 1 word-like segment, 3 graphemes |
+
+Relative links and heading anchors resolved across the README, research, plan, and job record. The research attributes the mixed example’s four-word result to the tagged canary and identifies the three-word result in its comparison as the candidate.

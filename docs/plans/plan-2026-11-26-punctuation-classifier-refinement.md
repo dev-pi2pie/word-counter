@@ -64,6 +64,6 @@ Run the category assertions and punctuation sweep on two supported Node.js build
 
 ## Phase 4 — Documentation validation and closeout
 
-- [ ] Update the [README non-word examples](../../README.md#non-word-collection) with `___` / `foo_bar` and `٫` / `١٫٢`. Clarify the [core API](../../README.md#core-api) helper units and explain why character mode reports three non-word graphemes for `___` while the selected punctuation total is one entry.
-- [ ] Run the documented examples against the built package. Compare the printed totals, exact collected strings, and units with the README and research. Verify the plan, research, and unified job record links resolve, and that historical canary results remain clearly identified.
+- [x] Update the [README non-word examples](../../README.md#non-word-collection) with `___` / `foo_bar` and `٫` / `١٫٢`. Clarify the [core API](../../README.md#core-api) helper units and explain why character mode reports three non-word graphemes for `___` while the selected punctuation total is one entry.
+- [x] Run the documented examples against the built package. Compare the printed totals, exact collected strings, and units with the README and research. Verify the plan, research, and unified job record links resolve, and that historical canary results remain clearly identified.
 - [ ] Verify every phase item against evidence in the unified job record. After validation passes and findings are resolved, record the final revision or reviewed range and mark the plan and job `completed`.

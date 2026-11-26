@@ -611,8 +611,8 @@ Sample output (with `nonWords: true` and `includeWhitespace: true`):
 | --------------------- | -------- | -------------------------------------------------- |
 | `default`             | function | `wordCounter(text, options?) -> WordCounterResult` |
 | `wordCounter`         | function | Alias of the default export.                       |
-| `countCharsForLocale` | function | Low-level helper for per-locale char counts.       |
-| `countWordsForLocale` | function | Low-level helper for per-locale counts.            |
+| `countCharsForLocale` | function | Counts grapheme clusters for the given locale.     |
+| `countWordsForLocale` | function | Counts segments the locale’s `Intl.Segmenter` marks as word-like, before package classification. |
 | `segmentTextByLocale` | function | Low-level helper for locale-tag segmentation.      |
 
 #### Markdown Helpers
@@ -813,14 +813,25 @@ Use `--non-words` (or `nonWords: true` in the API) to collect emoji, symbols, an
 word-counter --non-words "Hi 👋, world!"
 ```
 
-Example: `total = words + emoji + symbols + punctuation` when enabled.
-Standard output labels this as `Total count` to reflect the combined total; `--format raw` still prints a single number.
-
-Include whitespace-like characters in the non-words bucket (API: `includeWhitespace: true`):
+In word modes, the combined total counts words plus collected non-word entries. Standard output labels it `Total count`, and `--format raw` prints the number alone. Use `--mode segments` to see the strings in each locale chunk.
 
 ```bash
-word-counter --include-whitespace "Hi\tthere\n"
-word-counter --misc "Hi\tthere\n"
+word-counter --mode segments --non-words --format json "___ foo_bar ٫ ١٫٢"
+```
+
+Across the chunks, the two words are `["foo_bar", "١٫٢"]` and the two punctuation entries are `["___", "٫"]`, for a total of 4. The underscore in `foo_bar` and the decimal separator in `١٫٢` stay inside their words.
+
+```bash
+word-counter --mode char --non-words --total-of punctuation --format json "___"
+```
+
+Character mode counts graphemes. The three underscores give `counts.words = 0` and `counts.nonWords = 3`. The punctuation collection contains one segment, `["___"]`, so `meta.totalOfOverride = 1`.
+
+To include whitespace, use `--include-whitespace` or set `includeWhitespace: true` in the API.
+
+```bash
+printf 'Hi \t\nthere' | word-counter --include-whitespace --format json
+printf 'Hi \t\nthere' | word-counter --misc --format json
 ```
 
 In the CLI, `--include-whitespace` implies `--non-words` (same behavior as `--misc`). `--non-words` alone does not include whitespace. When enabled, whitespace counts appear under `nonWords.whitespace`, and `total = words + nonWords` (emoji + symbols + punctuation + whitespace). JSON output also includes top-level `counts` when `nonWords` is enabled. See `docs/schemas/whitespace-categories.md` for how whitespace is categorized.
