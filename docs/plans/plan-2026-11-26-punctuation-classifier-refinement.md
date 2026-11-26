@@ -32,6 +32,12 @@ Count a standalone underscore run (`___`) as one punctuation segment and zero wo
 - [x] Add table-driven public-API regression tests for standalone and embedded punctuation. For Arabic `٫` / `١٫٢`, Hebrew `׳` / `ג׳`, and Japanese `゠` / `ア゠イ`, assert that the mark alone yields one punctuation entry and the embedded form yields one intact word. Assert that `foo_bar` stays one word and that underscores separated by U+0301 or U+200D retain the intervening character in a single punctuation entry.
 - [x] Cover `你好，世界。` in the same suite. Assert one Han chunk with words `["你好", "世界"]` and punctuation `["，", "。"]`. Run `bun test test/word-counter-core.test.ts test/word-counter-char-modes.test.ts` and record the results.
 
+### Post-review follow-up
+
+The review at `3376fd0` identified a missing test for `"!\uFF9E"`. U+FF9E is a Unicode letter, but the segmenter marks the whole input as non-word-like.
+
+- [ ] Add `["!\uFF9E", "punctuation"]` to the [public API test table](../../test/word-counter-core.test.ts). Run the focused suites above and verify one intact punctuation entry and zero words. In a temporary copy, remove the `!isWordLike` alternative from the punctuation check and confirm the new case fails on the missing entry. Record both results and the reviewed range in the unified job record.
+
 ## Phase 3 — Validate public counting and Node.js behavior
 
 Run the category assertions and punctuation sweep on two supported Node.js builds already available. Prefer Node 22.x for the first build. For the second, prefer a different Unicode version (`process.versions.unicode`), then a different Node major. If only one supported build is available, run both checks on it and record single-build coverage in the unified job record.
