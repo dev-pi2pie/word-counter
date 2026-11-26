@@ -2,7 +2,7 @@
 title: "Classifying words, punctuation, symbols, and emoji"
 created-date: 2026-11-26
 modified-date: 2026-11-26
-status: draft
+status: completed
 agent: codex
 ---
 
