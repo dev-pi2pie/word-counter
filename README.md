@@ -827,7 +827,7 @@ word-counter --mode char --non-words --total-of punctuation --format json "___"
 
 Character mode counts graphemes. The three underscores give `counts.words = 0` and `counts.nonWords = 3`. The punctuation collection contains one segment, `["___"]`, so `meta.totalOfOverride = 1`.
 
-To include whitespace, use `--include-whitespace` or set `includeWhitespace: true` in the API.
+To include whitespace, pass `--include-whitespace` in the CLI or `{ nonWords: true, includeWhitespace: true }` to `wordCounter`.
 
 ```bash
 printf 'Hi \t\nthere' | word-counter --include-whitespace --format json
