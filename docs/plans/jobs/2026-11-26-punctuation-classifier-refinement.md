@@ -1,6 +1,7 @@
 ---
 title: "Punctuation classifier refinement"
 created-date: 2026-11-26
+modified-date: 2026-11-26
 status: in-progress
 agent: codex
 ---
@@ -41,3 +42,10 @@ Both focused suites run with `bun test test/word-counter-core.test.ts test/word-
 `bun run type-check`, `bun run lint`, and `bun run format:check` passed.
 
 Test review of `3a29bb7..56193bb` reproduced both failures, verified all three checklist items, and found no coverage gaps in Phase 1.
+
+## Phase 2 — Refine the classifier
+
+| Checkpoint | Verification | Result |
+| --- | --- | --- |
+| Baseline at `75d6140` | Focused suites from Phase 1 | 22 passed, 2 failed on `___` |
+| Shared classifier | Same suites after refining the punctuation check | 24 passed. `___` yields one punctuation entry, zero words, and zero word-only graphemes. |
