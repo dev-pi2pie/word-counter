@@ -145,6 +145,7 @@ describe("wordCounter segment classification", () => {
     ["#️⃣", "emoji"],
     ["aⓑc", "symbols"],
     ["_ⓑ_", "symbols"],
+    ["!\uFF9E", "punctuation"],
     ["٫", "punctuation"],
     ["١٫٢", "words"],
     ["׳", "punctuation"],

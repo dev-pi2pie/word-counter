@@ -36,7 +36,7 @@ Count a standalone underscore run (`___`) as one punctuation segment and zero wo
 
 The review at `3376fd0` identified a missing test for `"!\uFF9E"`. U+FF9E is a Unicode letter, but the segmenter marks the whole input as non-word-like.
 
-- [ ] Add `["!\uFF9E", "punctuation"]` to the [public API test table](../../test/word-counter-core.test.ts). Run the focused suites above and verify one intact punctuation entry and zero words. In a temporary copy, remove the `!isWordLike` alternative from the punctuation check and confirm the new case fails on the missing entry. Record both results and the reviewed range in the unified job record.
+- [x] Add `["!\uFF9E", "punctuation"]` to the [public API test table](../../test/word-counter-core.test.ts). Run the focused suites above and verify one intact punctuation entry and zero words. In a temporary copy, remove the `!isWordLike` alternative from the punctuation check and confirm the new case fails on the missing entry. Record both results and the reviewed range in the unified job record.
 
 ## Phase 3 — Validate public counting and Node.js behavior
 

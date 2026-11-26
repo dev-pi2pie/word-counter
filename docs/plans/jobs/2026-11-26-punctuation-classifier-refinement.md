@@ -53,6 +53,15 @@ Test review of `3a29bb7..56193bb` reproduced both failures, verified all three c
 | Static checks | `bun run type-check`, `bun run lint`, `bun run format:check` | All passed |
 | Review of `75d6140..7e9e9e6` | Classifier, public API tests, and all five checklist items | 39 focused tests passed on rerun. No material coverage gaps found. |
 
+### Post-review follow-up
+
+The review at `3376fd0` identified missing coverage for `"!\uFF9E"`. Added the case to the public API test table from `4ba27fc` and ran `bun test test/word-counter-core.test.ts test/word-counter-char-modes.test.ts` in both configurations.
+
+| Classifier | Focused suites | Result for `"!\uFF9E"` |
+| --- | --- | --- |
+| Current | 40 passed | One intact punctuation entry, zero words |
+| Temporary copy with the `!isWordLike` alternative removed | 39 passed, 1 failed | Only the new case failed. Expected `["!\uFF9E"]` in punctuation, received `[]`. |
+
 ## Phase 3 — Validate public counting and Node.js behavior
 
 `bun run test:ci` built `f504924` and passed all 407 tests. Both Node runs used that build’s package export and `dist/esm/bin.mjs`. Each sweep passed every code point matching the runtime’s `/\p{P}/u` to `wordCounter` alone and doubled.
