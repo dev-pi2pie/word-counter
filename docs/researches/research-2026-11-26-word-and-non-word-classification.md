@@ -88,6 +88,7 @@ The low-level helpers measure different things. On the tested runtime, `countWor
 
 ## Related Plans
 
+- [Punctuation classifier refinement](../plans/plan-2026-11-26-punctuation-classifier-refinement.md)
 - [Non-word collection](../plans/archive/plan-2026-01-16-non-words-addon.md)
 - [Character count mode](../plans/archive/plan-2026-01-21-character-count-mode.md)
 
