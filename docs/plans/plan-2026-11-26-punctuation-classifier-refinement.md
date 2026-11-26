@@ -36,9 +36,9 @@ Count a standalone underscore run (`___`) as one punctuation segment and zero wo
 
 Run the category assertions and punctuation sweep on two supported Node.js builds already available. Prefer Node 22.x for the first build. For the second, prefer a different Unicode version (`process.versions.unicode`), then a different Node major. If only one supported build is available, run both checks on it and record single-build coverage in the unified job record.
 
-- [ ] Check the corrected word totals across `chunk`, `segments`, and `collector`. For `___`, both `char` and `char-collector` must give a word-only total of 0. With `nonWords: true`, expect 3 non-word graphemes and one punctuation entry. Confirm the [per-locale helpers](../../src/wc/segmenter.ts) still report raw word-like segments and graphemes respectively.
-- [ ] Run `bun run test:ci` to build the package and run the Bun suite. Exercise the built CLI on Node with the worked example, then with `___ --mode char --non-words --total-of punctuation --format json`. Verify `counts.words = 0`, `counts.nonWords = 3`, and `meta.totalOfOverride = 1` for the latter. Check a two-file batch containing `___` and `٫` returns a selected punctuation total of 2.
-- [ ] Pipe the Markdown fixture below into the built CLI with `--detector wasm --section split --mode segments --non-words --format json`. Assert the word and punctuation lists separately for each section. The combined total is 7 before and after the fix.
+- [x] Check the corrected word totals across `chunk`, `segments`, and `collector`. For `___`, both `char` and `char-collector` must give a word-only total of 0. With `nonWords: true`, expect 3 non-word graphemes and one punctuation entry. Confirm the [per-locale helpers](../../src/wc/segmenter.ts) still report raw word-like segments and graphemes respectively.
+- [x] Run `bun run test:ci` to build the package and run the Bun suite. Exercise the built CLI on Node with the worked example, then with `___ --mode char --non-words --total-of punctuation --format json`. Verify `counts.words = 0`, `counts.nonWords = 3`, and `meta.totalOfOverride = 1` for the latter. Check a two-file batch containing `___` and `٫` returns a selected punctuation total of 2.
+- [x] Pipe the Markdown fixture below into the built CLI with `--detector wasm --section split --mode segments --non-words --format json`. Assert the word and punctuation lists separately for each section. The combined total is 7 before and after the fix.
 
   ```markdown
   ---
@@ -52,9 +52,9 @@ Run the category assertions and punctuation sweep on two supported Node.js build
   | `frontmatter` | `["title"]` | `[":", "\"", "___", "\""]` |
   | `content` | `["they’re"]` | `["___"]` |
 
-- [ ] On each selected build, call the built package’s `wordCounter` with `mode: "segments"` and `nonWords: true`. Expect `٫` in punctuation, `١٫٢` in words, and `#️⃣` in emoji. Each input must be the sole entry across all lists.
-- [ ] On each selected build, pass every code point matching its `/\p{P}/u` to the built `wordCounter` alone and doubled. Assert zero words for every input. In the job record, use one row per build for Node, ICU, and Unicode versions, the number of code points tested, and failure counts for each input form.
-- [ ] Run `bun run type-check`, `bun run lint`, `bun run format:check`, and `bun run verify:package-contents`. Record results and resolve any implementation findings before documenting the final behavior.
+- [x] On each selected build, call the built package’s `wordCounter` with `mode: "segments"` and `nonWords: true`. Expect `٫` in punctuation, `١٫٢` in words, and `#️⃣` in emoji. Each input must be the sole entry across all lists.
+- [x] On each selected build, pass every code point matching its `/\p{P}/u` to the built `wordCounter` alone and doubled. Assert zero words for every input. In the job record, use one row per build for Node, ICU, and Unicode versions, the number of code points tested, and failure counts for each input form.
+- [x] Run `bun run type-check`, `bun run lint`, `bun run format:check`, and `bun run verify:package-contents`. Record results and resolve any implementation findings before documenting the final behavior.
 
 ## Phase 4 — Documentation validation and closeout
 

@@ -52,3 +52,16 @@ Test review of `3a29bb7..56193bb` reproduced both failures, verified all three c
 | Public API regressions | Same suites with 15 added cases | 39 passed. The mixed example yields 3 words and 5 non-words. Exact entries passed for emoji, symbols, standalone and embedded punctuation, and the Han chunk. |
 | Static checks | `bun run type-check`, `bun run lint`, `bun run format:check` | All passed |
 | Review of `75d6140..7e9e9e6` | Classifier, public API tests, and all five checklist items | 39 focused tests passed on rerun. No material coverage gaps found. |
+
+## Phase 3 — Validate public counting and Node.js behavior
+
+`bun run test:ci` built `f504924` and passed all 407 tests. Both Node runs used that build’s package export and `dist/esm/bin.mjs`. Each sweep passed every code point matching the runtime’s `/\p{P}/u` to `wordCounter` alone and doubled.
+
+| Node | ICU | Unicode | API | CLI | Punctuation code points | Standalone failures | Doubled failures |
+| --- | --- | --- | --- | --- | ---: | ---: | ---: |
+| 22.23.5 | 78.3 | 17.0 | Passed | Passed | 856 | 0 | 0 |
+| 24.22.3 | 78.3 | 17.0 | Passed | Passed | 856 | 0 | 0 |
+
+- **API.** The mixed input returned 3 words and 5 non-words across all three word modes. Both character modes gave `___` zero word graphemes, three non-word graphemes, and one punctuation entry. The raw per-locale helpers returned 1 word-like segment and 3 graphemes. Each of `٫`, `١٫٢`, and `#️⃣` was the sole entry in its expected category.
+- **CLI.** The mixed input matched the expected lists and totals. With `--total-of punctuation`, `___` in character mode selected 1 entry and the two-file batch selected 2. The WASM split fixture totaled 7 and matched the exact word and punctuation lists for each section in the [Phase 3 checklist](../plan-2026-11-26-punctuation-classifier-refinement.md#phase-3--validate-public-counting-and-nodejs-behavior).
+- **Package checks.** `bun run type-check`, `bun run lint`, `bun run format:check`, and `bun run verify:package-contents` passed.
