@@ -21,7 +21,7 @@ Count a standalone underscore run (`___`) as one punctuation segment and zero wo
 
 - [x] At the start of implementation, set this plan to `active` and create one `in-progress` record at `docs/plans/jobs/YYYY-MM-DD-punctuation-classifier-refinement.md` using the actual UTC start date. Link the plan and record to each other. Use that same record throughout implementation to capture the starting revision, changes by phase, commands and observed results, and any findings and their resolution. Follow the [documentation policy](../../DOCUMENTATION_POLICY.md#job-records).
 - [x] Reproduce the regression through `wordCounter` with default locale settings. For `they’re 3.14 ___ © ©️ 1️⃣ 世界。`, record the actual segment lists and counts. The `v0.2.0-canary.2` baseline counts 4 words and includes `___` in the Latin word list. With non-words enabled, the baseline and target both total 8.
-- [ ] Add a failing public-API regression assertion in the [core tests](../../test/word-counter-core.test.ts) that locates `___` in the punctuation collection, and one in the [character-mode tests](../../test/word-counter-char-modes.test.ts) that expects zero word-only graphemes for `___`. Record the pre-fix failures.
+- [x] Add a failing public-API regression assertion in the [core tests](../../test/word-counter-core.test.ts) that locates `___` in the punctuation collection, and one in the [character-mode tests](../../test/word-counter-char-modes.test.ts) that expects zero word-only graphemes for `___`. Record the pre-fix failures.
 
 ## Phase 2 — Refine the classifier and verify exact categories
 

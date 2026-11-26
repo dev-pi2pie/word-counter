@@ -31,3 +31,11 @@ Both focused suites run with `bun test test/word-counter-core.test.ts test/word-
 | Run | Result |
 | --- | --- |
 | Before adding regressions | 22 passed, 0 failed |
+| With both regression tests, before the fix | 22 passed, 2 failed |
+
+| Assertion for `___` | Expected | Observed |
+| --- | --- | --- |
+| `segments` punctuation list with non-words enabled | `["___"]` | `[]` |
+| `char` word-only grapheme total | `0` | `3` |
+
+`bun run type-check` and `bun run format:check` passed.

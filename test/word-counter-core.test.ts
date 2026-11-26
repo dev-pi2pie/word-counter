@@ -47,6 +47,15 @@ describe("wordCounter", () => {
     expect(items.flatMap((item) => item.nonWords?.emoji ?? [])).toEqual(["1️⃣"]);
   });
 
+  test("collects a standalone underscore run as one punctuation segment", () => {
+    const { breakdown } = wordCounter("___", { mode: "segments", nonWords: true });
+    if (breakdown.mode !== "segments") {
+      throw new Error("Expected segments breakdown");
+    }
+    expect(breakdown.items.flatMap((item) => item.nonWords?.punctuation ?? [])).toEqual(["___"]);
+    expect(breakdown.items.flatMap((item) => item.segments)).toEqual([]);
+  });
+
   test("collects non-word categories when enabled", () => {
     const result = wordCounter("Hi 👋, world! 1️⃣", {
       nonWords: true,

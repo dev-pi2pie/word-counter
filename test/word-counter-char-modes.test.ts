@@ -19,6 +19,10 @@ describe("char mode", () => {
     expect(result.total).toBe(7);
   });
 
+  test("excludes a standalone underscore run from word-only graphemes", () => {
+    expect(wordCounter("___", { mode: "char" }).total).toBe(0);
+  });
+
   test("counts internal punctuation in word-only character totals", () => {
     const input = "Don't stop! they’re, 3.14 1️⃣";
     expect(wordCounter(input, { mode: "char" }).total).toBe(20);
