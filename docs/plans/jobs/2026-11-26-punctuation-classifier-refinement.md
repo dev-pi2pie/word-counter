@@ -38,4 +38,6 @@ Both focused suites run with `bun test test/word-counter-core.test.ts test/word-
 | `segments` punctuation list with non-words enabled | `["___"]` | `[]` |
 | `char` word-only grapheme total | `0` | `3` |
 
-`bun run type-check` and `bun run format:check` passed.
+`bun run type-check`, `bun run lint`, and `bun run format:check` passed.
+
+Test review of `3a29bb7..56193bb` reproduced both failures, verified all three checklist items, and found no coverage gaps in Phase 1.
