@@ -78,7 +78,10 @@ export function addWhitespace(collection: NonWordCollection, segment: string): n
   return count;
 }
 
-export function classifyNonWordSegment(segment: string): "emoji" | "symbol" | "punctuation" | null {
+export function classifyNonWordSegment({
+  segment,
+  isWordLike,
+}: Intl.SegmentData): "emoji" | "symbol" | "punctuation" | null {
   const hasEmojiVariationSelector = segment.includes("\uFE0F");
   if (
     keycapEmojiRegex.test(segment) ||
@@ -90,7 +93,7 @@ export function classifyNonWordSegment(segment: string): "emoji" | "symbol" | "p
   if (symbolRegex.test(segment)) {
     return "symbol";
   }
-  if (punctuationRegex.test(segment)) {
+  if (!isWordLike && punctuationRegex.test(segment)) {
     return "punctuation";
   }
   return null;

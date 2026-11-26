@@ -19,6 +19,16 @@ describe("char mode", () => {
     expect(result.total).toBe(7);
   });
 
+  test("counts internal punctuation in word-only character totals", () => {
+    const input = "Don't stop! they’re, 3.14 1️⃣";
+    expect(wordCounter(input, { mode: "char" }).total).toBe(20);
+    expect(wordCounter(input, { mode: "char", nonWords: true }).counts).toEqual({
+      words: 20,
+      nonWords: 3,
+      total: 23,
+    });
+  });
+
   test("normalizes mode aliases", () => {
     const result = wordCounter("Hi", { mode: "chars" as unknown as "char" });
     expect(result.breakdown.mode).toBe("char");

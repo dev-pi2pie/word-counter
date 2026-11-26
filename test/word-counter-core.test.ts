@@ -23,6 +23,30 @@ describe("wordCounter", () => {
     expect(countWordsForLocale("Hello, world!", "en")).toBe(2);
   });
 
+  test.each([
+    ["Don't stop", 2],
+    ["they’re", 1],
+    ["3.14 is pi", 3],
+  ])("counts words in %s", (input, expected) => {
+    expect(wordCounter(input).total).toBe(expected);
+  });
+
+  test("collects standalone punctuation and keycap emoji separately from words", () => {
+    const result = wordCounter("Don't stop! they’re, 3.14 1️⃣", {
+      mode: "segments",
+      nonWords: true,
+    });
+    expect(result.counts).toEqual({ words: 4, nonWords: 3, total: 7 });
+    const { breakdown } = result;
+    if (breakdown.mode !== "segments") {
+      throw new Error("Expected segments breakdown");
+    }
+    const { items } = breakdown;
+    expect(items.flatMap((item) => item.segments)).toEqual(["Don't", "stop", "they’re", "3.14"]);
+    expect(items.flatMap((item) => item.nonWords?.punctuation ?? [])).toEqual(["!", ","]);
+    expect(items.flatMap((item) => item.nonWords?.emoji ?? [])).toEqual(["1️⃣"]);
+  });
+
   test("collects non-word categories when enabled", () => {
     const result = wordCounter("Hi 👋, world! 1️⃣", {
       nonWords: true,

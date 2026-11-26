@@ -27,7 +27,7 @@ export function analyzeChunk(
   const segments: string[] = [];
   const nonWords: NonWordCollection | null = collectNonWords ? createNonWordCollection() : null;
   for (const part of segmenter.segment(chunk.text)) {
-    const category = classifyNonWordSegment(part.segment);
+    const category = classifyNonWordSegment(part);
     if (category) {
       if (collectNonWords && nonWords) {
         addNonWord(nonWords, category, part.segment);
@@ -63,7 +63,7 @@ export function analyzeCharChunk(
   let nonWordChars = 0;
 
   for (const part of segmenter.segment(chunk.text)) {
-    const category = classifyNonWordSegment(part.segment);
+    const category = classifyNonWordSegment(part);
     if (category) {
       if (collectNonWords && nonWords) {
         addNonWord(nonWords, category, part.segment);
