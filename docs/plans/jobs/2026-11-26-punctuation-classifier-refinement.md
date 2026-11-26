@@ -65,3 +65,5 @@ Test review of `3a29bb7..56193bb` reproduced both failures, verified all three c
 - **API.** The mixed input returned 3 words and 5 non-words across all three word modes. Both character modes gave `___` zero word graphemes, three non-word graphemes, and one punctuation entry. The raw per-locale helpers returned 1 word-like segment and 3 graphemes. Each of `٫`, `١٫٢`, and `#️⃣` was the sole entry in its expected category.
 - **CLI.** The mixed input matched the expected lists and totals. With `--total-of punctuation`, `___` in character mode selected 1 entry and the two-file batch selected 2. The WASM split fixture totaled 7 and matched the exact word and punctuation lists for each section in the [Phase 3 checklist](../plan-2026-11-26-punctuation-classifier-refinement.md#phase-3--validate-public-counting-and-nodejs-behavior).
 - **Package checks.** `bun run type-check`, `bun run lint`, `bun run format:check`, and `bun run verify:package-contents` passed.
+
+Review of `f504924..23fb441` reproduced the API, CLI, section, and punctuation sweep results on both builds. No material coverage gaps were found.
