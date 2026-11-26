@@ -2,7 +2,7 @@
 title: "Punctuation classifier refinement"
 created-date: 2026-11-26
 modified-date: 2026-11-26
-status: in-progress
+status: completed
 agent: codex
 ---
 
@@ -89,3 +89,5 @@ Review of `f504924..23fb441` reproduced the API, CLI, section, and punctuation s
 | 24.22.3 | Words `["foo_bar", "١٫٢"]`, punctuation `["___", "٫"]`, total 4 | 0 word graphemes, 3 non-word graphemes, 1 punctuation entry | 1 word-like segment, 3 graphemes |
 
 Relative links and heading anchors resolved across the README, research, plan, and job record. The research attributes the mixed example’s four-word result to the tagged canary and identifies the three-word result in its comparison as the candidate.
+
+Documentation review of `931c676..29a8344` reproduced the examples and helper counts on both Node builds and confirmed all 31 relative links and five heading anchors. The review found no outstanding issues. All 18 checklist items, including the Phase 2 mutation check, have verification evidence in this record.
