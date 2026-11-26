@@ -27,10 +27,10 @@ Count a standalone underscore run (`___`) as one punctuation segment and zero wo
 ## Phase 2 — Refine the classifier and verify exact categories
 
 - [x] In [classifyNonWordSegment](../../src/wc/non-words.ts), retain emoji and symbol precedence. For a remaining segment containing `\p{P}`, return the punctuation category when `isWordLike` is false or the segment contains no Unicode letter or number (`/[\p{L}\p{N}]/u`). Otherwise let the existing [analyzers](../../src/wc/analyze.ts) count the word-like segment. Preserve the original segment text and locale boundaries.
-- [ ] Extend the public `wordCounter` tests to assert the worked input's exact lists: words `["they’re", "3.14", "世界"]`, punctuation `["___", "。"]`, symbols `["©"]`, and emoji `["©️", "1️⃣"]`. Add whole-segment regression assertions that `1️⃣2` yields exactly `["1️⃣2"]` in emoji and `aⓑc` yields exactly `["aⓑc"]` in symbols, each with zero words.
-- [ ] Assert that `#️⃣` is one intact emoji entry and `_ⓑ_` one intact symbol entry. Each input must yield zero words and empty lists for the other non-word categories.
-- [ ] Add table-driven public-API regression tests for standalone and embedded punctuation. For Arabic `٫` / `١٫٢`, Hebrew `׳` / `ג׳`, and Japanese `゠` / `ア゠イ`, assert that the mark alone yields one punctuation entry and the embedded form yields one intact word. Assert that `foo_bar` stays one word and that underscores separated by U+0301 or U+200D retain the intervening character in a single punctuation entry.
-- [ ] Cover `你好，世界。` in the same suite. Assert one Han chunk with words `["你好", "世界"]` and punctuation `["，", "。"]`. Run `bun test test/word-counter-core.test.ts test/word-counter-char-modes.test.ts` and record the results.
+- [x] Extend the public `wordCounter` tests to assert the worked input's exact lists: words `["they’re", "3.14", "世界"]`, punctuation `["___", "。"]`, symbols `["©"]`, and emoji `["©️", "1️⃣"]`. Add whole-segment regression assertions that `1️⃣2` yields exactly `["1️⃣2"]` in emoji and `aⓑc` yields exactly `["aⓑc"]` in symbols, each with zero words.
+- [x] Assert that `#️⃣` is one intact emoji entry and `_ⓑ_` one intact symbol entry. Each input must yield zero words and empty lists for the other non-word categories.
+- [x] Add table-driven public-API regression tests for standalone and embedded punctuation. For Arabic `٫` / `١٫٢`, Hebrew `׳` / `ג׳`, and Japanese `゠` / `ア゠イ`, assert that the mark alone yields one punctuation entry and the embedded form yields one intact word. Assert that `foo_bar` stays one word and that underscores separated by U+0301 or U+200D retain the intervening character in a single punctuation entry.
+- [x] Cover `你好，世界。` in the same suite. Assert one Han chunk with words `["你好", "世界"]` and punctuation `["，", "。"]`. Run `bun test test/word-counter-core.test.ts test/word-counter-char-modes.test.ts` and record the results.
 
 ## Phase 3 — Validate public counting and Node.js behavior
 

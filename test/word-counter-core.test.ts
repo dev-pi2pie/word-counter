@@ -108,6 +108,76 @@ describe("wordCounter", () => {
   });
 });
 
+describe("wordCounter segment classification", () => {
+  function collectSegments(input: string) {
+    const { breakdown, counts } = wordCounter(input, { mode: "segments", nonWords: true });
+    if (breakdown.mode !== "segments") {
+      throw new Error("Expected segments breakdown");
+    }
+    const { items } = breakdown;
+    return {
+      counts,
+      locales: items.map((item) => item.locale),
+      lists: {
+        words: items.flatMap((item) => item.segments),
+        punctuation: items.flatMap((item) => item.nonWords?.punctuation ?? []),
+        symbols: items.flatMap((item) => item.nonWords?.symbols ?? []),
+        emoji: items.flatMap((item) => item.nonWords?.emoji ?? []),
+      },
+    };
+  }
+
+  test("collects words and non-words in source order across locale chunks", () => {
+    const input = "they’re 3.14 ___ © ©️ 1️⃣ 世界。";
+    const { lists, counts } = collectSegments(input);
+    expect(wordCounter(input).total).toBe(3);
+    expect(counts).toEqual({ words: 3, nonWords: 5, total: 8 });
+    expect(lists).toEqual({
+      words: ["they’re", "3.14", "世界"],
+      punctuation: ["___", "。"],
+      symbols: ["©"],
+      emoji: ["©️", "1️⃣"],
+    });
+  });
+
+  test.each([
+    ["1️⃣2", "emoji"],
+    ["#️⃣", "emoji"],
+    ["aⓑc", "symbols"],
+    ["_ⓑ_", "symbols"],
+    ["٫", "punctuation"],
+    ["١٫٢", "words"],
+    ["׳", "punctuation"],
+    ["ג׳", "words"],
+    ["゠", "punctuation"],
+    ["ア゠イ", "words"],
+    ["foo_bar", "words"],
+    ["_\u0301_", "punctuation"],
+    ["_\u200d_", "punctuation"],
+  ])("collects %s intact in %s only", (input, category) => {
+    const { lists, counts } = collectSegments(input);
+    expect(lists).toEqual({
+      words: [],
+      punctuation: [],
+      symbols: [],
+      emoji: [],
+      [category]: [input],
+    });
+    expect(counts?.words).toBe(category === "words" ? 1 : 0);
+  });
+
+  test("keeps Han words and punctuation in one chunk", () => {
+    const { locales, lists } = collectSegments("你好，世界。");
+    expect(locales).toEqual(["und-Hani"]);
+    expect(lists).toEqual({
+      words: ["你好", "世界"],
+      punctuation: ["，", "。"],
+      symbols: [],
+      emoji: [],
+    });
+  });
+});
+
 describe("countWordsForLocale", () => {
   test("counts words for a specific locale", () => {
     expect(countWordsForLocale("Hello world", "und-Latn")).toBe(2);

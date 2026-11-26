@@ -48,4 +48,6 @@ Test review of `3a29bb7..56193bb` reproduced both failures, verified all three c
 | Checkpoint | Verification | Result |
 | --- | --- | --- |
 | Baseline at `75d6140` | Focused suites from Phase 1 | 22 passed, 2 failed on `___` |
-| Shared classifier | Same suites after refining the punctuation check | 24 passed. `___` yields one punctuation entry, zero words, and zero word-only graphemes. |
+| Classifier at `086f6ab` | Same suites after refining the punctuation check | 24 passed. `___` yields one punctuation entry, zero words, and zero word-only graphemes. |
+| Public API regressions | Same suites with 15 added cases | 39 passed. The mixed example yields 3 words and 5 non-words. Exact entries passed for emoji, symbols, standalone and embedded punctuation, and the Han chunk. |
+| Static checks | `bun run type-check`, `bun run lint`, `bun run format:check` | All passed |
