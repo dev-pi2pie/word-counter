@@ -62,6 +62,8 @@ The review at `3376fd0` identified missing coverage for `"!\uFF9E"`. Added the c
 | Current | 40 passed | One intact punctuation entry, zero words |
 | Temporary copy with the `!isWordLike` alternative removed | 39 passed, 1 failed | Only the new case failed. Expected `["!\uFF9E"]` in punctuation, received `[]`. |
 
+Review of `4ba27fc..316bfce` reproduced both results and found the coverage gap resolved.
+
 ## Phase 3 — Validate public counting and Node.js behavior
 
 `bun run test:ci` built `f504924` and passed all 407 tests. Both Node runs used that build’s package export and `dist/esm/bin.mjs`. Each sweep passed every code point matching the runtime’s `/\p{P}/u` to `wordCounter` alone and doubled.
