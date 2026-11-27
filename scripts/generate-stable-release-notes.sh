@@ -155,7 +155,8 @@ group_file() {
 github_api_get() {
   local path="$1"
   local jq_expr="$2"
-  local token="${GH_TOKEN:-${GITHUB_TOKEN:-}}"
+  # Keep the resolved token unexported even if the caller exported a variable named token.
+  local +x token="${GH_TOKEN:-${GITHUB_TOKEN:-}}"
   local api_url="https://api.github.com/$path"
   local response=""
 
@@ -164,22 +165,22 @@ github_api_get() {
     return
   fi
 
-  if [ -n "$token" ]; then
-    response=$(
+  response=$(
+    # Skip the lookup if either token variable cannot be cleared.
+    unset GH_TOKEN GITHUB_TOKEN 2>/dev/null || exit 0
+    if [ -n "$token" ]; then
       curl -fsSL \
         -H "Accept: application/vnd.github+json" \
-        -H "Authorization: Bearer $token" \
+        -H @- \
         -H "X-GitHub-Api-Version: 2022-11-28" \
-        "$api_url" 2>/dev/null || true
-    )
-  else
-    response=$(
+        "$api_url" <<< "Authorization: Bearer $token" 2>/dev/null || true
+    else
       curl -fsSL \
         -H "Accept: application/vnd.github+json" \
         -H "X-GitHub-Api-Version: 2022-11-28" \
         "$api_url" 2>/dev/null || true
-    )
-  fi
+    fi
+  )
 
   if [ -z "$response" ]; then
     printf ''

@@ -174,7 +174,7 @@ jobs:
           GITHUB_REPO: ${{ github.repository }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Generate release notes (stable, curated aggregate)
+      - name: Resolve release notes (stable)
         id: stable_notes
         if: steps.prerelease.outputs.IS_PRERELEASE != 'true'
         shell: bash
@@ -186,20 +186,38 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          SCRIPT_PATH="scripts/generate-stable-release-notes.sh"
-          ARGS=(--mode "hybrid" --range "$RELEASE_RANGE" --current-tag "$CURRENT_TAG" --repository "$REPOSITORY")
-
-          if [ -n "${PREVIOUS_TAG:-}" ]; then
-            ARGS+=(--previous-tag "$PREVIOUS_TAG")
+          NOTES_PATH="CHANGELOGS/$CURRENT_TAG.md"
+          NOTES_ENTRY=""
+          if [[ "$CURRENT_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            NOTES_ENTRY=$(git ls-tree --format='%(objectmode) %(objectname)' "refs/tags/$CURRENT_TAG" -- "$NOTES_PATH")
           fi
 
-          NOTES="$("$SCRIPT_PATH" "${ARGS[@]}")"
+          if [ -n "$NOTES_ENTRY" ]; then
+            read -r NOTES_MODE NOTES_OBJECT <<< "$NOTES_ENTRY"
+            if [[ "$NOTES_MODE" != 100644 && "$NOTES_MODE" != 100755 ]]; then
+              echo "::error::$NOTES_PATH must be a regular Markdown file in the tagged commit."
+              exit 1
+            fi
+            NOTES=$(git cat-file blob "$NOTES_OBJECT")
+            if [[ "$NOTES" != *[![:space:]]* ]]; then
+              echo "::error::$NOTES_PATH is blank in the tagged commit."
+              exit 1
+            fi
+            printf 'Using stable release notes from %s in %s.\n' "$NOTES_PATH" "$CURRENT_TAG"
+          else
+            printf 'Generating stable release notes for %s from the release range.\n' "$CURRENT_TAG"
+            ARGS=(--mode "hybrid" --range "$RELEASE_RANGE" --current-tag "$CURRENT_TAG" --repository "$REPOSITORY")
+            if [ -n "${PREVIOUS_TAG:-}" ]; then
+              ARGS+=(--previous-tag "$PREVIOUS_TAG")
+            fi
+            NOTES=$(scripts/generate-stable-release-notes.sh "${ARGS[@]}")
+          fi
 
-          {
-            echo "content<<__RELEASE_NOTES__"
-            printf '%s\n' "$NOTES"
-            echo "__RELEASE_NOTES__"
-          } >> "$GITHUB_OUTPUT"
+          DELIMITER="__RELEASE_NOTES__"
+          while [[ "$NOTES" == *"$DELIMITER"* ]]; do
+            DELIMITER+="_"
+          done
+          printf 'content<<%s\n%s\n%s\n' "$DELIMITER" "$NOTES" "$DELIMITER" >> "$GITHUB_OUTPUT"
 
       - name: Select release notes content
         id: notes
@@ -214,11 +232,11 @@ jobs:
             SELECTED="$STABLE_NOTES"
           fi
 
-          {
-            echo "content<<__RELEASE_NOTES__"
-            printf '%s\n' "$SELECTED"
-            echo "__RELEASE_NOTES__"
-          } >> "$GITHUB_OUTPUT"
+          DELIMITER="__RELEASE_NOTES__"
+          while [[ "$SELECTED" == *"$DELIMITER"* ]]; do
+            DELIMITER+="_"
+          done
+          printf 'content<<%s\n%s\n%s\n' "$DELIMITER" "$SELECTED" "$DELIMITER" >> "$GITHUB_OUTPUT"
 
   prepare:
     runs-on: ubuntu-latest
@@ -236,7 +254,7 @@ jobs:
       - name: Setup Bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
         with:
-          bun-version: 1.4.4
+          bun-version: 1.4.5
 
       - name: Setup Node
         uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
@@ -261,7 +279,7 @@ jobs:
       - name: Setup Rust toolchain
         uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
         with:
-          toolchain: 1.99.1
+          toolchain: 1.100.0
           targets: wasm32-unknown-unknown
 
       - name: Cache Rust artifacts

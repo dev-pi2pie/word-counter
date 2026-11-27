@@ -1,6 +1,6 @@
 {
   "name": "@dev-pi2pie/word-counter",
-  "version": "0.1.9",
+  "version": "0.2.0",
   "keywords": [
     "cli",
     "intl-segmenter",
@@ -60,10 +60,10 @@
     "yaml": "^2.9.1"
   },
   "devDependencies": {
-    "@types/bun": "^1.4.4",
+    "@types/bun": "^1.4.5",
     "@types/node": "^26.6.6",
     "oxfmt": "^0.78.0",
-    "oxlint": "^1.93.0",
+    "oxlint": "^1.95.0",
     "picocolors": "^1.1.1",
     "tsdown": "^0.23.7",
     "typescript": "^7.0.2"

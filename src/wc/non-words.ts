@@ -6,6 +6,7 @@ const emojiPresentationRegex = /\p{Emoji_Presentation}/u;
 const keycapEmojiRegex = /[0-9#*]\uFE0F?\u20E3/u;
 const symbolRegex = /\p{S}/u;
 const punctuationRegex = /\p{P}/u;
+const letterOrNumberRegex = /[\p{L}\p{N}]/u;
 const whitespaceRegex = /\s/u;
 const newlineChars = new Set(["\n", "\r", "\u2028", "\u2029"]);
 
@@ -78,7 +79,10 @@ export function addWhitespace(collection: NonWordCollection, segment: string): n
   return count;
 }
 
-export function classifyNonWordSegment(segment: string): "emoji" | "symbol" | "punctuation" | null {
+export function classifyNonWordSegment({
+  segment,
+  isWordLike,
+}: Intl.SegmentData): "emoji" | "symbol" | "punctuation" | null {
   const hasEmojiVariationSelector = segment.includes("\uFE0F");
   if (
     keycapEmojiRegex.test(segment) ||
@@ -90,7 +94,7 @@ export function classifyNonWordSegment(segment: string): "emoji" | "symbol" | "p
   if (symbolRegex.test(segment)) {
     return "symbol";
   }
-  if (punctuationRegex.test(segment)) {
+  if (punctuationRegex.test(segment) && (!isWordLike || !letterOrNumberRegex.test(segment))) {
     return "punctuation";
   }
   return null;
