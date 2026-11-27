@@ -2,7 +2,7 @@
 
 Use `scripts/local-release-verification.sh` for a quick local preview before running CI.
 
-Current CI default for stable release notes is `--mode hybrid`.
+CI uses a curated note from the tagged commit when available and generates stable notes in `--mode hybrid` otherwise. Local previews run the generator. See the [stable release notes policy](../../RELEASE_NOTES_POLICY.md) for selection and drafting rules.
 
 ## Quick Run
 
@@ -89,7 +89,7 @@ scripts/local-release-verification.sh --output /tmp/stable-release-notes-preview
 - `scripts/local-release-verification.sh` resolves tag/range inputs.
 - It then calls `scripts/generate-stable-release-notes.sh` to render final markdown.
 
-## Why Local and CI Can Differ (PR Mode)
+## Why Local and CI Can Differ
 
 Differences are usually caused by one of these:
 - Different release range (auto-resolved locally vs fixed range in CI).
@@ -98,13 +98,13 @@ Differences are usually caused by one of these:
 - Local fallback flags in use (for example, `--fallback-login`) that CI does not use.
 - Stale local tags/history.
 
-To compare with CI behavior, run with explicit inputs:
+To reproduce CI's generated fallback, run with explicit inputs:
 
 ```bash
 git fetch --tags --prune origin
 
 GH_TOKEN="<token>" scripts/generate-stable-release-notes.sh \
-  --mode "pr" \
+  --mode "hybrid" \
   --range "<from-commit>..<to-commit>" \
   --current-tag "<current-tag>" \
   --previous-tag "<previous-tag>" \
