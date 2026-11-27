@@ -1,7 +1,7 @@
 ---
 title: "Classifying words, punctuation, symbols, and emoji"
 created-date: 2026-11-26
-modified-date: 2026-11-26
+modified-date: 2026-11-27
 status: completed
 agent: codex
 ---
@@ -22,18 +22,29 @@ When a locale-aware word segment contains punctuation, what should `wordCounter`
 
 The table compares the available stable Git tags from `v0.0.1` through `v0.1.9` and the first two tagged 0.2 canaries. Each tag's counting source was bundled for Node and exercised through `wordCounter` with default locale settings. Node 22.23.5 and 24.22.3 gave the same results. Both used ICU 78.3 and Unicode 17.0. These are historical sources run on a common runtime.
 
-Each classification column gives the result for each listed input individually. The last two columns use the full example below. The candidate row reports a temporary implementation of the agreed rule on the `v0.2.0-canary.2` counting source.
+The standalone punctuation checks include two similar-looking marks.
 
-| Source | `they’re`, `3.14` | `___`, `٫` | `©` / `©️` | `1️⃣` | Example words | Example with non-words |
-| --- | --- | --- | --- | --- | ---: | ---: |
-| Stable tags through `v0.0.7` | Word | Word | Both omitted | Word | 5 | Unavailable |
-| `v0.0.8`–`v0.0.9` | Word | Word | Symbol / emoji | Word | 5 | 8 |
-| `v0.1.0`–`v0.1.6` | Word | Word | Symbol / emoji | Word | 5 | 8 |
-| `v0.1.7`–`v0.1.9` | Punctuation | Punctuation | Symbol / emoji | Emoji | 1 | 8 |
-| `v0.2.0-canary.1` and `v0.2.0-canary.2` | Word | Word | Symbol / emoji | Emoji | 4 | 8 |
-| Candidate (unreleased) | Word | Punctuation | Symbol / emoji | Emoji | **3** | **8** |
+| Character | Name | Unicode | Example |
+| --- | --- | --- | --- |
+| `٫` | Arabic decimal separator | `U+066B` | `١٫٢` |
+| `,` | ASCII comma | `U+002C` | `one, two` |
 
-The July keycap fix moved non-word classification ahead of the word-like check. This protected keycaps but also put whole segments such as `they’re` into punctuation. The 0.2 canaries restored contractions and decimals by skipping the punctuation check for all word-like segments. That also admitted `___` and standalone Arabic decimal separator `٫` as words.[^keycap][^apostrophes]
+The table shows how the segments in the worked example below are classified. Both totals exclude spaces. The candidate row reports a temporary implementation of the agreed rule on the `v0.2.0-canary.2` counting source.
+
+A standalone ASCII comma (`,`) counted as zero words on every stable tag tested.
+
+| Source | `they’re` and `3.14` | `___` | `©` / `©️` | `1️⃣` | `世界` | `。` | Example words | Example with non-words |
+| --- | --- | --- | --- | --- | --- | --- | ---: | ---: |
+| Stable tags through `v0.0.7` | Both words | Word | Both omitted | Word | Word | Omitted | 5 | — |
+| `v0.0.8`–`v0.0.9` | Both words | Word | Symbol / emoji | Word | Word | Punctuation | 5 | 8 |
+| `v0.1.0`–`v0.1.6` | Both words | Word | Symbol / emoji | Word | Word | Punctuation | 5 | 8 |
+| `v0.1.7`–`v0.1.9` | Both punctuation | Punctuation | Symbol / emoji | Emoji | Word | Punctuation | 1 | 8 |
+| `v0.2.0-canary.1` and `v0.2.0-canary.2` | Both words | Word | Symbol / emoji | Emoji | Word | Punctuation | 4 | 8 |
+| Candidate (unreleased) | Both words | Punctuation | Symbol / emoji | Emoji | Word | Punctuation | **3** | **8** |
+
+An em dash (—) indicates that non-word collection was unavailable. Punctuation entries are collected with `nonWords: true`.
+
+The July keycap fix moved non-word classification ahead of the word-like check. This protected keycaps but also put whole segments such as `they’re` into punctuation. The 0.2 canaries restored contractions and decimals by skipping the punctuation check for segments marked word-like. The segmenter also marked `___` and the standalone Arabic decimal separator `٫` as word-like, so those inputs counted as words again.[^keycap][^apostrophes]
 
 ### Worked CLI example
 
